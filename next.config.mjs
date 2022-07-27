@@ -20,6 +20,10 @@ export default defineNextConfig({
           destination: '/api/:sourceId',
         },
         {
+          source: '/videos/:videoId',
+          destination: '/api/videos/:videoId',
+        },
+        {
           source: '/watch',
           has: [
             {

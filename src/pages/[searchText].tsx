@@ -3,9 +3,7 @@ import MainPage from '../components/MainPage';
 import type { MainPageProps } from '../components/MainPage';
 import { searchForSource } from '../services/sourceService';
 
-const UserPage = ({ source, host, errorMessage }: MainPageProps) => (
-  <MainPage source={source} host={host} errorMessage={errorMessage} />
-);
+const UserPage = (props: MainPageProps) => <MainPage {...props} />;
 
 const getServerSideProps: GetServerSideProps = async (context) => {
   const { query, req } = context;
@@ -21,9 +19,10 @@ const getServerSideProps: GetServerSideProps = async (context) => {
   if (searchText) {
     try {
       const source = await searchForSource(decodeURI(searchText));
-      return { props: { source, host } };
+      return { props: { source, host, searchText } };
     } catch (errorMessage) {
-      return { props: { errorMessage } };
+      console.log(errorMessage);
+      return { props: { errorMessage, searchText } };
     }
   }
 

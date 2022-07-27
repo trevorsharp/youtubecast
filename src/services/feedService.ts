@@ -15,20 +15,18 @@ const getRssFeed = async (
     description: source.description,
     author: source.displayName,
     feedUrl: `http://${hostname}/feed/${sourceId}`,
-    siteUrl:
-      source.type === 'channel'
-        ? `https://youtube.com/channel/${sourceId}`
-        : `https://youtube.com/playlist?list=${sourceId}`,
-    imageUrl: source.profileImageUrl,
+    siteUrl: source.url,
+    imageUrl:
+      source.type === 'playlist'
+        ? `http://${hostname}${source.profileImageUrl}`
+        : source.profileImageUrl,
   });
 
-  videos.forEach((video) => {
-    const itunesDuration = video.duration;
-
+  videos.forEach((video) =>
     rssFeed.addItem({
       title: video.title,
       itunesTitle: video.title,
-      description: video.url,
+      description: video.description + '\n' + '\n' + video.url,
       date: new Date(video.date),
       enclosure: {
         url: `http://${hostname}/watch?v=${video.id}${
@@ -37,9 +35,8 @@ const getRssFeed = async (
         type: quality === Quality.Audio ? 'audio/aac' : 'video/mp4',
       },
       url: video.url,
-      itunesDuration,
-    });
-  });
+    })
+  );
 
   return rssFeed.buildXml();
 };

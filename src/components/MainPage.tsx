@@ -11,20 +11,23 @@ import RssLinks from './RssLinks';
 import { Quality, Source } from '../types';
 
 type MainPageProps = {
+  searchText?: string;
   source?: Source;
   errorMessage?: string;
   host?: string;
 };
 
-const MainPage = ({ source, errorMessage, host }: MainPageProps) => {
+const MainPage = ({ searchText, source, errorMessage, host }: MainPageProps) => {
   const router = useRouter();
 
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [qualitySelection, setQualitySelection] = useState<Quality>(Quality.Default);
 
+  console.log(searchText);
+
   const { register, handleSubmit, setFocus } = useForm({
     resolver: zodResolver(z.object({ searchText: z.string() })),
-    defaultValues: { searchText: source?.name },
+    defaultValues: { searchText },
   });
 
   useEffect(() => {
@@ -82,11 +85,7 @@ const MainPage = ({ source, errorMessage, host }: MainPageProps) => {
               <div className="flex flex-col gap-6 items-center">
                 {source && (
                   <>
-                    <a
-                      className="flex gap-4 items-center"
-                      target="_new"
-                      href={`https://youtube.com/channel/${source.id}`}
-                    >
+                    <a className="flex gap-4 items-center" target="_new" href={source.url}>
                       <img
                         className="rounded-full w-16 h-16"
                         src={source.profileImageUrl}

@@ -5,12 +5,12 @@ enum Quality {
 }
 
 type Source = {
-  type: 'channel';
+  type: 'channel' | 'playlist';
   id: string;
-  name: string;
   displayName: string;
   profileImageUrl: string;
   description: string;
+  url: string;
 };
 
 type Video = {
@@ -18,7 +18,6 @@ type Video = {
   title: string;
   date: string;
   description: string;
-  duration: number;
   url: string;
 };
 

@@ -16,10 +16,9 @@ const getRssFeed = async (
     author: source.displayName,
     feedUrl: `http://${hostname}/${sourceId}/feed`,
     siteUrl: source.url,
-    imageUrl:
-      source.type === 'playlist'
-        ? `http://${hostname}${source.profileImageUrl}`
-        : source.profileImageUrl,
+    imageUrl: source.profileImageUrl.startsWith('/')
+      ? `http://${hostname}${source.profileImageUrl}`
+      : source.profileImageUrl,
   });
 
   videos.forEach((video) =>

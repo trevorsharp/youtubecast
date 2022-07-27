@@ -12,7 +12,7 @@ const getYoutube = () => {
 };
 
 const searchForChannel = async (searchText: string): Promise<Source> => {
-  const searchResult = await getYoutube()
+  const rawSearchResult = await getYoutube()
     .search.list({
       part: ['snippet'],
       type: ['channel'],
@@ -22,7 +22,7 @@ const searchForChannel = async (searchText: string): Promise<Source> => {
     .then((response: any) => response?.data?.items?.shift()?.snippet)
     .catch((error) => console.log(error));
 
-  const validationResult = z
+  const searchResult = z
     .object({
       channelId: z.string(),
       title: z.string(),
@@ -33,22 +33,22 @@ const searchForChannel = async (searchText: string): Promise<Source> => {
         }),
       }),
     })
-    .safeParse(searchResult);
+    .safeParse(rawSearchResult);
 
-  if (!validationResult.success) throw `Could not find YouTube channel for ${searchText}`;
+  if (!searchResult.success) throw `Could not find YouTube channel for ${searchText}`;
 
   return {
     type: 'channel',
-    id: validationResult.data.channelId,
-    displayName: validationResult.data.title,
-    description: validationResult.data.description,
-    profileImageUrl: validationResult.data.thumbnails.high.url,
-    url: `https://youtube.com/channel/${validationResult.data.channelId}`,
+    id: searchResult.data.channelId,
+    displayName: searchResult.data.title,
+    description: searchResult.data.description,
+    profileImageUrl: searchResult.data.thumbnails.high.url,
+    url: `https://youtube.com/channel/${searchResult.data.channelId}`,
   };
 };
 
 const getChannelDetails = async (channelId: string): Promise<Source> => {
-  const channelResult = await getYoutube()
+  const rawChannelResult = await getYoutube()
     .channels.list({
       part: ['snippet'],
       id: [channelId],
@@ -56,7 +56,7 @@ const getChannelDetails = async (channelId: string): Promise<Source> => {
     .then((response: any) => response?.data?.items?.shift())
     .catch((error) => console.log(error));
 
-  const validationResult = z
+  const channelResult = z
     .object({
       id: z.string(),
       snippet: z.object({
@@ -69,22 +69,22 @@ const getChannelDetails = async (channelId: string): Promise<Source> => {
         }),
       }),
     })
-    .safeParse(channelResult);
+    .safeParse(rawChannelResult);
 
-  if (!validationResult.success) throw `Could not find YouTube channel for id ${channelId}`;
+  if (!channelResult.success) throw `Could not find YouTube channel for id ${channelId}`;
 
   return {
     type: 'channel',
-    id: validationResult.data.id,
-    displayName: validationResult.data.snippet.title,
-    description: validationResult.data.snippet.description,
-    profileImageUrl: validationResult.data.snippet.thumbnails.high.url,
-    url: `https://youtube.com/channel/${validationResult.data.id}`,
+    id: channelResult.data.id,
+    displayName: channelResult.data.snippet.title,
+    description: channelResult.data.snippet.description,
+    profileImageUrl: channelResult.data.snippet.thumbnails.high.url,
+    url: `https://youtube.com/channel/${channelResult.data.id}`,
   };
 };
 
 const getPlaylistDetails = async (playlistId: string): Promise<Source> => {
-  const playlistResult = await getYoutube()
+  const rawPlaylistResult = await getYoutube()
     .playlists.list({
       part: ['snippet'],
       id: [playlistId],
@@ -92,39 +92,73 @@ const getPlaylistDetails = async (playlistId: string): Promise<Source> => {
     .then((response: any) => response?.data?.items?.shift())
     .catch((error) => console.log(error));
 
-  const validationResult = z
+  const playlistResult = z
     .object({
       id: z.string(),
       snippet: z.object({
         title: z.string(),
         description: z.string(),
+        channelId: z.string(),
       }),
     })
-    .safeParse(playlistResult);
+    .safeParse(rawPlaylistResult);
 
-  if (!validationResult.success) throw `Could not find YouTube playlist for id ${playlistId}`;
+  if (!playlistResult.success) throw `Could not find YouTube playlist for id ${playlistId}`;
+
+  const channelId = playlistResult.data.snippet.channelId;
+
+  const rawChannelResult = await getYoutube()
+    .channels.list({
+      part: ['snippet', 'statistics'],
+      id: [channelId],
+    })
+    .then((response: any) => response?.data?.items?.shift())
+    .catch((error) => console.log(error));
+
+  const channelResult = z
+    .object({
+      snippet: z.object({
+        thumbnails: z.object({
+          high: z.object({
+            url: z.string(),
+          }),
+        }),
+      }),
+      statistics: z.object({
+        subscriberCount: z
+          .string()
+          .regex(/^[0-9]+$/)
+          .transform((x) => parseInt(x)),
+      }),
+    })
+    .safeParse(rawChannelResult);
+
+  if (!channelResult.success) throw `Could not find YouTube channel for id ${channelId}`;
 
   return Promise.resolve({
     type: 'playlist',
-    id: validationResult.data.id,
-    displayName: validationResult.data.snippet.title,
-    description: validationResult.data.snippet.description,
-    profileImageUrl: '/playlist.png',
-    url: `https://youtube.com/playlist?list=${validationResult.data.id}`,
+    id: playlistResult.data.id,
+    displayName: playlistResult.data.snippet.title,
+    description: playlistResult.data.snippet.description,
+    url: `https://youtube.com/playlist?list=${playlistResult.data.id}`,
+    profileImageUrl:
+      channelResult.data.statistics.subscriberCount < 100
+        ? '/playlist.png'
+        : channelResult.data.snippet.thumbnails.high.url,
   });
 };
 
 const getVideosForPlaylist = async (playlistId: string): Promise<Video[]> => {
-  const videoResults = await getYoutube()
+  const rawPlaylistItemResults = await getYoutube()
     .playlistItems.list({
       part: ['snippet'],
-      maxResults: 25,
+      maxResults: 50,
       playlistId,
     })
     .then((response: any) => response?.data?.items?.map((x: any) => x?.snippet))
     .catch((error) => console.log(error));
 
-  const validationResult = z
+  const playlistItemResults = z
     .array(
       z.object({
         title: z.string(),
@@ -135,12 +169,12 @@ const getVideosForPlaylist = async (playlistId: string): Promise<Video[]> => {
         }),
       })
     )
-    .safeParse(videoResults);
+    .safeParse(rawPlaylistItemResults);
 
-  if (!validationResult.success)
+  if (!playlistItemResults.success)
     throw `Could not find videos on YouTube playlist for id ${playlistId}`;
 
-  const videos = validationResult.data.map((result) => ({
+  const videos = playlistItemResults.data.map((result) => ({
     id: result.resourceId.videoId,
     title: result.title,
     date: result.publishedAt,
@@ -148,16 +182,16 @@ const getVideosForPlaylist = async (playlistId: string): Promise<Video[]> => {
     url: `https://youtu.be/${result.resourceId.videoId}`,
   }));
 
-  const additionalDetails = await getYoutube()
+  const rawVideoDetailsResults = await getYoutube()
     .videos.list({
       part: ['snippet,contentDetails,status'],
-      maxResults: 25,
+      maxResults: 50,
       id: videos.map((x) => x.id),
     })
     .then((response: any) => response?.data?.items)
     .catch((error) => console.log(error));
 
-  const additionalValidationResult = z
+  const videoDetailsResults = z
     .array(
       z.object({
         id: z.string(),
@@ -173,21 +207,21 @@ const getVideosForPlaylist = async (playlistId: string): Promise<Video[]> => {
         }),
       })
     )
-    .safeParse(additionalDetails);
+    .safeParse(rawVideoDetailsResults);
 
-  if (!additionalValidationResult.success)
+  if (!videoDetailsResults.success)
     throw `Could not find videos on YouTube playlist for id ${playlistId}`;
 
   return videos
     .map((video) => ({
       ...video,
       duration: getDuration(
-        additionalValidationResult.data.find((videoDetails) => video.id === videoDetails.id)
+        videoDetailsResults.data.find((videoDetails) => video.id === videoDetails.id)
           ?.contentDetails.duration
       ),
     }))
     .filter((video) => {
-      const videoDetails = additionalValidationResult.data.find(
+      const videoDetails = videoDetailsResults.data.find(
         (videoDetails) => video.id === videoDetails.id
       );
 

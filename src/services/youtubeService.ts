@@ -80,7 +80,7 @@ const getPlaylistDetails = async (playlistId: string): Promise<Source> => {
   const playlistResult = await youtube.playlists
     .list({
       part: ['snippet'],
-      id: ['PLxA687tYuMWjuNRTGvDuLQZjHaLQv3wYL'],
+      id: [playlistId],
     })
     .then((response: any) => response?.data?.items?.shift())
     .catch(() => {});
@@ -105,29 +105,6 @@ const getPlaylistDetails = async (playlistId: string): Promise<Source> => {
     profileImageUrl: '/playlist.png',
     url: `https://youtube.com/playlist?list=${validationResult.data.id}`,
   });
-};
-
-const getPlaylistIdForChannelUploads = async (channelId: string): Promise<string> => {
-  const channelResult = await youtube.channels
-    .list({
-      part: ['contentDetails'],
-      id: [channelId],
-    })
-    .then((response: any) => response?.data?.items?.shift()?.contentDetails)
-    .catch(() => {});
-
-  const validationResult = z
-    .object({
-      relatedPlaylists: z.object({
-        uploads: z.string(),
-      }),
-    })
-    .safeParse(channelResult);
-
-  if (!validationResult.success)
-    throw `Could not find uploads playlist for YouTube channel with id ${channelId}`;
-
-  return validationResult.data.relatedPlaylists.uploads;
 };
 
 const getVideosForPlaylist = async (playlistId: string): Promise<Video[]> => {
@@ -156,19 +133,78 @@ const getVideosForPlaylist = async (playlistId: string): Promise<Video[]> => {
   if (!validationResult.success)
     throw `Could not find videos on YouTube playlist for id ${playlistId}`;
 
-  return validationResult.data.map((result) => ({
+  const videos = validationResult.data.map((result) => ({
     id: result.resourceId.videoId,
     title: result.title,
     date: result.publishedAt,
     description: result.description,
     url: `https://youtu.be/${result.resourceId.videoId}`,
   }));
+
+  const additionalDetails = await youtube.videos
+    .list({
+      part: ['snippet,contentDetails,status'],
+      maxResults: 25,
+      id: videos.map((x) => x.id),
+    })
+    .then((response: any) => response?.data?.items)
+    .catch(() => {});
+
+  const additionalValidationResult = z
+    .array(
+      z.object({
+        id: z.string(),
+        contentDetails: z.object({
+          duration: z.string(),
+        }),
+        status: z.object({
+          uploadStatus: z.string(),
+          privacyStatus: z.string(),
+        }),
+        snippet: z.object({
+          liveBroadcastContent: z.string(),
+        }),
+      })
+    )
+    .safeParse(additionalDetails);
+
+  if (!additionalValidationResult.success)
+    throw `Could not find videos on YouTube playlist for id ${playlistId}`;
+
+  return videos
+    .map((video) => ({
+      ...video,
+      duration: getDuration(
+        additionalValidationResult.data.find((videoDetails) => video.id === videoDetails.id)
+          ?.contentDetails.duration
+      ),
+    }))
+    .filter((video) => {
+      const videoDetails = additionalValidationResult.data.find(
+        (videoDetails) => video.id === videoDetails.id
+      );
+
+      if (!videoDetails) return false;
+
+      return (
+        videoDetails.status.uploadStatus === 'processed' &&
+        videoDetails.snippet.liveBroadcastContent === 'none' &&
+        videoDetails.status.privacyStatus !== 'private'
+      );
+    });
 };
 
-export {
-  searchForChannel,
-  getChannelDetails,
-  getPlaylistDetails,
-  getPlaylistIdForChannelUploads,
-  getVideosForPlaylist,
+const getDuration = (duration: string | undefined): number => {
+  if (!duration) return 0;
+
+  const getTimePart = (letter: 'H' | 'M' | 'S') =>
+    parseInt(duration.match(new RegExp('[0-9]+(?=' + letter + ')'))?.find(() => true) ?? '0');
+
+  const hours = getTimePart('H');
+  const minutes = getTimePart('M');
+  const seconds = getTimePart('S');
+
+  return hours * 3600 + minutes * 60 + seconds;
 };
+
+export { searchForChannel, getChannelDetails, getPlaylistDetails, getVideosForPlaylist };

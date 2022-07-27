@@ -5,7 +5,7 @@ const RssLinks = ({ host, id, quality }: { host: string; id: string; quality: Qu
   const [copiedText, setCopiedText] = useState<string>('');
 
   const getRssLink = () =>
-    `${host}/feed/${id}${quality != Quality.Default ? `?quality=${quality}` : ''}`;
+    `${host}/${id}/feed${quality != Quality.Default ? `?quality=${quality}` : ''}`;
 
   const copyRssLink = () => {
     navigator.clipboard.writeText(`http://${getRssLink()}`);

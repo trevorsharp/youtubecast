@@ -13,28 +13,16 @@ const getStream = async (videoId: string, quality: Quality): Promise<string> => 
 
   if (videoUrl === '') throw `Video not found with id ${videoId}`;
 
-  cache.set(cacheKey, videoUrl, 600);
+  cache.set(cacheKey, videoUrl, 3600);
 
   return videoUrl;
 };
 
-const getVideoUrl = async (videoId: string, quality: Quality): Promise<string> => {
-  let format = '22';
-
-  switch (quality) {
-    case Quality.Audio:
-      format = '140';
-      break;
-    case Quality.P360:
-      format = '18';
-      break;
-  }
-
-  return await spawnChild(['-g', '-f', format, `youtu.be/${videoId}`]);
-};
+const getVideoUrl = async (videoId: string, quality: Quality): Promise<string> =>
+  await spawnChild([`https://www.youtube.com/watch?v=${videoId}`, quality.toString()]);
 
 const spawnChild = async (args: string[]) => {
-  const child = spawn('yt-dlp', args);
+  const child = spawn('python3', ['getStreamLink.py', ...args]);
 
   let data = '';
   for await (const chunk of child.stdout) data += chunk;

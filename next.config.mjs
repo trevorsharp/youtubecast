@@ -16,33 +16,67 @@ export default defineNextConfig({
     return {
       beforeFiles: [
         {
-          source: '/channel/:channelId',
-          destination: '/:channelId',
-        },
-        {
-          source: '/c/:channelName',
-          destination: '/:channelName',
-        },
-        {
-          source: '/playlist',
-          has: [
-            {
-              type: 'query',
-              key: 'list',
-              value: '(?<playlistId>.*)',
-            },
-          ],
-          destination: '/:playlistId',
-        },
-        {
-          source: '/feed/:id',
-          destination: '/api/feed/:id',
+          source: '/:sourceId/feed',
+          destination: '/api/:sourceId',
         },
         {
           source: '/watch',
-          destination: '/api/videos',
+          has: [
+            {
+              type: 'query',
+              key: 'v',
+              value: '(?<videoId>.*)',
+            },
+          ],
+          destination: '/api/videos/:videoId',
         },
       ],
     };
+  },
+  async redirects() {
+    return [
+      {
+        source: '/channel/:channelId',
+        destination: '/:channelId',
+        permanent: false,
+      },
+      {
+        source: '/c/:channelName',
+        destination: '/:channelName',
+        permanent: false,
+      },
+      {
+        source: '/user/:channelName',
+        destination: '/:channelName',
+        permanent: false,
+      },
+      {
+        source: '/channel/:channelId/videos',
+        destination: '/:channelId',
+        permanent: false,
+      },
+      {
+        source: '/c/:channelName/videos',
+        destination: '/:channelName',
+        permanent: false,
+      },
+      {
+        source: '/user/:channelName/videos',
+        destination: '/:channelName',
+        permanent: false,
+      },
+      {
+        source: '/playlist',
+        has: [
+          {
+            type: 'query',
+            key: 'list',
+            value: '(?<playlistId>.*)',
+          },
+        ],
+        destination: '/:playlistId?',
+        permanent: false,
+      },
+    ];
   },
 });

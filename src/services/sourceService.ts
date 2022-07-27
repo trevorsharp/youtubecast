@@ -4,20 +4,27 @@ import {
   searchForChannel,
   getChannelDetails,
   getPlaylistDetails,
-  getPlaylistIdForChannelUploads,
   getVideosForPlaylist,
 } from './youtubeService';
 
 const cache = new NodeCache({ checkperiod: 120 });
 
 const searchForSource = async (searchText: string): Promise<Source> => {
-  searchText = searchText.trim();
+  searchText = searchText
+    .trim()
+    .replace(/http(s){0,1}:\/\//i, '')
+    .replace(/youtu\.be/i, '')
+    .replace(/.*youtube\.com/i, '')
+    .replace(/\/channel\//i, '')
+    .replace(/\/c\//i, '')
+    .replace(/\/user\//i, '')
+    .replace(/\/playlist\?list=/i, '');
 
   const cacheKey = `youtube-source-search-${searchText}`;
   const cacheResult = cache.get(cacheKey);
   if (cacheResult) return cacheResult as Source;
 
-  const source = searchText.match(/^(UC|PL)[A-Z0-9]*$/i)
+  const source = searchText.match(/^(UC[-_a-z0-9]{22}|PL[-_a-z0-9]{32})$/i)
     ? await getSourceData(searchText)
     : await searchForChannel(searchText);
 
@@ -34,10 +41,7 @@ const getSourceData = async (id: string): Promise<Source> => {
 
   if (id.startsWith('UC')) source = await getChannelDetails(id);
 
-  if (id.startsWith('PL')) {
-    source = await getPlaylistDetails(id);
-    if (!source) throw `Could not find playlist with id ${id}`;
-  }
+  if (id.startsWith('PL')) source = await getPlaylistDetails(id);
 
   if (!source) throw `Could not find a YouTube source for id ${id}`;
 
@@ -50,14 +54,13 @@ const getVideos = async (sourceId: string): Promise<Video[]> => {
   const cacheResult = cache.get(cacheKey);
   if (cacheResult) return cacheResult as Video[];
 
-  const playlistId = sourceId.startsWith('PL')
-    ? sourceId
-    : await getPlaylistIdForChannelUploads(sourceId);
-  if (!playlistId) throw `Could not find a YouTube source for id ${sourceId}`;
+  let playlistId = sourceId;
+
+  if (sourceId.startsWith('UC')) playlistId = sourceId.replace('UC', 'UU');
 
   const videos = await getVideosForPlaylist(playlistId);
 
-  cache.set(cacheKey, videos, 300);
+  cache.set(cacheKey, videos, 600);
   return videos;
 };
 

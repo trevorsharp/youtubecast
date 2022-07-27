@@ -19,6 +19,7 @@ type Video = {
   date: string;
   description: string;
   url: string;
+  duration: number;
 };
 
 export { Quality };

@@ -14,7 +14,7 @@ const getRssFeed = async (
     title: source.displayName,
     description: source.description,
     author: source.displayName,
-    feedUrl: `http://${hostname}/feed/${sourceId}`,
+    feedUrl: `http://${hostname}/${sourceId}/feed`,
     siteUrl: source.url,
     imageUrl:
       source.type === 'playlist'
@@ -29,12 +29,13 @@ const getRssFeed = async (
       description: video.description + '\n' + '\n' + video.url,
       date: new Date(video.date),
       enclosure: {
-        url: `http://${hostname}/watch?v=${video.id}${
+        url: `http://${hostname}/videos/${video.id}${
           quality != Quality.Default ? `?quality=${quality}` : ''
         }`,
         type: quality === Quality.Audio ? 'audio/aac' : 'video/mp4',
       },
       url: video.url,
+      itunesDuration: video.duration,
     })
   );
 

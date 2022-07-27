@@ -30,7 +30,7 @@ services:
   youtubecast:
     image: trevorsharp/youtubecast:latest
     container_name: youtubecast
-    restart: unless_stopped
+    restart: unless-stopped
     ports:
       - 80:3000
     environment:

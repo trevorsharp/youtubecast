@@ -11,8 +11,6 @@ const getStream = async (videoId: string, quality: Quality): Promise<string> => 
 
   const videoUrl = await getVideoUrl(videoId, quality);
 
-  console.log(videoUrl);
-
   if (videoUrl === '') throw `Video not found with id ${videoId}`;
 
   cache.set(cacheKey, videoUrl, 600);
@@ -31,8 +29,6 @@ const getVideoUrl = async (videoId: string, quality: Quality): Promise<string> =
       format = '18';
       break;
   }
-
-  console.log(quality, format);
 
   return await spawnChild(['-g', '-f', format, `youtu.be/${videoId}`]);
 };

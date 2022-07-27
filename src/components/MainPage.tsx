@@ -23,8 +23,6 @@ const MainPage = ({ searchText, source, errorMessage, host }: MainPageProps) => 
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [qualitySelection, setQualitySelection] = useState<Quality>(Quality.Default);
 
-  console.log(searchText);
-
   const { register, handleSubmit, setFocus } = useForm({
     resolver: zodResolver(z.object({ searchText: z.string() })),
     defaultValues: { searchText },

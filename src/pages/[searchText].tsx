@@ -21,7 +21,6 @@ const getServerSideProps: GetServerSideProps = async (context) => {
       const source = await searchForSource(decodeURI(searchText));
       return { props: { source, host, searchText } };
     } catch (errorMessage) {
-      console.log(errorMessage);
       return { props: { errorMessage, searchText } };
     }
   }

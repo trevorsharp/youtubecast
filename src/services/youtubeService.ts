@@ -2,18 +2,25 @@ import { google } from 'googleapis';
 import { z } from 'zod';
 import { Source, Video } from '../types';
 
-const youtube = google.youtube({ version: 'v3', auth: process.env.YOUTUBE_API_KEY });
+const youtubeInstances =
+  process.env.YOUTUBE_API_KEY?.split(',').map((auth) => google.youtube({ version: 'v3', auth })) ??
+  [];
+
+const getYoutube = () => {
+  if (youtubeInstances.length === 0) throw 'No API Key Provided';
+  return youtubeInstances[Math.floor(Math.random() * youtubeInstances.length)]!;
+};
 
 const searchForChannel = async (searchText: string): Promise<Source> => {
-  const searchResult = await youtube.search
-    .list({
+  const searchResult = await getYoutube()
+    .search.list({
       part: ['snippet'],
       type: ['channel'],
       q: searchText,
       maxResults: 1,
     })
     .then((response: any) => response?.data?.items?.shift()?.snippet)
-    .catch(() => {});
+    .catch((error) => console.log(error));
 
   const validationResult = z
     .object({
@@ -41,13 +48,13 @@ const searchForChannel = async (searchText: string): Promise<Source> => {
 };
 
 const getChannelDetails = async (channelId: string): Promise<Source> => {
-  const channelResult = await youtube.channels
-    .list({
+  const channelResult = await getYoutube()
+    .channels.list({
       part: ['snippet'],
       id: [channelId],
     })
     .then((response: any) => response?.data?.items?.shift())
-    .catch(() => {});
+    .catch((error) => console.log(error));
 
   const validationResult = z
     .object({
@@ -77,13 +84,13 @@ const getChannelDetails = async (channelId: string): Promise<Source> => {
 };
 
 const getPlaylistDetails = async (playlistId: string): Promise<Source> => {
-  const playlistResult = await youtube.playlists
-    .list({
+  const playlistResult = await getYoutube()
+    .playlists.list({
       part: ['snippet'],
       id: [playlistId],
     })
     .then((response: any) => response?.data?.items?.shift())
-    .catch(() => {});
+    .catch((error) => console.log(error));
 
   const validationResult = z
     .object({
@@ -108,14 +115,14 @@ const getPlaylistDetails = async (playlistId: string): Promise<Source> => {
 };
 
 const getVideosForPlaylist = async (playlistId: string): Promise<Video[]> => {
-  const videoResults = await youtube.playlistItems
-    .list({
+  const videoResults = await getYoutube()
+    .playlistItems.list({
       part: ['snippet'],
       maxResults: 25,
       playlistId,
     })
     .then((response: any) => response?.data?.items?.map((x: any) => x?.snippet))
-    .catch(() => {});
+    .catch((error) => console.log(error));
 
   const validationResult = z
     .array(
@@ -141,14 +148,14 @@ const getVideosForPlaylist = async (playlistId: string): Promise<Video[]> => {
     url: `https://youtu.be/${result.resourceId.videoId}`,
   }));
 
-  const additionalDetails = await youtube.videos
-    .list({
+  const additionalDetails = await getYoutube()
+    .videos.list({
       part: ['snippet,contentDetails,status'],
       maxResults: 25,
       id: videos.map((x) => x.id),
     })
     .then((response: any) => response?.data?.items)
-    .catch(() => {});
+    .catch((error) => console.log(error));
 
   const additionalValidationResult = z
     .array(

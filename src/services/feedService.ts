@@ -51,6 +51,7 @@ const getRssFeed = async (
 const callVideoServer = async (videoServer: string, videoList: Video[]) =>
   await fetch(`http://${videoServer}`, {
     method: 'POST',
+    headers: { 'Content-type': 'application/json' },
     body: JSON.stringify(videoList.map((x) => x.id)),
   }).catch((error) => console.log(error));
 

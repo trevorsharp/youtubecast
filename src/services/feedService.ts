@@ -1,5 +1,5 @@
 import { Podcast } from 'podcast';
-import { Quality } from '../types';
+import { Quality, Video } from '../types';
 import { getSourceData, getVideos } from './sourceService';
 
 const getRssFeed = async (
@@ -10,6 +10,14 @@ const getRssFeed = async (
 ): Promise<string> => {
   const source = await getSourceData(sourceId);
   const videos = await getVideos(source.id);
+  const videoQueryParams = new URLSearchParams();
+
+  if (quality != Quality.Default) videoQueryParams.append('quality', quality.toString());
+
+  if (videoServer) {
+    callVideoServer(videoServer, videos);
+    videoQueryParams.append('videoServer', videoServer);
+  }
 
   const rssFeed = new Podcast({
     title: source.displayName,
@@ -21,12 +29,6 @@ const getRssFeed = async (
       ? `http://${hostname}${source.profileImageUrl}`
       : source.profileImageUrl,
   });
-
-  const videoQueryParams = new URLSearchParams();
-
-  if (quality != Quality.Default) videoQueryParams.append('quality', quality.toString());
-
-  if (videoServer) videoQueryParams.append('videoServer', videoServer);
 
   videos.forEach((video) =>
     rssFeed.addItem({
@@ -45,5 +47,11 @@ const getRssFeed = async (
 
   return rssFeed.buildXml();
 };
+
+const callVideoServer = async (videoServer: string, videoList: Video[]) =>
+  await fetch(`http://${videoServer}`, {
+    method: 'POST',
+    body: JSON.stringify(videoList.map((x) => x.id)),
+  }).catch((error) => console.log(error));
 
 export { getRssFeed };

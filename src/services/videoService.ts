@@ -4,7 +4,19 @@ import { Quality } from '../types';
 
 const cache = new NodeCache({ checkperiod: 120 });
 
-const getStream = async (videoId: string, quality: Quality): Promise<string> => {
+const getStream = async (
+  videoId: string,
+  quality: Quality,
+  videoServer?: string | undefined
+): Promise<string> => {
+  if (videoServer) {
+    const videoLink = await fetch(`http://${videoServer}/${videoId}`)
+      .then((response) => response.text())
+      .catch(() => undefined);
+
+    if (videoLink) return `http://${videoServer}${videoLink}`;
+  }
+
   const cacheKey = `video-url-${videoId}-${quality}`;
   const cacheResult = cache.get(cacheKey);
   if (cacheResult) return cacheResult as string;

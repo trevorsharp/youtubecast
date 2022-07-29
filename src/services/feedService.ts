@@ -5,7 +5,8 @@ import { getSourceData, getVideos } from './sourceService';
 const getRssFeed = async (
   sourceId: string,
   hostname: string,
-  quality: Quality
+  quality: Quality,
+  videoServer?: string | undefined
 ): Promise<string> => {
   const source = await getSourceData(sourceId);
   const videos = await getVideos(source.id);
@@ -21,6 +22,12 @@ const getRssFeed = async (
       : source.profileImageUrl,
   });
 
+  const videoQueryParams = new URLSearchParams();
+
+  if (quality != Quality.Default) videoQueryParams.append('quality', quality.toString());
+
+  if (videoServer) videoQueryParams.append('videoServer', videoServer);
+
   videos.forEach((video) =>
     rssFeed.addItem({
       title: video.title,
@@ -28,9 +35,7 @@ const getRssFeed = async (
       description: video.description + '\n' + '\n' + video.url,
       date: new Date(video.date),
       enclosure: {
-        url: `http://${hostname}/videos/${video.id}${
-          quality != Quality.Default ? `?quality=${quality}` : ''
-        }`,
+        url: `http://${hostname}/videos/${video.id}?${videoQueryParams.toString()}`,
         type: quality === Quality.Audio ? 'audio/aac' : 'video/mp4',
       },
       url: video.url,

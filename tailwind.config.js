@@ -11,12 +11,14 @@ module.exports = {
         3: '3px',
       },
       screens: {
-        mobile: '340px',
+        tiny: '340px',
+        mobile: '400px',
         normal: '470px',
       },
       fontSize: {
-        tiny: '8px',
-        mobile: '12px',
+        base: '10px',
+        tiny: '12px',
+        mobile: '14px',
         normal: '16px',
       },
     },

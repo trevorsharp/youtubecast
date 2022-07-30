@@ -1,3 +1,5 @@
+// https://github.com/appit-online/youtube-search
+
 const searchChannels = async (searchQuery: string): Promise<string | undefined> => {
   try {
     const searchRes: any = await fetch(

@@ -1,4 +1,4 @@
-// https://github.com/appit-online/youtube-search
+// Sourced from https://github.com/appit-online/youtube-search
 
 const searchChannels = async (searchQuery: string): Promise<string | undefined> => {
   try {

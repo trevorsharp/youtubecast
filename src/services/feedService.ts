@@ -15,7 +15,7 @@ const getRssFeed = async (
   if (quality != Quality.Default) videoQueryParams.append('quality', quality.toString());
 
   if (videoServer) {
-    callVideoServer(videoServer, videos);
+    notifyVideoServer(videoServer, videos);
     videoQueryParams.append('videoServer', videoServer);
   }
 
@@ -48,7 +48,7 @@ const getRssFeed = async (
   return rssFeed.buildXml();
 };
 
-const callVideoServer = async (videoServer: string, videoList: Video[]) =>
+const notifyVideoServer = async (videoServer: string, videoList: Video[]) =>
   await fetch(`http://${videoServer}`, {
     method: 'POST',
     headers: { 'Content-type': 'application/json' },

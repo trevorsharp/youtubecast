@@ -1,50 +1,22 @@
 import { google } from 'googleapis';
 import { z } from 'zod';
 import { Source, Video } from '../types';
+import { searchChannels } from './searchService';
 
-const youtubeInstances =
-  process.env.YOUTUBE_API_KEY?.split(',').map((auth) => google.youtube({ version: 'v3', auth })) ??
-  [];
+const youtubeInstance = process.env.YOUTUBE_API_KEY
+  ? google.youtube({ version: 'v3', auth: process.env.YOUTUBE_API_KEY })
+  : undefined;
 
 const getYoutube = () => {
-  if (youtubeInstances.length === 0) throw 'No API Key Provided';
-  return youtubeInstances[Math.floor(Math.random() * youtubeInstances.length)]!;
+  if (!youtubeInstance) throw 'No API Key Provided';
+  return youtubeInstance;
 };
 
 const searchForChannel = async (searchText: string): Promise<Source> => {
-  const rawSearchResult = await getYoutube()
-    .search.list({
-      part: ['snippet'],
-      type: ['channel'],
-      q: searchText,
-      maxResults: 1,
-    })
-    .then((response: any) => response?.data?.items?.shift()?.snippet)
-    .catch((error) => console.log(error));
+  const searchResult = await searchChannels(searchText);
+  if (!searchResult) throw `Could not find YouTube channel for ${searchText}`;
 
-  const searchResult = z
-    .object({
-      channelId: z.string(),
-      title: z.string(),
-      description: z.string(),
-      thumbnails: z.object({
-        high: z.object({
-          url: z.string(),
-        }),
-      }),
-    })
-    .safeParse(rawSearchResult);
-
-  if (!searchResult.success) throw `Could not find YouTube channel for ${searchText}`;
-
-  return {
-    type: 'channel',
-    id: searchResult.data.channelId,
-    displayName: searchResult.data.title,
-    description: searchResult.data.description,
-    profileImageUrl: searchResult.data.thumbnails.high.url,
-    url: `https://youtube.com/channel/${searchResult.data.channelId}`,
-  };
+  return await getChannelDetails(searchResult);
 };
 
 const getChannelDetails = async (channelId: string): Promise<Source> => {

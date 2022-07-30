@@ -46,8 +46,6 @@ const MainPage = ({ searchText, source, errorMessage, host }: MainPageProps) => 
       <Head>
         <title>YouTubeCast</title>
         <meta name="description" content="Create podcast feeds from YouTube channels" />
-        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
-        <meta name="theme-color" content="#fa0000" />
         <link rel="shortcut icon" href="/favicon.ico" />
         <link rel="apple-touch-icon" sizes="112x112" href="/apple-touch-icon.png" />
       </Head>

@@ -10,9 +10,14 @@ const getStream = async (
   videoServer?: string | undefined
 ): Promise<string> => {
   if (videoServer) {
-    const videoLink = await fetch(`http://${videoServer}/${videoId}`)
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 2000);
+
+    const videoLink = await fetch(`http://${videoServer}/${videoId}`, { signal: controller.signal })
       .then((response) => response.text())
       .catch(() => undefined);
+
+    clearTimeout(timeout);
 
     if (videoLink) return `http://${videoServer}${videoLink}`;
   }

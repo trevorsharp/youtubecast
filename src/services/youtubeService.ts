@@ -2,49 +2,13 @@ import { google } from 'googleapis';
 import { z } from 'zod';
 import { Source, Video } from '../types';
 
-const youtubeInstances =
-  process.env.YOUTUBE_API_KEY?.split(',').map((auth) => google.youtube({ version: 'v3', auth })) ??
-  [];
+const youtubeInstance = process.env.YOUTUBE_API_KEY
+  ? google.youtube({ version: 'v3', auth: process.env.YOUTUBE_API_KEY })
+  : undefined;
 
 const getYoutube = () => {
-  if (youtubeInstances.length === 0) throw 'No API Key Provided';
-  return youtubeInstances[Math.floor(Math.random() * youtubeInstances.length)]!;
-};
-
-const searchForChannel = async (searchText: string): Promise<Source> => {
-  const rawSearchResult = await getYoutube()
-    .search.list({
-      part: ['snippet'],
-      type: ['channel'],
-      q: searchText,
-      maxResults: 1,
-    })
-    .then((response: any) => response?.data?.items?.shift()?.snippet)
-    .catch((error) => console.log(error));
-
-  const searchResult = z
-    .object({
-      channelId: z.string(),
-      title: z.string(),
-      description: z.string(),
-      thumbnails: z.object({
-        high: z.object({
-          url: z.string(),
-        }),
-      }),
-    })
-    .safeParse(rawSearchResult);
-
-  if (!searchResult.success) throw `Could not find YouTube channel for ${searchText}`;
-
-  return {
-    type: 'channel',
-    id: searchResult.data.channelId,
-    displayName: searchResult.data.title,
-    description: searchResult.data.description,
-    profileImageUrl: searchResult.data.thumbnails.high.url,
-    url: `https://youtube.com/channel/${searchResult.data.channelId}`,
-  };
+  if (!youtubeInstance) throw 'No API Key Provided';
+  return youtubeInstance;
 };
 
 const getChannelDetails = async (channelId: string): Promise<Source> => {
@@ -71,7 +35,7 @@ const getChannelDetails = async (channelId: string): Promise<Source> => {
     })
     .safeParse(rawChannelResult);
 
-  if (!channelResult.success) throw `Could not find YouTube channel for id ${channelId}`;
+  if (!channelResult.success) throw `Could not find YouTube channel for id ${channelId} 🤷`;
 
   return {
     type: 'channel',
@@ -103,7 +67,7 @@ const getPlaylistDetails = async (playlistId: string): Promise<Source> => {
     })
     .safeParse(rawPlaylistResult);
 
-  if (!playlistResult.success) throw `Could not find YouTube playlist for id ${playlistId}`;
+  if (!playlistResult.success) throw `Could not find YouTube playlist for id ${playlistId} 🤷`;
 
   const channelId = playlistResult.data.snippet.channelId;
 
@@ -133,7 +97,7 @@ const getPlaylistDetails = async (playlistId: string): Promise<Source> => {
     })
     .safeParse(rawChannelResult);
 
-  if (!channelResult.success) throw `Could not find YouTube channel for id ${channelId}`;
+  if (!channelResult.success) throw `Could not find YouTube channel for id ${channelId} 🤷`;
 
   return Promise.resolve({
     type: 'playlist',
@@ -172,7 +136,7 @@ const getVideosForPlaylist = async (playlistId: string): Promise<Video[]> => {
     .safeParse(rawPlaylistItemResults);
 
   if (!playlistItemResults.success)
-    throw `Could not find videos on YouTube playlist for id ${playlistId}`;
+    throw `Could not find videos on YouTube playlist for id ${playlistId} 🤷`;
 
   const videos = playlistItemResults.data.map((result) => ({
     id: result.resourceId.videoId,
@@ -210,7 +174,7 @@ const getVideosForPlaylist = async (playlistId: string): Promise<Video[]> => {
     .safeParse(rawVideoDetailsResults);
 
   if (!videoDetailsResults.success)
-    throw `Could not find videos on YouTube playlist for id ${playlistId}`;
+    throw `Could not find videos on YouTube playlist for id ${playlistId} 🤷`;
 
   return videos
     .map((video) => ({
@@ -248,4 +212,4 @@ const getDuration = (duration: string | undefined): number => {
   return hours * 3600 + minutes * 60 + seconds;
 };
 
-export { searchForChannel, getChannelDetails, getPlaylistDetails, getVideosForPlaylist };
+export { getChannelDetails, getPlaylistDetails, getVideosForPlaylist };

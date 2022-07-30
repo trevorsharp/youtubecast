@@ -11,7 +11,13 @@ const getVideoUrl = async (req: NextApiRequest, res: NextApiResponse) => {
 
   if (isNaN(quality)) quality = Quality.Default;
 
-  return getStream(req.query.videoId as string, quality)
+  const videoServer = !Array.isArray(req.query.videoServer)
+    ? req.query.videoServer
+    : req.query.videoServer.length > 0
+    ? req.query.videoServer[0]
+    : undefined;
+
+  return getStream(req.query.videoId as string, quality, videoServer)
     .then((streamUrl) => res.status(307).redirect(encodeURI(streamUrl).replaceAll('%25', '%')))
     .catch((e) => res.status(500).send(e ?? 'Unexpected Error'));
 };

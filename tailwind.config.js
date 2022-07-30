@@ -5,15 +5,19 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        youtube: '#FF0000',
+        youtube: '#ED0000',
       },
       ringWidth: {
         3: '3px',
       },
       screens: {
-        normal: '450px',
+        tiny: '340px',
+        mobile: '400px',
+        normal: '470px',
       },
       fontSize: {
+        base: '10px',
+        tiny: '12px',
         mobile: '14px',
         normal: '16px',
       },

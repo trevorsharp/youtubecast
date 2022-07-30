@@ -1,14 +1,23 @@
 import { Podcast } from 'podcast';
-import { Quality } from '../types';
+import { Quality, Video } from '../types';
 import { getSourceData, getVideos } from './sourceService';
 
 const getRssFeed = async (
   sourceId: string,
   hostname: string,
-  quality: Quality
+  quality: Quality,
+  videoServer?: string | undefined
 ): Promise<string> => {
   const source = await getSourceData(sourceId);
   const videos = await getVideos(source.id);
+  const videoQueryParams = new URLSearchParams();
+
+  if (quality != Quality.Default) videoQueryParams.append('quality', quality.toString());
+
+  if (videoServer) {
+    notifyVideoServer(videoServer, videos);
+    videoQueryParams.append('videoServer', videoServer);
+  }
 
   const rssFeed = new Podcast({
     title: source.displayName,
@@ -28,9 +37,7 @@ const getRssFeed = async (
       description: video.description + '\n' + '\n' + video.url,
       date: new Date(video.date),
       enclosure: {
-        url: `http://${hostname}/videos/${video.id}${
-          quality != Quality.Default ? `?quality=${quality}` : ''
-        }`,
+        url: `http://${hostname}/videos/${video.id}?${videoQueryParams.toString()}`,
         type: quality === Quality.Audio ? 'audio/aac' : 'video/mp4',
       },
       url: video.url,
@@ -40,5 +47,12 @@ const getRssFeed = async (
 
   return rssFeed.buildXml();
 };
+
+const notifyVideoServer = async (videoServer: string, videoList: Video[]) =>
+  await fetch(`http://${videoServer}`, {
+    method: 'POST',
+    headers: { 'Content-type': 'application/json' },
+    body: JSON.stringify(videoList.map((x) => x.id)),
+  }).catch((error) => console.log(error));
 
 export { getRssFeed };

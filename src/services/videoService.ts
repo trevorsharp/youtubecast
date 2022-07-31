@@ -23,8 +23,8 @@ const getStream = async (
   }
 
   const cacheKey = `video-url-${videoId}-${quality}`;
-  const cacheResult = cache.get(cacheKey);
-  if (cacheResult) return cacheResult as string;
+  const cacheResult = cache.get<string>(cacheKey);
+  if (cacheResult) return cacheResult;
 
   const videoUrl = await getVideoUrl(videoId, quality);
 

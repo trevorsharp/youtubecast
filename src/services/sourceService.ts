@@ -14,8 +14,8 @@ const searchForSource = async (searchText: string): Promise<Source> => {
     .replace(/youtube\.com\/.*(\?|\&)list=([^\&]+)/i, '$1');
 
   const cacheKey = `source-search-${searchText}`;
-  const cacheResult = cache.get(cacheKey);
-  if (cacheResult) return cacheResult as Source;
+  const cacheResult = cache.get<Source>(cacheKey);
+  if (cacheResult) return cacheResult;
 
   const sourceId = searchText.match(/^(UC[-_a-z0-9]{22}|PL[-_a-z0-9]{32})$/i)
     ? searchText
@@ -31,8 +31,8 @@ const searchForSource = async (searchText: string): Promise<Source> => {
 
 const getSourceData = async (id: string): Promise<Source> => {
   const cacheKey = `source-${id}`;
-  const cacheResult = cache.get(cacheKey);
-  if (cacheResult) return cacheResult as Source;
+  const cacheResult = cache.get<Source>(cacheKey);
+  if (cacheResult) return cacheResult;
 
   const source = id.startsWith('UC')
     ? await getChannelDetails(id)
@@ -48,8 +48,8 @@ const getSourceData = async (id: string): Promise<Source> => {
 
 const getVideos = async (sourceId: string): Promise<Video[]> => {
   const cacheKey = `source-videos-${sourceId}`;
-  const cacheResult = cache.get(cacheKey);
-  if (cacheResult) return cacheResult as Video[];
+  const cacheResult = cache.get<Video[]>(cacheKey);
+  if (cacheResult) return cacheResult;
 
   const playlistId = sourceId.replace('UC', sourceId.startsWith('UC') ? 'UU' : 'UC');
 

@@ -1,6 +1,9 @@
 import { google } from 'googleapis';
+import NodeCache from 'node-cache';
 import { z } from 'zod';
 import { Source, Video } from '../types';
+
+const cache = new NodeCache({ checkperiod: 120 });
 
 const youtubeInstance = process.env.YOUTUBE_API_KEY
   ? google.youtube({ version: 'v3', auth: process.env.YOUTUBE_API_KEY })
@@ -146,14 +149,26 @@ const getVideosForPlaylist = async (playlistId: string): Promise<Video[]> => {
     url: `https://youtu.be/${result.resourceId.videoId}`,
   }));
 
-  const rawVideoDetailsResults = await getYoutube()
-    .videos.list({
-      part: ['snippet,contentDetails,status'],
-      maxResults: 50,
-      id: videos.map((x) => x.id),
-    })
-    .then((response: any) => response?.data?.items)
-    .catch((error) => console.log(error));
+  const cacheKey = `youtube-video-details-${videos
+    .map((x) => x.id)
+    .sort((a, b) => (a < b ? -1 : 1))
+    .join('-')}`;
+  const cacheResult = cache.get<any>(cacheKey);
+
+  const rawVideoDetailsResults =
+    cacheResult ??
+    (await getYoutube()
+      .videos.list({
+        part: ['snippet,contentDetails,status'],
+        maxResults: 50,
+        id: videos.map((x) => x.id),
+      })
+      .then((response: any) => {
+        const results = response?.data?.items;
+        cache.set(cacheKey, results, 86400);
+        return results;
+      })
+      .catch((error) => console.log(error)));
 
   const videoDetailsResults = z
     .array(
@@ -189,13 +204,14 @@ const getVideosForPlaylist = async (playlistId: string): Promise<Video[]> => {
         (videoDetails) => video.id === videoDetails.id
       );
 
-      if (!videoDetails) return false;
+      const isVideoProcessed =
+        videoDetails?.status.uploadStatus === 'processed' &&
+        videoDetails?.snippet.liveBroadcastContent === 'none' &&
+        videoDetails?.status.privacyStatus !== 'private';
 
-      return (
-        videoDetails.status.uploadStatus === 'processed' &&
-        videoDetails.snippet.liveBroadcastContent === 'none' &&
-        videoDetails.status.privacyStatus !== 'private'
-      );
+      if (!isVideoProcessed) cache.del(cacheKey);
+
+      return isVideoProcessed;
     });
 };
 

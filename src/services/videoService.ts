@@ -10,20 +10,18 @@ const getStream = async (
   videoServer?: string | undefined
 ): Promise<string> => {
   if (videoServer) {
-    try {
-      const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 2000);
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 2000);
 
-      const videoLink = await fetch(`http://${videoServer}/${videoId}`, {
-        signal: controller.signal,
-      })
-        .then((response) => response.text())
-        .catch(() => undefined);
+    const videoLink = await fetch(`http://${videoServer}/${videoId}`, {
+      signal: controller.signal,
+    })
+      .then((response) => (response.status === 200 ? response.text() : undefined))
+      .catch(() => undefined);
 
-      clearTimeout(timeout);
+    clearTimeout(timeout);
 
-      if (videoLink) return `http://${videoServer}${videoLink}`;
-    } catch {}
+    if (videoLink) return `http://${videoServer}${videoLink}`;
   }
 
   const cacheKey = `video-url-${videoId}-${quality}`;

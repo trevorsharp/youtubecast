@@ -22,7 +22,7 @@ const getStream = async (
 
       clearTimeout(timeout);
 
-      if (videoLink) return videoLink;
+      if (videoLink) return `http://${videoServer}${videoLink}`;
     } catch {}
   }
 

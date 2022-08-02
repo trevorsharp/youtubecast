@@ -11,7 +11,7 @@ const searchForSource = async (searchText: string): Promise<Source> => {
     .replace(/http(s){0,1}:\/\//i, '')
     .replace(/.*youtube\.com/i, 'youtube.com')
     .replace(/youtube\.com\/channel\//i, '')
-    .replace(/youtube\.com\/.*(\?|\&)list=([^\&]+)/i, '$1');
+    .replace(/youtube\.com\/.*(\?|\&)list=([^\&]+)/i, '$2');
 
   const cacheKey = `source-search-${searchText}`;
   const cacheResult = cache.get<Source>(cacheKey);

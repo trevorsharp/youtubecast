@@ -88,7 +88,9 @@ const MainPage = ({ searchText, source, errorMessage, host }: MainPageProps) => 
                         src={source.profileImageUrl}
                         alt="Profile"
                       />
-                      <p className="text-4xl font-bold">{source.displayName}</p>
+                      <p className="text-4xl font-bold break-words max-w-sm">
+                        {source.displayName}
+                      </p>
                     </a>
                     <QualitySelection selection={qualitySelection} onSelect={setQualitySelection} />
                     <RssLinks

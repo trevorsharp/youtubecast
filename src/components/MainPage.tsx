@@ -8,6 +8,7 @@ import { z } from 'zod';
 import SearchInput from './SearchInput';
 import QualitySelection from './QualitySelection';
 import RssLinks from './RssLinks';
+import DisplayName from './DisplayName';
 import { Quality, Source } from '../types';
 
 type MainPageProps = {
@@ -66,7 +67,7 @@ const MainPage = ({ searchText, source, errorMessage, host }: MainPageProps) => 
               </span>
             </p>
           </div>
-          <div className="flex flex-col gap-12 items-center transition duration-200">
+          <div className="flex flex-col gap-12 items-center">
             <form className="flex gap-4 items-center" onSubmit={onSubmit}>
               <SearchInput {...register('searchText')} />
               <button type="submit">
@@ -88,9 +89,7 @@ const MainPage = ({ searchText, source, errorMessage, host }: MainPageProps) => 
                         src={source.profileImageUrl}
                         alt="Profile"
                       />
-                      <p className="text-4xl font-bold break-words max-w-sm">
-                        {source.displayName}
-                      </p>
+                      <DisplayName text={source.displayName} />
                     </a>
                     <QualitySelection selection={qualitySelection} onSelect={setQualitySelection} />
                     <RssLinks

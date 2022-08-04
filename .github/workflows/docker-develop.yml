@@ -72,7 +72,7 @@ jobs:
           SSH_HOST: ${{ secrets.SERVER_SSH_HOST }}
 
       - name: Pull Docker Image
-        run: ssh server 'cd ${{ secrets.SERVER_FILE_PATH }} && docker-compose pull'
+        run: ssh server 'PATH=/bin:/usr/bin:/usr/local/bin && cd ${{ secrets.SERVER_FILE_PATH }} && docker-compose pull'
 
       - name: Recreate Containers
-        run: ssh server 'cd ${{ secrets.SERVER_FILE_PATH }} && docker-compose up -d --force-recreate'
+        run: ssh server 'PATH=/bin:/usr/bin:/usr/local/bin && cd ${{ secrets.SERVER_FILE_PATH }} && docker-compose up -d --force-recreate'

@@ -52,8 +52,8 @@ const MainPage = ({ searchText, source, errorMessage, host }: MainPageProps) => 
       </Head>
 
       <main className="h-full min-h-fit bg-white text-neutral-800 dark:bg-neutral-900 dark:text-white">
-        <div className="flex flex-col items-center justify-center gap-16 p-8 h-full min-h-fit">
-          <div className="flex flex-col items-center gap-16 text-center max-w-md">
+        <div className="flex h-full min-h-fit flex-col items-center justify-center gap-16 p-8">
+          <div className="flex max-w-md flex-col items-center gap-16 text-center">
             <h1 className="text-7xl font-bold">
               Welcome to{' '}
               <span className="text-youtube">
@@ -67,12 +67,12 @@ const MainPage = ({ searchText, source, errorMessage, host }: MainPageProps) => 
               </span>
             </p>
           </div>
-          <div className="flex flex-col gap-12 items-center">
-            <form className="flex gap-4 items-center" onSubmit={onSubmit}>
+          <div className="flex flex-col items-center gap-12">
+            <form className="flex items-center gap-4" onSubmit={onSubmit}>
               <SearchInput {...register('searchText')} />
               <button type="submit">
                 <img
-                  className="w-8 h-8 text-youtube"
+                  className="h-8 w-8 text-youtube"
                   src={isLoading ? '/loading.svg' : '/next.svg'}
                   alt="Submit"
                 />
@@ -80,12 +80,12 @@ const MainPage = ({ searchText, source, errorMessage, host }: MainPageProps) => 
             </form>
 
             {(source || errorMessage) && (
-              <div className="flex flex-col gap-6 items-center">
+              <div className="flex flex-col items-center gap-6">
                 {source && (
                   <>
-                    <a className="flex gap-4 items-center" target="_new" href={source.url}>
+                    <a className="flex items-center gap-4" target="_new" href={source.url}>
                       <img
-                        className="rounded-full w-16 h-16"
+                        className="h-16 w-16 rounded-full"
                         src={source.profileImageUrl}
                         alt="Profile"
                       />

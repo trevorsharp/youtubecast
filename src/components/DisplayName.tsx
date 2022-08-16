@@ -7,7 +7,7 @@ const hasMultipleShortWords = (text: string) =>
 
 const DisplayName = ({ text }: DisplayNameProps) => (
   <p
-    className={`text-4xl font-bold break-word ${text.length < 20 ? 'w-fit' : 'w-min'} ${
+    className={`break-word text-4xl font-bold ${text.length < 20 ? 'w-fit' : 'w-min'} ${
       text.length > 20 && hasMultipleShortWords(text) ? 'min-w-[16rem]' : ''
     }`}
   >

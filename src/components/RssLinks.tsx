@@ -14,15 +14,15 @@ const RssLinks = ({ host, id, quality }: { host: string; id: string; quality: Qu
   };
 
   return (
-    <div className="flex flex-col items-center gap-6 h-24">
+    <div className="flex h-24 flex-col items-center gap-6">
       <div className="flex gap-4">
         <a href={`podcast://${getRssLink()}`}>
-          <img className="w-10 h-10" src="/applepodcasts.svg" alt="apple podcasts" />
+          <img className="h-10 w-10" src="/applepodcasts.svg" alt="apple podcasts" />
         </a>
         <a href={`pktc://subscribe/${getRssLink()}`}>
-          <img className="w-10 h-10" src="/pocketcasts.svg" alt="pocket casts" />
+          <img className="h-10 w-10" src="/pocketcasts.svg" alt="pocket casts" />
         </a>
-        <img className="w-10 h-10 cursor-pointer" src="/rss.svg" alt="rss" onClick={copyRssLink} />
+        <img className="h-10 w-10 cursor-pointer" src="/rss.svg" alt="rss" onClick={copyRssLink} />
       </div>
       {copiedText && <p>{copiedText}</p>}
     </div>

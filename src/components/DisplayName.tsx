@@ -1,3 +1,5 @@
+import clsx from 'clsx';
+
 type DisplayNameProps = {
   text: string;
 };
@@ -7,9 +9,11 @@ const hasMultipleShortWords = (text: string) =>
 
 const DisplayName = ({ text }: DisplayNameProps) => (
   <p
-    className={`break-word text-4xl font-bold ${text.length < 20 ? 'w-fit' : 'w-min'} ${
-      text.length > 20 && hasMultipleShortWords(text) ? 'min-w-[16rem]' : ''
-    }`}
+    className={clsx(
+      'break-word text-4xl font-bold',
+      text.length < 20 ? 'w-fit' : 'w-min',
+      text.length > 20 && hasMultipleShortWords(text) && 'min-w-[16rem]'
+    )}
   >
     {text.slice(0, Math.min(text.length, 38)) + ((text.length ?? 0) > 38 ? '...' : '')}
   </p>

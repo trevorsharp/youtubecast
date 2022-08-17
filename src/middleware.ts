@@ -10,15 +10,15 @@ export function middleware(request: NextRequest) {
     request.nextUrl.pathname.startsWith('/user')
   ) {
     url.pathname = `/${encodeURIComponent(`youtube.com${request.nextUrl.pathname}`)}`;
+    return NextResponse.redirect(url);
   }
 
   if (request.nextUrl.pathname.startsWith('/playlist')) {
     url.pathname = `/${encodeURIComponent(
       `youtube.com/playlist?list=${request.nextUrl.searchParams.get('list')}`
     )}`;
+    return NextResponse.redirect(url);
   }
-
-  return NextResponse.redirect(url);
 }
 
 export const config = {

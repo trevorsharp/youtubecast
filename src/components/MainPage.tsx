@@ -52,57 +52,48 @@ const MainPage = ({ searchText, source, errorMessage, host }: MainPageProps) => 
       </Head>
 
       <main className="h-full min-h-fit bg-white text-neutral-800 dark:bg-neutral-900 dark:text-white">
-        <div className="flex h-full min-h-fit flex-col items-center justify-center gap-16 p-8">
-          <div className="flex max-w-md flex-col items-center gap-16 text-center">
-            <h1 className="text-7xl font-bold">
-              Welcome to{' '}
-              <span className="text-youtube">
-                <Link href="/">YouTubeCast</Link>
-              </span>
-            </h1>
-            <p className="text-2xl">
-              <span className="inline-block">Generate podcast feeds for your&nbsp;</span>
-              <span className="inline-block">
-                favorite <span className="text-youtube">YouTube</span> content
-              </span>
-            </p>
-          </div>
-          <div className="flex flex-col items-center gap-12">
-            <form className="flex items-center gap-4" onSubmit={onSubmit}>
-              <SearchInput {...register('searchText')} />
-              <button type="submit">
+        <div className="flex h-full min-h-fit flex-col items-center justify-center gap-16 p-8 text-center">
+          <h1 className="flex flex-col text-7xl font-bold">
+            <span>Welcome to</span>
+            <span className="text-youtube">
+              <Link href="/">YouTubeCast</Link>
+            </span>
+          </h1>
+          <p className="flex flex-col text-2xl">
+            <span>Generate podcast feeds for your</span>
+            <span>
+              favorite <span className="text-youtube">YouTube</span> content
+            </span>
+          </p>
+          <form className="flex items-center gap-4" onSubmit={onSubmit}>
+            <SearchInput {...register('searchText')} />
+            <button type="submit">
+              <img
+                className="h-8 w-8 text-youtube"
+                src={isLoading ? '/loading.svg' : '/next.svg'}
+                alt="Submit"
+              />
+            </button>
+          </form>
+          {source && (
+            <div className="flex flex-col items-center gap-6">
+              <a className="flex items-center gap-4" target="_new" href={source.url}>
                 <img
-                  className="h-8 w-8 text-youtube"
-                  src={isLoading ? '/loading.svg' : '/next.svg'}
-                  alt="Submit"
+                  className="h-16 w-16 rounded-full"
+                  src={source.profileImageUrl}
+                  alt="Profile"
                 />
-              </button>
-            </form>
-
-            {(source || errorMessage) && (
-              <div className="flex flex-col items-center gap-6">
-                {source && (
-                  <>
-                    <a className="flex items-center gap-4" target="_new" href={source.url}>
-                      <img
-                        className="h-16 w-16 rounded-full"
-                        src={source.profileImageUrl}
-                        alt="Profile"
-                      />
-                      <DisplayName text={source.displayName} />
-                    </a>
-                    <QualitySelection selection={qualitySelection} onSelect={setQualitySelection} />
-                    <RssLinks
-                      host={host ?? window.location.host}
-                      id={source.id}
-                      quality={qualitySelection}
-                    />
-                  </>
-                )}
-                {errorMessage && <p>{errorMessage}</p>}
-              </div>
-            )}
-          </div>
+                <DisplayName text={source.displayName} />
+              </a>
+              <QualitySelection selection={qualitySelection} onSelect={setQualitySelection} />
+              <RssLinks
+                host={host ?? window.location.host}
+                id={source.id}
+                quality={qualitySelection}
+              />
+            </div>
+          )}
+          {errorMessage && <p>{errorMessage}</p>}
         </div>
       </main>
     </>

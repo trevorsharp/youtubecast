@@ -1,7 +1,13 @@
 import { useState } from 'react';
 import { Quality } from '../types';
 
-const RssLinks = ({ host, id, quality }: { host: string; id: string; quality: Quality }) => {
+type RssLinksProps = {
+  host: string;
+  id: string;
+  quality: Quality;
+};
+
+const RssLinks = ({ host, id, quality }: RssLinksProps) => {
   const [copiedText, setCopiedText] = useState<string>('');
 
   const getRssLink = () =>
@@ -17,12 +23,12 @@ const RssLinks = ({ host, id, quality }: { host: string; id: string; quality: Qu
     <div className="flex h-24 flex-col items-center gap-6">
       <div className="flex gap-4">
         <a href={`podcast://${getRssLink()}`}>
-          <img className="h-10 w-10" src="/applepodcasts.svg" alt="apple podcasts" />
+          <img className="h-10 w-10" src="/applepodcasts.svg" alt="Apple Podcasts" />
         </a>
         <a href={`pktc://subscribe/${getRssLink()}`}>
-          <img className="h-10 w-10" src="/pocketcasts.svg" alt="pocket casts" />
+          <img className="h-10 w-10" src="/pocketcasts.svg" alt="Pocket Casts" />
         </a>
-        <img className="h-10 w-10 cursor-pointer" src="/rss.svg" alt="rss" onClick={copyRssLink} />
+        <img className="h-10 w-10 cursor-pointer" src="/rss.svg" alt="RSS" onClick={copyRssLink} />
       </div>
       {copiedText && <p>{copiedText}</p>}
     </div>

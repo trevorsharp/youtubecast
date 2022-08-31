@@ -1,12 +1,11 @@
 import { Quality } from '../types';
 
-const QualitySelection = ({
-  selection,
-  onSelect,
-}: {
+type QualitySelectionProps = {
   selection: Quality;
   onSelect: (selection: Quality) => void;
-}) => {
+};
+
+const QualitySelection = ({ selection, onSelect }: QualitySelectionProps) => {
   return (
     <div className="flex gap-4">
       <RadioButton
@@ -34,16 +33,15 @@ const QualitySelection = ({
   );
 };
 
-const RadioButton = ({
-  label,
-  ...props
-}: {
+type RadioButtonProps = {
   label: string;
   id: string;
   value: any;
   checked: boolean;
   onClick: () => void;
-}) => (
+};
+
+const RadioButton = ({ label, ...props }: RadioButtonProps) => (
   <label className="flex cursor-pointer items-center">
     <input
       className="peer h-4 w-4 cursor-pointer appearance-none rounded-full border-2 border-neutral-500 checked:border-youtube checked:ring-2 checked:ring-inset checked:ring-youtube normal:checked:ring-3"

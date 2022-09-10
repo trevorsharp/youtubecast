@@ -115,15 +115,19 @@ const getPlaylistDetails = async (playlistId: string): Promise<Source> => {
   });
 };
 
-const getVideosForPlaylist = async (playlistId: string): Promise<Video[]> => {
-  const rawPlaylistItemResults = await getYoutube()
+const getPlaylistPage = async (playlistId: string, pageToken?: string) => {
+  const [rawPlaylistItemResults, rawPlaylistResults] = await getYoutube()
     .playlistItems.list({
       part: ['snippet'],
       maxResults: 50,
       playlistId,
+      pageToken,
     })
-    .then((response: any) => response?.data?.items?.map((x: any) => x?.snippet))
-    .catch((error) => console.log(error));
+    .then((response: any) => [response?.data?.items?.map((x: any) => x?.snippet), response?.data])
+    .catch((error) => {
+      console.log(error);
+      return [];
+    });
 
   const playlistItemResults = z
     .array(
@@ -131,6 +135,7 @@ const getVideosForPlaylist = async (playlistId: string): Promise<Video[]> => {
         title: z.string(),
         description: z.string(),
         publishedAt: z.string(),
+        position: z.number(),
         resourceId: z.object({
           videoId: z.string(),
         }),
@@ -138,10 +143,43 @@ const getVideosForPlaylist = async (playlistId: string): Promise<Video[]> => {
     )
     .safeParse(rawPlaylistItemResults);
 
-  if (!playlistItemResults.success)
-    throw `Could not find videos on YouTube playlist for id ${playlistId} 🤷`;
+  const playlistResults = z
+    .object({
+      nextPageToken: z.string().nullish(),
+      prevPageToken: z.string().nullish(),
+      pageInfo: z.object({
+        totalResults: z.number(),
+      }),
+    })
+    .safeParse(rawPlaylistResults);
 
-  const videos = playlistItemResults.data.map((result) => ({
+  if (!playlistItemResults.success || !playlistResults.success)
+    throw `Could get playlist items for YouTube playlist with id ${playlistId} 🤷`;
+
+  return { ...playlistResults.data, items: playlistItemResults.data };
+};
+
+const getVideosForPlaylist = async (playlistId: string): Promise<Video[]> => {
+  let playlistPage = await getPlaylistPage(playlistId);
+  let playlistItems = playlistPage.items;
+
+  const playlistIsSortedByDateAdded = playlistPage.items
+    .map(
+      (item, index) => index === 0 || item.publishedAt <= playlistPage.items[index - 1]!.publishedAt
+    )
+    .reduce((accumulator, value) => accumulator && value, true);
+
+  if (!playlistIsSortedByDateAdded) {
+    for (let i = 0; i < 100 && playlistPage.nextPageToken; i++) {
+      playlistPage = await getPlaylistPage(playlistId, playlistPage.nextPageToken);
+      playlistItems = [...playlistItems, ...playlistPage.items];
+    }
+    playlistItems = playlistItems
+      .sort((a, b) => (a.publishedAt < b.publishedAt ? 1 : -1))
+      .splice(0, 50);
+  }
+
+  const videos = playlistItems.map((result) => ({
     id: result.resourceId.videoId,
     title: result.title,
     date: result.publishedAt,

@@ -1,17 +1,30 @@
 import { useState } from 'react';
+import cookie from 'cookie';
 import { Quality } from '../types';
 
 type RssLinksProps = {
-  host: string;
+  host: string | undefined;
   id: string;
   quality: Quality;
+  videoServer: string | undefined;
 };
 
-const RssLinks = ({ host, id, quality }: RssLinksProps) => {
+const RssLinks = ({ host, id, quality, videoServer }: RssLinksProps) => {
   const [copiedText, setCopiedText] = useState<string>('');
 
-  const getRssLink = () =>
-    `${host}/${id}/feed${quality != Quality.Default ? `?quality=${quality}` : ''}`;
+  const getRssLink = () => {
+    const searchParams = new URLSearchParams();
+
+    if (typeof window !== 'undefined') {
+      host = host ?? window.location.host;
+      videoServer = videoServer ?? cookie.parse(document.cookie)['videoServer'];
+    }
+
+    if (quality != Quality.Default) searchParams.append('quality', quality.toString());
+    if (videoServer) searchParams.append('videoServer', videoServer);
+
+    return `${host}/${id}/feed${searchParams.toString() ? '?' : ''}${searchParams.toString()}`;
+  };
 
   const copyRssLink = () => {
     navigator.clipboard.writeText(`http://${getRssLink()}`);

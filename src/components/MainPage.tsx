@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
+import cookie from 'cookie';
 import SearchInput from './SearchInput';
 import QualitySelection from './QualitySelection';
 import RssLinks from './RssLinks';
@@ -16,10 +17,17 @@ type MainPageProps = {
   source?: Source;
   errorMessage?: string;
   host?: string;
+  videoServer?: string;
 };
 
-const MainPage = ({ searchText, source, errorMessage, host }: MainPageProps) => {
+const MainPage = ({ searchText, source, errorMessage, host, videoServer }: MainPageProps) => {
   const router = useRouter();
+  const { setVideoServer } = router.query;
+
+  if (typeof window !== 'undefined' && typeof setVideoServer === 'string')
+    document.cookie = cookie.serialize('videoServer', setVideoServer, {
+      expires: new Date('2038-01-01'),
+    });
 
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [qualitySelection, setQualitySelection] = useState<Quality>(Quality.Default);
@@ -77,9 +85,10 @@ const MainPage = ({ searchText, source, errorMessage, host }: MainPageProps) => 
             </a>
             <QualitySelection selection={qualitySelection} onSelect={setQualitySelection} />
             <RssLinks
-              host={host ?? window.location.host}
+              host={host}
               id={source.id}
               quality={qualitySelection}
+              videoServer={videoServer}
             />
           </div>
         )}

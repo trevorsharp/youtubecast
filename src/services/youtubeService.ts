@@ -5,13 +5,13 @@ import { Source, Video } from '../types';
 
 const cache = new NodeCache({ checkperiod: 120 });
 
-const youtubeInstance = process.env.YOUTUBE_API_KEY
-  ? google.youtube({ version: 'v3', auth: process.env.YOUTUBE_API_KEY })
-  : undefined;
+const youtubeInstances =
+  process.env.YOUTUBE_API_KEY?.split(',').map((auth) => google.youtube({ version: 'v3', auth })) ??
+  [];
 
 const getYoutube = () => {
-  if (!youtubeInstance) throw 'No API Key Provided';
-  return youtubeInstance;
+  if (youtubeInstances.length === 0) throw 'No API Key Provided';
+  return youtubeInstances[Math.floor((new Date().getHours() * youtubeInstances.length) / 24)]!;
 };
 
 const getChannelDetails = async (channelId: string): Promise<Source> => {

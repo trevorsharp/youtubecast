@@ -1,7 +1,6 @@
 FROM node:16-alpine
 
-RUN apk add --no-cache yarn python3 py3-pip
-RUN pip install pytube
+RUN apk add --no-cache yarn
 
 WORKDIR /app
 
@@ -12,7 +11,4 @@ RUN yarn
 COPY . .
 RUN yarn build
 
-COPY ./getStreamLink.py ./getStreamLink.py
-
-CMD pip install pytube && \
-  yarn start
+CMD yarn start

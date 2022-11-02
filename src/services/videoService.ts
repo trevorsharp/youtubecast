@@ -1,6 +1,7 @@
 import { spawn } from 'child_process';
 import NodeCache from 'node-cache';
 import { Quality } from '../types';
+import ytdl from 'ytdl-core';
 
 const cache = new NodeCache({ checkperiod: 120 });
 
@@ -30,25 +31,34 @@ const getStream = async (
 
   const videoUrl = await getVideoUrl(videoId, quality);
 
-  if (videoUrl === '') throw `Video not found with id ${videoId}`;
+  if (videoUrl === '' || !videoUrl) throw `Video not found with id ${videoId}`;
 
   cache.set(cacheKey, videoUrl, 3600);
 
   return videoUrl;
 };
 
-const getVideoUrl = async (videoId: string, quality: Quality): Promise<string> =>
+const getVideoUrl = async (videoId: string, quality: Quality): Promise<string | undefined> =>
   await spawnChild([`https://www.youtube.com/watch?v=${videoId}`, quality.toString()]);
 
 const spawnChild = async (args: string[]) => {
-  const child = spawn('python3', ['getStreamLink.py', ...args]);
-
-  let data = '';
-  for await (const chunk of child.stdout) data += chunk;
-
-  await new Promise((resolve, _) => child.on('close', resolve));
-
-  return data;
+  const [url, quality] = args;
+  const ytdlInfo = await ytdl.getInfo(url as string);
+  switch (quality) {
+    case '0':
+      return ytdlInfo.formats
+        .filter((format) => format.qualityLabel === '720p')
+        .filter((format) => format.hasAudio)[0]?.url;
+    case '1':
+      return ytdlInfo.formats
+        .filter((format) => format.hasAudio)
+        .filter((format) => format.hasVideo === false)[0]?.url;
+    case '2':
+      return ytdlInfo.formats
+        .filter((format) => format.qualityLabel === '360p')
+        .filter((format) => format.hasAudio)[0]?.url;
+  }
+  return '';
 };
 
 export { getStream };

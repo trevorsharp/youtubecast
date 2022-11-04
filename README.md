@@ -38,3 +38,14 @@ services:
 ```
 
 Create a file named `docker-compose.yml` with the contents above. Add in your YouTube API key.
+
+You can also set an optional COOKIE environment variable to watch age restricted or members-only content
+
+To get your YouTube cookie:
+
+- navigate to YouTube in a web browser
+- open up dev tools (opt+cmd+j on mac)
+- go to the network tab
+- click on the first "watch" request on the left
+- scroll down to "Request Headers"
+- find the "cookie" header and copy its entire contents

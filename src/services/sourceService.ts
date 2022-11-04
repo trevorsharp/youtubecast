@@ -17,7 +17,7 @@ const searchForSource = async (searchText: string): Promise<Source> => {
   const cacheResult = cache.get<Source>(cacheKey);
   if (cacheResult) return cacheResult;
 
-  const sourceId = searchText.match(/^(UC[-_a-z0-9]{22}|PL[-_a-z0-9]{32})$/i)
+  const sourceId = searchText.match(/^(UC[-_a-z0-9]{22}|PL[-_a-z0-9]{32}|UU[-_a-z0-9]{24})$/i)
     ? searchText
     : await searchChannels(searchText);
 
@@ -36,7 +36,7 @@ const getSourceData = async (id: string): Promise<Source> => {
 
   const source = id.startsWith('UC')
     ? await getChannelDetails(id)
-    : id.startsWith('PL')
+    : id.startsWith('PL') || id.startsWith('UU')
     ? await getPlaylistDetails(id)
     : null;
 

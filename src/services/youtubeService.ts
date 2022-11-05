@@ -85,6 +85,7 @@ const getPlaylistDetails = async (playlistId: string): Promise<Source> => {
   const channelResult = z
     .object({
       snippet: z.object({
+        title: z.string(),
         thumbnails: z.object({
           high: z.object({
             url: z.string(),
@@ -102,16 +103,22 @@ const getPlaylistDetails = async (playlistId: string): Promise<Source> => {
 
   if (!channelResult.success) throw `Could not find YouTube channel for id ${channelId} 🤷`;
 
+  const displayName = playlistId.startsWith('UU')
+    ? `${channelResult.data.snippet.title} (Members-Only)`
+    : playlistResult.data.snippet.title;
+
+  const profileImageUrl =
+    channelResult.data.statistics.subscriberCount < 100
+      ? '/playlist.png'
+      : channelResult.data.snippet.thumbnails.high.url;
+
   return Promise.resolve({
     type: 'playlist',
     id: playlistResult.data.id,
-    displayName: playlistResult.data.snippet.title,
+    displayName,
     description: playlistResult.data.snippet.description,
     url: `https://youtube.com/playlist?list=${playlistResult.data.id}`,
-    profileImageUrl:
-      channelResult.data.statistics.subscriberCount < 100
-        ? '/playlist.png'
-        : channelResult.data.snippet.thumbnails.high.url,
+    profileImageUrl,
   });
 };
 

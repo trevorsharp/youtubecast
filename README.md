@@ -34,7 +34,19 @@ services:
     ports:
       - 80:3000
     environment:
-      - "YOUTUBE_API_KEY=XXXXX"
+      - YOUTUBE_API_KEY="XXXXX"
+      - COOKIES="XXXXX"
 ```
 
 Create a file named `docker-compose.yml` with the contents above. Add in your YouTube API key.
+
+### COOKIES Environment Variable (Optional)
+
+If you want to download YouTube content that requires user authentication to download, you will need to add cookies to your configuration. One reason for needing this is to download members-only videos. Note that the source of these videos (channel, user, or playlist) still must be either public or unlisted. For members-only videos, I recommend going to the channel's home page and scrolling down to find an auto-generated playlist titled "Members-only videos" which will contain all the videos posted for members of the channel.
+
+To generate this environment variable:
+
+1. Download a browser extension (such as [this one](https://chrome.google.com/webstore/detail/open-cookiestxt/gdocmgbfkjnnpapoeobnolbbkoibbcif) for Chrome)
+2. Log in to YouTube
+3. With a YouTube tab open, open the cookies.txt extension and view the cookies as an HTTP header string
+4. Copy the HTTP header string and use that value to set the environment variable COOKIES

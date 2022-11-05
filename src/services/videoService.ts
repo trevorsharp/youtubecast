@@ -38,7 +38,9 @@ const getStream = async (
 };
 
 const getVideoUrl = async (videoId: string, quality: Quality): Promise<string | undefined> => {
-  const videoInfo = await ytdl.getInfo(`https://www.youtube.com/watch?v=${videoId}`);
+  const videoInfo = await ytdl.getInfo(`https://www.youtube.com/watch?v=${videoId}`, {
+    requestOptions: { headers: { cookie: process.env.COOKIES ?? '' } },
+  });
 
   const formats = videoInfo.formats
     .filter(

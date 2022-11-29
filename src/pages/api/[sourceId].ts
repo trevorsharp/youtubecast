@@ -11,13 +11,21 @@ const getRssFeedForSource = async (req: NextApiRequest, res: NextApiResponse<str
 
   if (isNaN(quality)) quality = Quality.Default;
 
+  const excludeShorts = req.query.excludeShorts !== undefined;
+
   const videoServer = !Array.isArray(req.query.videoServer)
     ? req.query.videoServer
     : req.query.videoServer.length > 0
     ? req.query.videoServer[0]
     : undefined;
 
-  return getRssFeed(req.query.sourceId as string, req.headers.host ?? '', quality, videoServer)
+  return getRssFeed(
+    req.query.sourceId as string,
+    req.headers.host ?? '',
+    quality,
+    excludeShorts,
+    videoServer
+  )
     .then((rssFeed) => res.status(200).send(rssFeed))
     .catch((e) => res.status(500).send(e ?? 'Unexpected Error'));
 };

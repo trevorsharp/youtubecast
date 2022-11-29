@@ -6,6 +6,7 @@ const getRssFeed = async (
   sourceId: string,
   hostname: string,
   quality: Quality,
+  excludeShorts: boolean,
   videoServer?: string | undefined
 ): Promise<string> => {
   const source = await getSourceData(sourceId);
@@ -30,20 +31,22 @@ const getRssFeed = async (
       : source.profileImageUrl,
   });
 
-  videos.forEach((video) =>
-    rssFeed.addItem({
-      title: video.title,
-      itunesTitle: video.title,
-      description: video.description + '\n' + '\n' + video.url,
-      date: new Date(video.date),
-      enclosure: {
-        url: `http://${hostname}/videos/${video.id}?${videoQueryParams.toString()}`,
-        type: quality === Quality.Audio ? 'audio/aac' : 'video/mp4',
-      },
-      url: video.url,
-      itunesDuration: video.duration,
-    })
-  );
+  videos
+    .filter((video) => !(excludeShorts && video.isYouTubeShort))
+    .forEach((video) =>
+      rssFeed.addItem({
+        title: video.title,
+        itunesTitle: video.title,
+        description: video.description + '\n' + '\n' + video.url,
+        date: new Date(video.date),
+        enclosure: {
+          url: `http://${hostname}/videos/${video.id}?${videoQueryParams.toString()}`,
+          type: quality === Quality.Audio ? 'audio/aac' : 'video/mp4',
+        },
+        url: video.url,
+        itunesDuration: video.duration,
+      })
+    );
 
   return rssFeed.buildXml();
 };

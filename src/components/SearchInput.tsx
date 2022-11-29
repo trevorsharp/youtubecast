@@ -40,7 +40,7 @@ const SearchInput = forwardRef<HTMLInputElement>((props, ref) => {
 
   return (
     <input
-      className="w-50 appearance-none rounded-lg border-2 border-solid border-youtube bg-inherit p-3 text-xl outline-none"
+      className="w-50 appearance-none rounded-lg border-2 border-solid border-youtube bg-inherit p-3 text-xl outline-none ring-youtube focus:border-youtube focus:ring-youtube"
       ref={ref}
       type="text"
       placeholder={inputPlaceholder}

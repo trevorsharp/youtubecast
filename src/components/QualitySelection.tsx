@@ -51,7 +51,7 @@ const RadioButton = ({ label, ...props }: RadioButtonProps) => (
       {...props}
     />
     <span className="m-1" />
-    <span className="peer-checked:text-youtube">{label}</span>
+    <span className="select-none peer-checked:text-youtube">{label}</span>
   </label>
 );
 

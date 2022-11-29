@@ -6,10 +6,11 @@ type RssLinksProps = {
   host: string | undefined;
   id: string;
   quality: Quality;
+  excludeShorts: boolean;
   videoServer: string | undefined;
 };
 
-const RssLinks = ({ host, id, quality, videoServer }: RssLinksProps) => {
+const RssLinks = ({ host, id, quality, excludeShorts, videoServer }: RssLinksProps) => {
   const [copiedText, setCopiedText] = useState<string>('');
 
   const getRssLink = () => {
@@ -21,9 +22,12 @@ const RssLinks = ({ host, id, quality, videoServer }: RssLinksProps) => {
     }
 
     if (quality != Quality.Default) searchParams.append('quality', quality.toString());
+    if (excludeShorts) searchParams.append('excludeShorts', '');
     if (videoServer) searchParams.append('videoServer', videoServer);
 
-    return `${host}/${id}/feed${searchParams.toString() ? '?' : ''}${searchParams.toString()}`;
+    return `${host}/${id}/feed${searchParams.toString() ? '?' : ''}${searchParams
+      .toString()
+      .replace('excludeShorts=', 'excludeShorts')}`;
   };
 
   const copyRssLink = () => {

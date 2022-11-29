@@ -11,6 +11,7 @@ import QualitySelection from './QualitySelection';
 import RssLinks from './RssLinks';
 import DisplayName from './DisplayName';
 import { Quality, Source } from '../types';
+import ExcludeShortsSelection from './ShortsSelection';
 
 type MainPageProps = {
   searchText?: string;
@@ -31,6 +32,7 @@ const MainPage = ({ searchText, source, errorMessage, host, videoServer }: MainP
 
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [qualitySelection, setQualitySelection] = useState<Quality>(Quality.Default);
+  const [excludeShorts, setExcludeShorts] = useState<boolean>(false);
 
   const { register, handleSubmit, setFocus } = useForm({
     resolver: zodResolver(z.object({ searchText: z.string() })),
@@ -78,16 +80,20 @@ const MainPage = ({ searchText, source, errorMessage, host, videoServer }: MainP
           </button>
         </form>
         {source && (
-          <div className="flex flex-col items-center gap-6">
+          <div className="flex flex-col items-center gap-8">
             <a className="flex items-center gap-4" target="_new" href={source.url}>
               <img className="h-16 w-16 rounded-full" src={source.profileImageUrl} alt="Profile" />
               <DisplayName text={source.displayName} />
             </a>
-            <QualitySelection selection={qualitySelection} onSelect={setQualitySelection} />
+            <div className="flex flex-col items-center gap-4">
+              <QualitySelection selection={qualitySelection} onSelect={setQualitySelection} />
+              <ExcludeShortsSelection selection={excludeShorts} onSelect={setExcludeShorts} />
+            </div>
             <RssLinks
               host={host}
               id={source.id}
               quality={qualitySelection}
+              excludeShorts={excludeShorts}
               videoServer={videoServer}
             />
           </div>

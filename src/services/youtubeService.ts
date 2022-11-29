@@ -236,28 +236,48 @@ const getVideosForPlaylist = async (playlistId: string): Promise<Video[]> => {
   if (!videoDetailsResults.success)
     throw `Could not find videos on YouTube playlist for id ${playlistId} 🤷`;
 
-  return videos
-    .map((video) => ({
-      ...video,
-      duration: getDuration(
-        videoDetailsResults.data.find((videoDetails) => video.id === videoDetails.id)
-          ?.contentDetails.duration
-      ),
-    }))
-    .filter((video) => {
-      const videoDetails = videoDetailsResults.data.find(
-        (videoDetails) => video.id === videoDetails.id
-      );
+  return await Promise.all(
+    videos
+      .map((video) => ({
+        ...video,
+        duration: getDuration(
+          videoDetailsResults.data.find((videoDetails) => video.id === videoDetails.id)
+            ?.contentDetails.duration
+        ),
+      }))
+      .filter((video) => {
+        const videoDetails = videoDetailsResults.data.find(
+          (videoDetails) => video.id === videoDetails.id
+        );
 
-      const isVideoProcessed =
-        videoDetails?.status.uploadStatus === 'processed' &&
-        videoDetails?.snippet.liveBroadcastContent === 'none' &&
-        videoDetails?.status.privacyStatus !== 'private';
+        const isVideoProcessed =
+          videoDetails?.status.uploadStatus === 'processed' &&
+          videoDetails?.snippet.liveBroadcastContent === 'none' &&
+          videoDetails?.status.privacyStatus !== 'private';
 
-      if (!isVideoProcessed) cache.del(cacheKey);
+        if (!isVideoProcessed) cache.del(cacheKey);
 
-      return isVideoProcessed;
-    });
+        return isVideoProcessed;
+      })
+      .map(async (video) => {
+        const cacheKey = `youtube-video-is-youtube-short-${video.id}`;
+        const cacheResult = cache.get<boolean>(cacheKey);
+
+        let isYouTubeShort = cacheResult ?? false;
+
+        if (!cacheResult) {
+          if (video.duration <= 60) {
+            isYouTubeShort = await fetch(`https://www.youtube.com/shorts/${video.id}`, {
+              method: 'HEAD',
+            }).then((response) => !response.redirected);
+          }
+
+          cache.set(cacheKey, isYouTubeShort, 86400);
+        }
+
+        return { ...video, isYouTubeShort };
+      })
+  );
 };
 
 const getDuration = (duration: string | undefined): number => {

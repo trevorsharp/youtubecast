@@ -20,6 +20,7 @@ type Video = {
   description: string;
   url: string;
   duration: number;
+  isYouTubeShort: boolean;
 };
 
 export { Quality };

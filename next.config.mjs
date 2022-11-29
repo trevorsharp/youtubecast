@@ -23,18 +23,28 @@ export default defineNextConfig({
           source: '/videos/:videoId',
           destination: '/api/videos/:videoId',
         },
-        {
-          source: '/watch',
-          has: [
-            {
-              type: 'query',
-              key: 'v',
-              value: '(?<videoId>.*)',
-            },
-          ],
-          destination: '/api/videos/:videoId',
-        },
       ],
     };
+  },
+  async redirects() {
+    return [
+      {
+        source: '/watch',
+        has: [
+          {
+            type: 'query',
+            key: 'v',
+            value: '(?<videoId>.*)',
+          },
+        ],
+        destination: '/videos/:videoId',
+        permanent: false,
+      },
+      {
+        source: '/:searchText((?!api|videos).+)/:path((?!feed).+)',
+        destination: '/:searchText',
+        permanent: false,
+      },
+    ];
   },
 });

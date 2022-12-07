@@ -139,10 +139,7 @@ const getPlaylistPage = async (playlistId: string, pageToken?: string) => {
   const playlistItemResults = z
     .array(
       z.object({
-        title: z.string(),
-        description: z.string(),
         publishedAt: z.string(),
-        position: z.number(),
         resourceId: z.object({
           videoId: z.string(),
         }),
@@ -166,37 +163,47 @@ const getPlaylistPage = async (playlistId: string, pageToken?: string) => {
   return { ...playlistResults.data, items: playlistItemResults.data };
 };
 
-const getVideosForPlaylist = async (playlistId: string): Promise<Video[]> => {
-  let playlistPage = await getPlaylistPage(playlistId);
-  let playlistItems = playlistPage.items;
+const getVideoIdsForPlaylist = async (
+  playlistId: string
+): Promise<{ id: string; date: string }[]> => {
+  const cacheKey = `youtube-video-in-playlist-${playlistId}`;
+  const cacheResult = cache.get<Awaited<ReturnType<typeof getPlaylistPage>>['items']>(cacheKey);
 
-  const playlistIsSortedByDateAdded = playlistPage.items
-    .map(
-      (item, index) => index === 0 || item.publishedAt <= playlistPage.items[index - 1]!.publishedAt
-    )
-    .reduce((accumulator, value) => accumulator && value, true);
+  let playlistItems = cacheResult ?? [];
 
-  if (!playlistIsSortedByDateAdded) {
-    for (let i = 0; i < 100 && playlistPage.nextPageToken; i++) {
-      playlistPage = await getPlaylistPage(playlistId, playlistPage.nextPageToken);
-      playlistItems = [...playlistItems, ...playlistPage.items];
+  if (playlistItems.length === 0) {
+    let playlistPage = await getPlaylistPage(playlistId);
+    playlistItems = playlistPage.items;
+
+    const playlistIsNotSortedByDateAdded = playlistItems.some(
+      (item, index, arr) => index !== 0 && item.publishedAt >= arr[index - 1]!.publishedAt
+    );
+
+    if (playlistIsNotSortedByDateAdded) {
+      for (let i = 0; i < 100 && playlistPage.nextPageToken; i++) {
+        playlistPage = await getPlaylistPage(playlistId, playlistPage.nextPageToken);
+        playlistItems = [...playlistItems, ...playlistPage.items];
+      }
+      playlistItems = playlistItems
+        .sort((a, b) => (a.publishedAt < b.publishedAt ? 1 : -1))
+        .splice(0, 50);
     }
-    playlistItems = playlistItems
-      .sort((a, b) => (a.publishedAt < b.publishedAt ? 1 : -1))
-      .splice(0, 50);
+
+    cache.set(cacheKey, playlistItems, 1200);
   }
 
-  const videos = playlistItems.map((result) => ({
-    id: result.resourceId.videoId,
-    title: result.title,
-    date: result.publishedAt,
-    description: result.description,
-    url: `https://youtu.be/${result.resourceId.videoId}`,
+  return playlistItems.map((item) => ({
+    id: item.resourceId.videoId,
+    date: new Date(item.publishedAt).toISOString(),
   }));
+};
+
+const getVideoDetails = async (videos: { id: string; date?: string }[]): Promise<Video[]> => {
+  if (videos.length === 0) return [];
 
   const cacheKey = `youtube-video-details-${videos
-    .map((x) => x.id)
-    .sort((a, b) => (a < b ? -1 : 1))
+    .map((v) => v.id)
+    .sort()
     .join('-')}`;
   const cacheResult = cache.get<any>(cacheKey);
 
@@ -206,7 +213,7 @@ const getVideosForPlaylist = async (playlistId: string): Promise<Video[]> => {
       .videos.list({
         part: ['snippet,contentDetails,status'],
         maxResults: 50,
-        id: videos.map((x) => x.id),
+        id: videos.map((v) => v.id),
       })
       .then((response: any) => {
         const results = response?.data?.items;
@@ -227,38 +234,39 @@ const getVideosForPlaylist = async (playlistId: string): Promise<Video[]> => {
           privacyStatus: z.string(),
         }),
         snippet: z.object({
+          title: z.string(),
+          description: z.string(),
+          publishedAt: z.string(),
           liveBroadcastContent: z.string(),
         }),
       })
     )
     .safeParse(rawVideoDetailsResults);
 
-  if (!videoDetailsResults.success)
-    throw `Could not find videos on YouTube playlist for id ${playlistId} 🤷`;
+  if (!videoDetailsResults.success) throw `Could not find videos on YouTube 🤷`;
 
   return await Promise.all(
-    videos
-      .map((video) => ({
-        ...video,
-        duration: getDuration(
-          videoDetailsResults.data.find((videoDetails) => video.id === videoDetails.id)
-            ?.contentDetails.duration
-        ),
-      }))
-      .filter((video) => {
-        const videoDetails = videoDetailsResults.data.find(
-          (videoDetails) => video.id === videoDetails.id
-        );
-
+    videoDetailsResults.data
+      .filter((videoDetails) => {
         const isVideoProcessed =
-          videoDetails?.status.uploadStatus === 'processed' &&
-          videoDetails?.snippet.liveBroadcastContent === 'none' &&
-          videoDetails?.status.privacyStatus !== 'private';
+          videoDetails.status.uploadStatus === 'processed' &&
+          videoDetails.snippet.liveBroadcastContent === 'none' &&
+          videoDetails.status.privacyStatus !== 'private';
 
         if (!isVideoProcessed) cache.del(cacheKey);
 
         return isVideoProcessed;
       })
+      .map((videoDetails) => ({
+        id: videoDetails.id,
+        title: videoDetails.snippet.title,
+        description: videoDetails.snippet.description,
+        date:
+          videos.find((v) => v.id === videoDetails.id)?.date ??
+          new Date(videoDetails.snippet.publishedAt).toISOString(),
+        url: `https://youtu.be/${videoDetails.id}`,
+        duration: getDuration(videoDetails.contentDetails.duration),
+      }))
       .map(async (video) => {
         const cacheKey = `youtube-video-is-youtube-short-${video.id}`;
         const cacheResult = cache.get<boolean>(cacheKey);
@@ -293,4 +301,4 @@ const getDuration = (duration: string | undefined): number => {
   return hours * 3600 + minutes * 60 + seconds;
 };
 
-export { getChannelDetails, getPlaylistDetails, getVideosForPlaylist };
+export { getChannelDetails, getPlaylistDetails, getVideoIdsForPlaylist, getVideoDetails };

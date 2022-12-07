@@ -1,7 +1,13 @@
 import NodeCache from 'node-cache';
 import { Source, Video } from '../types';
+import { getVideoIdsForPlaylist as getVideoIdsForPlaylistWithoutAPI } from './playlistService';
 import { searchChannels } from './searchService';
-import { getChannelDetails, getPlaylistDetails, getVideosForPlaylist } from './youtubeService';
+import {
+  getChannelDetails,
+  getPlaylistDetails,
+  getVideoDetails,
+  getVideoIdsForPlaylist,
+} from './youtubeService';
 
 const cache = new NodeCache({ checkperiod: 120 });
 
@@ -51,11 +57,15 @@ const getVideos = async (sourceId: string): Promise<Video[]> => {
   const cacheResult = cache.get<Video[]>(cacheKey);
   if (cacheResult) return cacheResult;
 
-  const playlistId = sourceId.replace('UC', sourceId.startsWith('UC') ? 'UU' : 'UC');
+  const isChannel = sourceId.startsWith('UC');
+  const playlistId = sourceId.replace(/^UC/, 'UU');
 
-  const videos = await getVideosForPlaylist(playlistId);
+  const videoIds =
+    (isChannel ? await getVideoIdsForPlaylistWithoutAPI(playlistId) : undefined) ??
+    (await getVideoIdsForPlaylist(playlistId));
 
-  cache.set(cacheKey, videos, 900);
+  const videos = await getVideoDetails(videoIds);
+  cache.set(cacheKey, videos, 600);
   return videos;
 };
 

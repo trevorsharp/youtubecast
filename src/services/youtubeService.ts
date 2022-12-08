@@ -1,9 +1,7 @@
 import { google } from 'googleapis';
-import NodeCache from 'node-cache';
 import { z } from 'zod';
+import cacheService from './cacheService';
 import { Source, Video } from '../types';
-
-const cache = new NodeCache({ checkperiod: 120 });
 
 const youtubeInstances =
   process.env.YOUTUBE_API_KEY?.split(',').map((auth) => google.youtube({ version: 'v3', auth })) ??
@@ -167,7 +165,9 @@ const getVideoIdsForPlaylist = async (
   playlistId: string
 ): Promise<{ id: string; date: string }[]> => {
   const cacheKey = `youtube-video-in-playlist-${playlistId}`;
-  const cacheResult = cache.get<Awaited<ReturnType<typeof getPlaylistPage>>['items']>(cacheKey);
+  const cacheResult = await cacheService.get<Awaited<ReturnType<typeof getPlaylistPage>>['items']>(
+    cacheKey
+  );
 
   let playlistItems = cacheResult ?? [];
 
@@ -189,7 +189,7 @@ const getVideoIdsForPlaylist = async (
         .splice(0, 50);
     }
 
-    cache.set(cacheKey, playlistItems, 1200);
+    await cacheService.set(cacheKey, playlistItems, 1200);
   }
 
   return playlistItems.map((item) => ({
@@ -205,7 +205,7 @@ const getVideoDetails = async (videos: { id: string; date?: string }[]): Promise
     .map((v) => v.id)
     .sort()
     .join('-')}`;
-  const cacheResult = cache.get<any>(cacheKey);
+  const cacheResult = await cacheService.get<any>(cacheKey);
 
   const rawVideoDetailsResults =
     cacheResult ??
@@ -215,9 +215,9 @@ const getVideoDetails = async (videos: { id: string; date?: string }[]): Promise
         maxResults: 50,
         id: videos.map((v) => v.id),
       })
-      .then((response: any) => {
+      .then(async (response: any) => {
         const results = response?.data?.items;
-        cache.set(cacheKey, results, 86400);
+        await cacheService.set(cacheKey, results, 86400);
         return results;
       })
       .catch((error) => console.log(error)));
@@ -247,13 +247,13 @@ const getVideoDetails = async (videos: { id: string; date?: string }[]): Promise
 
   return await Promise.all(
     videoDetailsResults.data
-      .filter((videoDetails) => {
+      .filter(async (videoDetails) => {
         const isVideoProcessed =
           videoDetails.status.uploadStatus === 'processed' &&
           videoDetails.snippet.liveBroadcastContent === 'none' &&
           videoDetails.status.privacyStatus !== 'private';
 
-        if (!isVideoProcessed) cache.del(cacheKey);
+        if (!isVideoProcessed) await cacheService.del(cacheKey);
 
         return isVideoProcessed;
       })
@@ -269,7 +269,7 @@ const getVideoDetails = async (videos: { id: string; date?: string }[]): Promise
       }))
       .map(async (video) => {
         const cacheKey = `youtube-video-is-youtube-short-${video.id}`;
-        const cacheResult = cache.get<boolean>(cacheKey);
+        const cacheResult = await cacheService.get<boolean>(cacheKey);
 
         let isYouTubeShort = cacheResult ?? false;
 
@@ -280,7 +280,7 @@ const getVideoDetails = async (videos: { id: string; date?: string }[]): Promise
             }).then((response) => !response.redirected);
           }
 
-          cache.set(cacheKey, isYouTubeShort, 86400);
+          await cacheService.set(cacheKey, isYouTubeShort, 86400);
         }
 
         return { ...video, isYouTubeShort };

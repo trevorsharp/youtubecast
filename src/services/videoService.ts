@@ -1,8 +1,6 @@
-import NodeCache from 'node-cache';
 import ytdl from 'ytdl-core';
+import cacheService from './cacheService';
 import { Quality } from '../types';
-
-const cache = new NodeCache({ checkperiod: 120 });
 
 const getStream = async (
   videoId: string,
@@ -25,14 +23,14 @@ const getStream = async (
   }
 
   const cacheKey = `video-url-${videoId}-${quality}`;
-  const cacheResult = cache.get<string>(cacheKey);
+  const cacheResult = await cacheService.get<string>(cacheKey);
   if (cacheResult) return cacheResult;
 
   const videoUrl = await getVideoUrl(videoId, quality);
 
   if (!videoUrl) throw `Video not found with id ${videoId}`;
 
-  cache.set(cacheKey, videoUrl, 3600);
+  await cacheService.set(cacheKey, videoUrl, 3600);
 
   return videoUrl;
 };

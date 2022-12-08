@@ -1,3 +1,4 @@
+import { createHash } from 'crypto';
 import { google } from 'googleapis';
 import { z } from 'zod';
 import cacheService from './cacheService';
@@ -164,7 +165,7 @@ const getPlaylistPage = async (playlistId: string, pageToken?: string) => {
 const getVideoIdsForPlaylist = async (
   playlistId: string
 ): Promise<{ id: string; date: string }[]> => {
-  const cacheKey = `youtube-video-in-playlist-${playlistId}`;
+  const cacheKey = `youtube-videos-in-playlist-${playlistId}`;
   const cacheResult = await cacheService.get<Awaited<ReturnType<typeof getPlaylistPage>>['items']>(
     cacheKey
   );
@@ -201,10 +202,16 @@ const getVideoIdsForPlaylist = async (
 const getVideoDetails = async (videos: { id: string; date?: string }[]): Promise<Video[]> => {
   if (videos.length === 0) return [];
 
-  const cacheKey = `youtube-video-details-${videos
-    .map((v) => v.id)
-    .sort()
-    .join('-')}`;
+  const videoIdHash = createHash('sha256')
+    .update(
+      videos
+        .map((v) => v.id)
+        .sort()
+        .join('-')
+    )
+    .digest('hex');
+
+  const cacheKey = `youtube-video-details-${videoIdHash}`;
   const cacheResult = await cacheService.get<any>(cacheKey);
 
   const rawVideoDetailsResults =
@@ -215,12 +222,10 @@ const getVideoDetails = async (videos: { id: string; date?: string }[]): Promise
         maxResults: 50,
         id: videos.map((v) => v.id),
       })
-      .then(async (response: any) => {
-        const results = response?.data?.items;
-        await cacheService.set(cacheKey, results, 86400);
-        return results;
-      })
+      .then((response: any) => response?.data?.items)
       .catch((error) => console.log(error)));
+
+  if (!cacheResult) await cacheService.set(cacheKey, rawVideoDetailsResults, 86400);
 
   const videoDetailsResults = z
     .array(
@@ -245,15 +250,40 @@ const getVideoDetails = async (videos: { id: string; date?: string }[]): Promise
 
   if (!videoDetailsResults.success) throw `Could not find videos on YouTube 🤷`;
 
+  const videoDetails = videoDetailsResults.data;
+
+  const shortsCacheKey = `youtube-video-shorts-${videoIdHash}`;
+  const shortsCacheResult = await cacheService.get<string[]>(shortsCacheKey);
+
+  const shortsVideoIds =
+    shortsCacheResult ??
+    (
+      await Promise.all(
+        videoDetails.map(async (videoDetails) => {
+          const isYouTubeShort =
+            getDuration(videoDetails.contentDetails.duration) <= 60 &&
+            (await fetch(`https://www.youtube.com/shorts/${videoDetails.id}`, {
+              method: 'HEAD',
+            }).then((response) => !response.redirected));
+
+          return [videoDetails.id, isYouTubeShort] as const;
+        })
+      )
+    )
+      .filter(([_, isYouTubeShort]) => isYouTubeShort)
+      .map(([videoId]) => videoId);
+
+  if (!cacheResult) await cacheService.set(shortsCacheKey, shortsVideoIds, 86400);
+
   return await Promise.all(
     videoDetailsResults.data
-      .filter(async (videoDetails) => {
+      .filter((videoDetails) => {
         const isVideoProcessed =
           videoDetails.status.uploadStatus === 'processed' &&
           videoDetails.snippet.liveBroadcastContent === 'none' &&
           videoDetails.status.privacyStatus !== 'private';
 
-        if (!isVideoProcessed) await cacheService.del(cacheKey);
+        if (!isVideoProcessed) cacheService.del(cacheKey);
 
         return isVideoProcessed;
       })
@@ -266,25 +296,8 @@ const getVideoDetails = async (videos: { id: string; date?: string }[]): Promise
           new Date(videoDetails.snippet.publishedAt).toISOString(),
         url: `https://youtu.be/${videoDetails.id}`,
         duration: getDuration(videoDetails.contentDetails.duration),
+        isYouTubeShort: shortsVideoIds.includes(videoDetails.id),
       }))
-      .map(async (video) => {
-        const cacheKey = `youtube-video-is-youtube-short-${video.id}`;
-        const cacheResult = await cacheService.get<boolean>(cacheKey);
-
-        let isYouTubeShort = cacheResult ?? false;
-
-        if (!cacheResult) {
-          if (video.duration <= 60) {
-            isYouTubeShort = await fetch(`https://www.youtube.com/shorts/${video.id}`, {
-              method: 'HEAD',
-            }).then((response) => !response.redirected);
-          }
-
-          await cacheService.set(cacheKey, isYouTubeShort, 86400);
-        }
-
-        return { ...video, isYouTubeShort };
-      })
   );
 };
 

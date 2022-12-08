@@ -17,7 +17,7 @@ const searchForSource = async (searchText: string): Promise<Source> => {
     .replace(/youtube\.com\/channel\//i, '')
     .replace(/youtube\.com\/.*(\?|\&)list=([^\&]+)/i, '$2');
 
-  const cacheKey = `source-id-search-${searchText}`;
+  const cacheKey = `source-id-search-${searchText.toLowerCase()}`;
   const cacheResult = await cacheService.get<string>(cacheKey);
 
   const sourceId =

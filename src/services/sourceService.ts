@@ -17,19 +17,21 @@ const searchForSource = async (searchText: string): Promise<Source> => {
     .replace(/youtube\.com\/channel\//i, '')
     .replace(/youtube\.com\/.*(\?|\&)list=([^\&]+)/i, '$2');
 
-  const cacheKey = `source-search-${searchText}`;
-  const cacheResult = await cacheService.get<Source>(cacheKey);
-  if (cacheResult) return cacheResult;
+  const cacheKey = `source-id-search-${searchText}`;
+  const cacheResult = await cacheService.get<string>(cacheKey);
 
-  const sourceId = searchText.match(/^(UC[-_a-z0-9]{22}|PL[-_a-z0-9]{32}|UU[-_a-z0-9]{24})$/i)
-    ? searchText
-    : await searchChannels(searchText);
+  const sourceId =
+    cacheResult ??
+    (searchText.match(/^(UC[-_a-z0-9]{22}|PL[-_a-z0-9]{32}|UU[-_a-z0-9]{24})$/i)
+      ? searchText
+      : await searchChannels(searchText));
 
   if (!sourceId) throw `Could not find YouTube channel for ${searchText} 🤷`;
 
+  await cacheService.set(cacheKey, sourceId, 86400);
+
   const source = await getSourceData(sourceId);
 
-  await cacheService.set(cacheKey, source, 86400);
   return source;
 };
 

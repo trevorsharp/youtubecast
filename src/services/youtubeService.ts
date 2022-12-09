@@ -192,7 +192,7 @@ const getVideoIdsForPlaylist = async (
         .splice(0, 50);
     }
 
-    await cacheService.set(cacheKey, playlistItems, 1200);
+    await cacheService.set(cacheKey, playlistItems, 1800);
   }
 
   return playlistItems.map((item) => ({
@@ -275,7 +275,7 @@ const getVideoDetails = async (videos: { id: string; date?: string }[]): Promise
       .filter(([_, isYouTubeShort]) => isYouTubeShort)
       .map(([videoId]) => videoId);
 
-  if (!cacheResult) await cacheService.set(shortsCacheKey, shortsVideoIds, 86400);
+  if (!cacheResult) await cacheService.set(shortsCacheKey, shortsVideoIds, 7 * 86400);
 
   return await Promise.all(
     videoDetailsResults.data

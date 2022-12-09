@@ -7,7 +7,7 @@ import { searchForSource } from '../services/sourceService';
 const UserPage = (props: MainPageProps) => <MainPage {...props} />;
 
 const getServerSideProps: GetServerSideProps = async (context) => {
-  const { query, req } = context;
+  const { query, req, res } = context;
   const { headers } = req;
   const { host, cookie: clientCookie } = headers;
 
@@ -22,6 +22,7 @@ const getServerSideProps: GetServerSideProps = async (context) => {
   if (searchText) {
     try {
       const source = await searchForSource(decodeURI(searchText));
+      res.setHeader('Cache-Control', 's-maxage=86400');
       return { props: JSON.parse(JSON.stringify({ source, host, searchText, videoServer })) };
     } catch (errorMessage) {
       return { props: JSON.parse(JSON.stringify({ errorMessage, searchText })) };

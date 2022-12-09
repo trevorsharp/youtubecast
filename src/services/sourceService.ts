@@ -9,6 +9,8 @@ import {
   getVideoIdsForPlaylist,
 } from './youtubeService';
 
+const isPlaylistSortingEnabled = process.env.ENABLE_PLAYLIST_SORTING?.toLowerCase() === 'true';
+
 const searchForSource = async (searchText: string): Promise<Source> => {
   searchText = searchText
     .trim()
@@ -57,11 +59,11 @@ const getVideos = async (sourceId: string): Promise<Video[]> => {
   const cacheResult = await cacheService.get<Video[]>(cacheKey);
   if (cacheResult) return cacheResult;
 
-  const isChannel = sourceId.startsWith('UC');
   const playlistId = sourceId.replace(/^UC/, 'UU');
+  const attemptWithoutAPI = sourceId.startsWith('UC') || !isPlaylistSortingEnabled;
 
   const videoIds =
-    (isChannel ? await getVideoIdsForPlaylistWithoutAPI(playlistId) : undefined) ??
+    (attemptWithoutAPI ? await getVideoIdsForPlaylistWithoutAPI(playlistId) : undefined) ??
     (await getVideoIdsForPlaylist(playlistId));
 
   const videos = await getVideoDetails(videoIds);

@@ -4,6 +4,8 @@ import { z } from 'zod';
 import cacheService from './cacheService';
 import { Source, Video } from '../types';
 
+const isPlaylistSortingEnabled = process.env.ENABLE_PLAYLIST_SORTING?.toLowerCase() === 'true';
+
 const youtubeInstances =
   process.env.YOUTUBE_API_KEY?.split(',').map((auth) => google.youtube({ version: 'v3', auth })) ??
   [];
@@ -180,7 +182,7 @@ const getVideoIdsForPlaylist = async (
       (item, index, arr) => index !== 0 && item.publishedAt >= arr[index - 1]!.publishedAt
     );
 
-    if (playlistIsNotSortedByDateAdded) {
+    if (isPlaylistSortingEnabled && playlistIsNotSortedByDateAdded) {
       for (let i = 0; i < 100 && playlistPage.nextPageToken; i++) {
         playlistPage = await getPlaylistPage(playlistId, playlistPage.nextPageToken);
         playlistItems = [...playlistItems, ...playlistPage.items];

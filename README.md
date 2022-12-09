@@ -36,6 +36,7 @@ services:
     environment:
       - YOUTUBE_API_KEY="XXXXX"
       - COOKIES="XXXXX"
+      - ENABLE_PLAYLIST_SORTING=true
 ```
 
 Create a file named `docker-compose.yml` with the contents above. Add in your YouTube API key.
@@ -50,3 +51,7 @@ To generate this environment variable:
 2. Log in to YouTube
 3. With a YouTube tab open, open the cookies.txt extension and view the cookies as an HTTP header string
 4. Copy the HTTP header string and use that value to set the environment variable COOKIES
+
+### Playlists With New Items Added to the End
+
+Note that for playlists, the podcast feed will return with the first 50 videos in the playlist (from the top). If the playlist has more than 50 videos and new videos are added to the end of the playlist, then the podcast feed may not include the newest videos. Unfortunately, YouTube's APIs make it cost-prohibitive to get the items at the end of long playlists. If you want to have these type of playlists in your podcast player, you can self-host this project (using the information above) and set the environment variable `ENABLE_PLAYLIST_SORTING=true`. Alternatively, if you are the creator of the playlist, you can set the playlist's sort order to newest on top.

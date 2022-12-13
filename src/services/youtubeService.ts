@@ -277,30 +277,28 @@ const getVideoDetails = async (videos: { id: string; date?: string }[]): Promise
 
   if (!cacheResult) await cacheService.set(shortsCacheKey, shortsVideoIds, 7 * 86400);
 
-  return await Promise.all(
-    videoDetailsResults.data
-      .filter((videoDetails) => {
-        const isVideoProcessed =
-          videoDetails.status.uploadStatus === 'processed' &&
-          videoDetails.snippet.liveBroadcastContent === 'none' &&
-          videoDetails.status.privacyStatus !== 'private';
+  return videoDetailsResults.data
+    .filter((videoDetails) => {
+      const isVideoProcessed =
+        videoDetails.status.uploadStatus === 'processed' &&
+        videoDetails.snippet.liveBroadcastContent === 'none' &&
+        videoDetails.status.privacyStatus !== 'private';
 
-        if (!isVideoProcessed) cacheService.del(cacheKey);
+      if (!isVideoProcessed) cacheService.del(cacheKey);
 
-        return isVideoProcessed;
-      })
-      .map((videoDetails) => ({
-        id: videoDetails.id,
-        title: videoDetails.snippet.title,
-        description: videoDetails.snippet.description,
-        date:
-          videos.find((v) => v.id === videoDetails.id)?.date ??
-          new Date(videoDetails.snippet.publishedAt).toISOString(),
-        url: `https://youtu.be/${videoDetails.id}`,
-        duration: getDuration(videoDetails.contentDetails.duration),
-        isYouTubeShort: shortsVideoIds.includes(videoDetails.id),
-      }))
-  );
+      return isVideoProcessed;
+    })
+    .map((videoDetails) => ({
+      id: videoDetails.id,
+      title: videoDetails.snippet.title,
+      description: videoDetails.snippet.description,
+      date:
+        videos.find((v) => v.id === videoDetails.id)?.date ??
+        new Date(videoDetails.snippet.publishedAt).toISOString(),
+      url: `https://youtu.be/${videoDetails.id}`,
+      duration: getDuration(videoDetails.contentDetails.duration),
+      isYouTubeShort: shortsVideoIds.includes(videoDetails.id),
+    }));
 };
 
 const getDuration = (duration: string | undefined): number => {

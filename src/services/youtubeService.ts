@@ -226,7 +226,7 @@ const getVideosForPlaylist = async (playlistId: string): Promise<Video[]> => {
   if (cacheResult) return cacheResult;
 
   if (playlistItems.length === 0 && !playlistId.startsWith('UU')) {
-    populatePlaylistItems();
+    await populatePlaylistItems();
   }
 
   const rawVideoDetailsResults = await getYoutube()

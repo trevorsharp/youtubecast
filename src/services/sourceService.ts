@@ -1,15 +1,7 @@
 import { Source, Video } from '../types';
 import cacheService from './cacheService';
-import { getVideoIdsForPlaylist as getVideoIdsForPlaylistWithoutAPI } from './playlistService';
 import { searchChannels } from './searchService';
-import {
-  getChannelDetails,
-  getPlaylistDetails,
-  getVideoDetails,
-  getVideoIdsForPlaylist,
-} from './youtubeService';
-
-const isPlaylistSortingEnabled = process.env.ENABLE_PLAYLIST_SORTING?.toLowerCase() === 'true';
+import { getChannelDetails, getPlaylistDetails, getVideosForPlaylist } from './youtubeService';
 
 const searchForSource = async (searchText: string): Promise<Source> => {
   searchText = searchText
@@ -53,14 +45,11 @@ const getVideos = async (sourceId: string): Promise<Video[]> => {
   if (cacheResult) return cacheResult;
 
   const playlistId = sourceId.replace(/^UC/, 'UU');
-  const attemptWithoutAPI = sourceId.startsWith('UC') || !isPlaylistSortingEnabled;
 
-  const videoIds =
-    (attemptWithoutAPI ? await getVideoIdsForPlaylistWithoutAPI(playlistId) : undefined) ??
-    (await getVideoIdsForPlaylist(playlistId));
+  const videos = await getVideosForPlaylist(playlistId);
 
-  const videos = await getVideoDetails(videoIds);
   await cacheService.set(cacheKey, videos, 600);
+
   return videos;
 };
 

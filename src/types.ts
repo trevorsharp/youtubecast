@@ -21,6 +21,7 @@ type Video = {
   url: string;
   duration: number;
   isYouTubeShort: boolean;
+  isAvailable: boolean;
 };
 
 export { Quality };

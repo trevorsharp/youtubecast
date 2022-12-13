@@ -1,6 +1,4 @@
-const getVideoIdsForPlaylist = async (
-  playlistId: string
-): Promise<{ id: string }[] | undefined> => {
+const getPlaylistVideoIds = async (playlistId: string): Promise<string[] | undefined> => {
   try {
     const playlistRes: any = await fetch(
       `https://www.youtube.com/playlist?list=${encodeURIComponent(playlistId.trim())}`
@@ -16,7 +14,7 @@ const getVideoIdsForPlaylist = async (
     if (videoIds === undefined)
       console.log(`Could not find playlist items for playlist id ${playlistId}`);
 
-    return videoIds?.map((id) => ({ id }));
+    return videoIds;
   } catch (error) {
     console.log(error);
   }
@@ -24,4 +22,4 @@ const getVideoIdsForPlaylist = async (
   throw 'Sorry, something went wrong getting playlist items 🤷';
 };
 
-export { getVideoIdsForPlaylist };
+export { getPlaylistVideoIds };

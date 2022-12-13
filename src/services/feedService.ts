@@ -32,7 +32,7 @@ const getRssFeed = async (
   });
 
   videos
-    .filter((video) => !(excludeShorts && video.isYouTubeShort))
+    .filter((video) => video.isAvailable && !(excludeShorts && video.isYouTubeShort))
     .forEach((video) =>
       rssFeed.addItem({
         title: video.title,

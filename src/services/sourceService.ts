@@ -48,7 +48,7 @@ const getVideos = async (sourceId: string): Promise<Video[]> => {
 
   const videos = await getVideosForPlaylist(playlistId);
 
-  await cacheService.set(cacheKey, videos, 600);
+  await cacheService.set(cacheKey, videos, 900);
 
   return videos;
 };

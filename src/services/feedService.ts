@@ -16,7 +16,10 @@ const getRssFeed = async (
   if (quality != Quality.Default) videoQueryParams.append('quality', quality.toString());
 
   if (videoServer) {
-    notifyVideoServer(videoServer, videos);
+    notifyVideoServer(
+      videoServer,
+      videos.filter((video) => video.isAvailable)
+    );
     videoQueryParams.append('videoServer', videoServer);
   }
 

@@ -19,7 +19,7 @@ const getRssFeed = async (
   if (videoServer) {
     await notifyVideoServer(
       videoServer,
-      videos.filter((video) => video.isAvailable)
+      videos.filter((video) => video.isAvailable).sort((a, b) => (a.date < b.date ? 1 : -1))
     );
     videoQueryParams.append('videoServer', videoServer);
   }

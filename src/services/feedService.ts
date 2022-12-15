@@ -1,3 +1,4 @@
+import { time } from 'console';
 import { Podcast } from 'podcast';
 import { Quality, Video } from '../types';
 import { getSourceData, getVideos } from './sourceService';
@@ -16,7 +17,7 @@ const getRssFeed = async (
   if (quality != Quality.Default) videoQueryParams.append('quality', quality.toString());
 
   if (videoServer) {
-    notifyVideoServer(
+    await notifyVideoServer(
       videoServer,
       videos.filter((video) => video.isAvailable)
     );
@@ -54,11 +55,20 @@ const getRssFeed = async (
   return rssFeed.buildXml();
 };
 
-const notifyVideoServer = async (videoServer: string, videoList: Video[]) =>
+const notifyVideoServer = async (videoServer: string, videoList: Video[]) => {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 2000);
+
+  clearTimeout(timeout);
   await fetch(`http://${videoServer}`, {
     method: 'POST',
     headers: { 'Content-type': 'application/json' },
     body: JSON.stringify(videoList.map((x) => x.id)),
+
+    signal: controller.signal,
   }).catch((error) => console.log(error));
+
+  clearTimeout(timeout);
+};
 
 export { getRssFeed };

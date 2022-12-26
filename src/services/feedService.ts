@@ -59,7 +59,6 @@ const notifyVideoServer = async (videoServer: string, videoList: Video[]) => {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 2000);
 
-  clearTimeout(timeout);
   await fetch(`http://${videoServer}`, {
     method: 'POST',
     headers: { 'Content-type': 'application/json' },

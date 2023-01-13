@@ -19,7 +19,7 @@ const getRssFeedForSource = async (req: NextApiRequest, res: NextApiResponse<str
     ? req.query.videoServer[0]
     : undefined;
 
-  res.setHeader('Cache-Control', 's-maxage=900');
+  res.setHeader('Cache-Control', 's-maxage=1200');
   return getRssFeed(
     req.query.sourceId as string,
     req.headers.host ?? '',

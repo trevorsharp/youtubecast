@@ -135,7 +135,7 @@ const getPlaylistPage = async (playlistId: string, pageToken?: string) => {
     .then((response: any) => [response?.data?.items?.map((x: any) => x?.snippet), response?.data])
     .catch((error) => {
       console.log(error);
-      return [];
+      return [undefined, undefined];
     });
 
   const playlistItemResults = z
@@ -171,11 +171,11 @@ const getPlaylistItems = async (playlistId: string): Promise<{ id: string; date:
     cacheKey
   );
 
-  let playlistItems = cacheResult ?? [];
+  const playlistItems = cacheResult ?? [];
 
   if (playlistItems.length === 0) {
     let playlistPage = await getPlaylistPage(playlistId);
-    playlistItems = playlistPage.items;
+    const newPlaylistItems = playlistPage.items;
 
     const playlistIsNotSortedByDateAdded = playlistItems.some(
       (item, index, arr) => index !== 0 && item.publishedAt >= arr[index - 1]!.publishedAt
@@ -184,12 +184,13 @@ const getPlaylistItems = async (playlistId: string): Promise<{ id: string; date:
     if (isPlaylistSortingEnabled && playlistIsNotSortedByDateAdded) {
       for (let i = 0; i < 100 && playlistPage.nextPageToken; i++) {
         playlistPage = await getPlaylistPage(playlistId, playlistPage.nextPageToken);
-        playlistItems = [...playlistItems, ...playlistPage.items];
+        newPlaylistItems.push(...playlistPage.items);
       }
-      playlistItems = playlistItems
-        .sort((a, b) => (a.publishedAt < b.publishedAt ? 1 : -1))
-        .splice(0, 50);
     }
+
+    playlistItems.push(
+      ...newPlaylistItems.sort((a, b) => (a.publishedAt < b.publishedAt ? 1 : -1)).splice(0, 50)
+    );
 
     await cacheService.set(cacheKey, playlistItems, 1800);
   }
@@ -201,20 +202,12 @@ const getPlaylistItems = async (playlistId: string): Promise<{ id: string; date:
 };
 
 const getVideosForPlaylist = async (playlistId: string): Promise<Video[]> => {
-  const playlistItems: { id: string; date: string }[] = [];
+  let playlistItems: { id: string; date: string }[] = [];
+  let videoIds = (await getPlaylistVideoIds(playlistId)) ?? [];
 
-  const populatePlaylistItems = async () => {
-    const newPlaylistItems = await getPlaylistItems(playlistId);
-    playlistItems.push(...newPlaylistItems);
-  };
-
-  const videoIds: string[] = isPlaylistSortingEnabled
-    ? []
-    : (await getPlaylistVideoIds(playlistId)) ?? [];
-
-  if (videoIds.length === 0) {
-    await populatePlaylistItems();
-    videoIds.push(...playlistItems.map((item) => item.id));
+  if (videoIds.length === 0 || isPlaylistSortingEnabled) {
+    playlistItems = await getPlaylistItems(playlistId);
+    videoIds = playlistItems.map((item) => item.id);
   }
 
   if (videoIds.length === 0) return [];
@@ -226,7 +219,7 @@ const getVideosForPlaylist = async (playlistId: string): Promise<Video[]> => {
   if (cacheResult) return cacheResult;
 
   if (playlistItems.length === 0 && !playlistId.startsWith('UU')) {
-    await populatePlaylistItems();
+    playlistItems = await getPlaylistItems(playlistId);
   }
 
   const rawVideoDetailsResults = await getYoutube()
@@ -292,13 +285,11 @@ const getIsAvailable = (
   privacyStatus: string
 ) => uploadStatus === 'processed' && liveBroadcastContent === 'none' && privacyStatus !== 'private';
 
-const getIsYouTubeShort = async (duration: string, videoId: string) => {
-  if (getDuration(duration) > 60) return false;
-
-  return await fetch(`https://www.youtube.com/shorts/${videoId}`, {
+const getIsYouTubeShort = async (duration: string, videoId: string) =>
+  getDuration(duration) <= 60 &&
+  (await fetch(`https://www.youtube.com/shorts/${videoId}`, {
     method: 'HEAD',
-  }).then((response) => !response.redirected);
-};
+  }).then((response) => !response.redirected));
 
 const getDuration = (duration: string | undefined): number => {
   if (!duration) return 0;

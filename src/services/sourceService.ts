@@ -35,7 +35,8 @@ const getSourceData = async (id: string): Promise<Source> => {
 
   if (!source) throw `Could not find a YouTube source for id ${id} 🤷`;
 
-  await cacheService.set(cacheKey, source, 3 * 86400);
+  const cacheTtl = Math.floor(3 * (1 + Math.random()) * 86400);
+  await cacheService.set(cacheKey, source, cacheTtl);
   return source;
 };
 
@@ -48,7 +49,7 @@ const getVideos = async (sourceId: string): Promise<Video[]> => {
 
   const videos = await getVideosForPlaylist(playlistId);
 
-  await cacheService.set(cacheKey, videos, 900);
+  await cacheService.set(cacheKey, videos, 1200);
 
   return videos;
 };

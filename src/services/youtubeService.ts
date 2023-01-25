@@ -255,22 +255,28 @@ const getVideosForPlaylist = async (playlistId: string): Promise<Video[]> => {
   if (!videoDetailsResults.success) throw `Could not find videos on YouTube 🤷`;
 
   const videoDetails = await Promise.all(
-    videoDetailsResults.data.map(async (video) => ({
-      id: video.id,
-      title: video.snippet.title,
-      description: video.snippet.description,
-      date:
-        playlistItems.find((v) => v.id === video.id)?.date ??
-        new Date(video.snippet.publishedAt).toISOString(),
-      url: `https://youtu.be/${video.id}`,
-      duration: getDuration(video.contentDetails.duration),
-      isYouTubeShort: await getIsYouTubeShort(video.contentDetails.duration, video.id),
-      isAvailable: getIsAvailable(
-        video.status.uploadStatus,
-        video.snippet.liveBroadcastContent,
-        video.status.privacyStatus
-      ),
-    }))
+    videoDetailsResults.data.map(async (video) => {
+      const uploadDate = new Date(video.snippet.publishedAt).toISOString();
+      const addedToPlaylistDate = playlistItems.find((v) => v.id === video.id)?.date;
+
+      const date =
+        addedToPlaylistDate && addedToPlaylistDate > uploadDate ? addedToPlaylistDate : uploadDate;
+
+      return {
+        id: video.id,
+        title: video.snippet.title,
+        description: video.snippet.description,
+        date,
+        url: `https://youtu.be/${video.id}`,
+        duration: getDuration(video.contentDetails.duration),
+        isYouTubeShort: await getIsYouTubeShort(video.contentDetails.duration, video.id),
+        isAvailable: getIsAvailable(
+          video.status.uploadStatus,
+          video.snippet.liveBroadcastContent,
+          video.status.privacyStatus
+        ),
+      };
+    })
   );
 
   if (!videoDetails.some((video) => !video.isAvailable))

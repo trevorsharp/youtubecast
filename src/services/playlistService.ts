@@ -4,7 +4,7 @@ const getPlaylistVideoIds = async (playlistId: string): Promise<string[] | undef
       `https://www.youtube.com/playlist?list=${encodeURIComponent(playlistId.trim())}`
     ).then((response) => response.text());
 
-    const data = JSON.parse(playlistRes.split('ytInitialData = ')[1].split(';</script>')[0]);
+    const data = JSON.parse(playlistRes?.split('ytInitialData = ')[1]?.split(';</script>')[0]);
 
     const videoIds: string[] | undefined =
       data?.contents?.twoColumnBrowseResultsRenderer?.tabs?.[0]?.tabRenderer?.content?.sectionListRenderer?.contents?.[0]?.itemSectionRenderer?.contents?.[0]?.playlistVideoListRenderer?.contents

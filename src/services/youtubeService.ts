@@ -13,7 +13,7 @@ const youtubeInstances =
 
 const getYoutube = () => {
   if (youtubeInstances.length === 0) throw 'No API Key Provided';
-  return youtubeInstances[Math.floor((new Date().getHours() * youtubeInstances.length) / 24)]!;
+  return youtubeInstances[Math.floor((new Date().getMinutes() * youtubeInstances.length) / 60)]!;
 };
 
 const getChannelDetails = async (channelId: string): Promise<Source> => {

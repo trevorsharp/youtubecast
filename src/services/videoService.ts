@@ -8,16 +8,13 @@ const getStream = async (
   videoServer?: string | undefined
 ): Promise<string> => {
   if (videoServer) {
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 2000);
+    const timeout = new Promise<Response>((_, reject) =>
+      setTimeout(() => reject(new Error('Video server request timed out')), 2000)
+    );
 
-    const videoLink = await fetch(`http://${videoServer}/${videoId}`, {
-      signal: controller.signal,
-    })
+    const videoLink = await Promise.race([await fetch(`http://${videoServer}/${videoId}`), timeout])
       .then((response) => (response.status === 200 ? response.text() : undefined))
       .catch(() => undefined);
-
-    clearTimeout(timeout);
 
     if (videoLink) return `http://${videoServer}${videoLink}`;
   }

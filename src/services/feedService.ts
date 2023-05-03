@@ -55,25 +55,18 @@ const getRssFeed = async (
 };
 
 const notifyVideoServer = async (videoServer: string, videoList: Video[]) => {
-  const controller = new AbortController();
-  const timeout = setTimeout(() => {
-    console.log(`Aborting Video Server Update ${videoServer}`);
-    controller.abort();
-  }, 2000);
+  const timeout = new Promise<Response>((_, reject) =>
+    setTimeout(() => reject(new Error('Video server request timed out')), 2000)
+  );
 
-  console.log(`Starting Video Server Update ${videoServer}`);
-
-  await fetch(`http://${videoServer}`, {
-    method: 'POST',
-    headers: { 'Content-type': 'application/json' },
-    body: JSON.stringify(videoList.map((x) => x.id)),
-
-    signal: controller.signal,
-  }).catch((error) => console.log(error));
-
-  console.log(`Finished Video Server Update ${videoServer}`);
-
-  clearTimeout(timeout);
+  await Promise.race([
+    await fetch(`http://${videoServer}`, {
+      method: 'POST',
+      headers: { 'Content-type': 'application/json' },
+      body: JSON.stringify(videoList.map((x) => x.id)),
+    }).catch((error) => console.log(error)),
+    timeout,
+  ]).catch((error) => console.log(error));
 };
 
 export { getRssFeed };

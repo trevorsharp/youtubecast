@@ -2400,9 +2400,9 @@ yaml@^1.10.2:
   resolved "https://registry.yarnpkg.com/yaml/-/yaml-1.10.2.tgz#2301c5ffbf12b467de8da2333a459e29e7920e4b"
   integrity sha512-r3vXyErRCYJ7wg28yvBY5VSoAF8ZvlcW9/BwUzEtUsjvX/DKs24dIkuwjtuprwJJHsbyUbLApepYTR1BN4uHrg==
 
-"ytdl-core@git+ssh://git@github.com:khlevon/node-ytdl-core.git#v4.11.4-patch.1":
+"ytdl-core@git+https://github.com/khlevon/node-ytdl-core.git#v4.11.4-patch.1":
   version "0.0.0-development"
-  resolved "git+ssh://git@github.com:khlevon/node-ytdl-core.git#a9d80c0c619c8214c6fb4ef817c9d7aed5e25ff3"
+  resolved "git+https://github.com/khlevon/node-ytdl-core.git#a9d80c0c619c8214c6fb4ef817c9d7aed5e25ff3"
   dependencies:
     m3u8stream "^0.8.6"
     miniget "^4.2.2"

@@ -56,7 +56,12 @@ const getRssFeed = async (
 
 const notifyVideoServer = async (videoServer: string, videoList: Video[]) => {
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 2000);
+  const timeout = setTimeout(() => {
+    console.log(`Aborting Video Server Update ${videoServer}`);
+    controller.abort();
+  }, 2000);
+
+  console.log(`Starting Video Server Update ${videoServer}`);
 
   await fetch(`http://${videoServer}`, {
     method: 'POST',
@@ -65,6 +70,8 @@ const notifyVideoServer = async (videoServer: string, videoList: Video[]) => {
 
     signal: controller.signal,
   }).catch((error) => console.log(error));
+
+  console.log(`Finished Video Server Update ${videoServer}`);
 
   clearTimeout(timeout);
 };

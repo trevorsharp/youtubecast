@@ -31,7 +31,9 @@ const MainPage = ({ searchText, source, errorMessage, host, videoServer }: MainP
     });
 
   const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [qualitySelection, setQualitySelection] = useState<Quality>(Quality.Default);
+  const [qualitySelection, setQualitySelection] = useState<Quality | 'VideoServer'>(
+    videoServer ? 'VideoServer' : Quality.Default
+  );
   const [excludeShorts, setExcludeShorts] = useState<boolean>(false);
 
   const { register, handleSubmit, setFocus } = useForm({
@@ -86,13 +88,17 @@ const MainPage = ({ searchText, source, errorMessage, host, videoServer }: MainP
               <DisplayName text={source.displayName} />
             </a>
             <div className="flex flex-col items-center gap-4">
-              <QualitySelection selection={qualitySelection} onSelect={setQualitySelection} />
+              <QualitySelection
+                selection={qualitySelection}
+                videoServer={videoServer}
+                onSelect={setQualitySelection}
+              />
               <ExcludeShortsSelection selection={excludeShorts} onSelect={setExcludeShorts} />
             </div>
             <RssLinks
               host={host}
               id={source.id}
-              quality={qualitySelection}
+              qualitySelection={qualitySelection}
               excludeShorts={excludeShorts}
               videoServer={videoServer}
             />

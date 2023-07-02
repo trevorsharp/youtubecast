@@ -5,12 +5,12 @@ import { Quality } from '../types';
 type RssLinksProps = {
   host: string | undefined;
   id: string;
-  quality: Quality;
+  qualitySelection: Quality | 'VideoServer';
   excludeShorts: boolean;
   videoServer: string | undefined;
 };
 
-const RssLinks = ({ host, id, quality, excludeShorts, videoServer }: RssLinksProps) => {
+const RssLinks = ({ host, id, qualitySelection, excludeShorts, videoServer }: RssLinksProps) => {
   const [copiedText, setCopiedText] = useState<string>('');
 
   const updateHostAndVideoServer = () => {
@@ -27,9 +27,19 @@ const RssLinks = ({ host, id, quality, excludeShorts, videoServer }: RssLinksPro
 
     updateHostAndVideoServer();
 
-    if (quality != Quality.Default) searchParams.append('quality', quality.toString());
+    switch (qualitySelection) {
+      case 'VideoServer':
+        if (videoServer) searchParams.append('videoServer', videoServer);
+        break;
+
+      case Quality.Default:
+        break;
+
+      default:
+        searchParams.append('quality', qualitySelection.toString());
+    }
+
     if (excludeShorts) searchParams.append('excludeShorts', '');
-    if (videoServer) searchParams.append('videoServer', videoServer);
 
     return `${host}/${id}/feed${searchParams.toString() ? '?' : ''}${searchParams
       .toString()
@@ -54,7 +64,6 @@ const RssLinks = ({ host, id, quality, excludeShorts, videoServer }: RssLinksPro
         <img className="h-10 w-10 cursor-pointer" src="/rss.svg" alt="RSS" onClick={copyRssLink} />
       </div>
       {copiedText && <p>{copiedText}</p>}
-      {videoServer && !copiedText && <p>Video Server - {videoServer}</p>}
     </div>
   );
 };

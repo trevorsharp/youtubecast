@@ -1,6 +1,6 @@
 FROM node:16-alpine
 
-RUN apk add --no-cache yarn
+RUN apk add --no-cache yarn git
 
 WORKDIR /app
 

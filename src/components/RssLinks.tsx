@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Quality } from '~/types';
+import getFeedUrlParams from '~/utils/getFeedUrlParams';
 
 type RssLinksProps = {
   id: string;
@@ -12,25 +13,12 @@ const RssLinks = ({ id, qualitySelection, excludeShorts, videoServer }: RssLinks
   const [copiedText, setCopiedText] = useState<string>('');
 
   const getRssLink = () => {
-    const searchParams = new URLSearchParams();
+    const feedUrlParams =
+      qualitySelection === 'VideoServer'
+        ? getFeedUrlParams(Quality.Default, excludeShorts, videoServer)
+        : getFeedUrlParams(qualitySelection, excludeShorts, undefined);
 
-    switch (qualitySelection) {
-      case 'VideoServer':
-        if (videoServer) searchParams.append('videoServer', videoServer);
-        break;
-
-      case Quality.Default:
-        break;
-
-      default:
-        searchParams.append('quality', qualitySelection.toString());
-    }
-
-    if (excludeShorts) searchParams.append('excludeShorts', '');
-
-    return `${window.location.origin}/${id}/feed${searchParams.toString() ? '?' : ''}${searchParams
-      .toString()
-      .replace('excludeShorts=', 'excludeShorts')}`;
+    return `${window.location.origin}/${id}/feed${feedUrlParams}`;
   };
 
   const copyRssLink = () => {

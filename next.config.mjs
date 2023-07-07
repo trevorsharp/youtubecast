@@ -23,27 +23,6 @@ const config = {
       fallback: [],
     };
   },
-  async redirects() {
-    return [
-      {
-        source: '/watch',
-        has: [
-          {
-            type: 'query',
-            key: 'v',
-            value: '(?<videoId>.*)',
-          },
-        ],
-        destination: '/videos/:videoId',
-        permanent: false,
-      },
-      {
-        source: '/:searchText((?!api|videos).+)/:path((?!feed).+)',
-        destination: '/:searchText',
-        permanent: false,
-      },
-    ];
-  },
 
   /**
    * If you have `experimental: { appDir: true }` set, then you must comment the below `i18n` config

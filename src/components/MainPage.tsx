@@ -21,11 +21,28 @@ const MainPage = () => {
   const saveVideoServer =
     typeof router.query.setVideoServer === 'string' ? router.query.setVideoServer : undefined;
 
-  const searchText = decodeURI(router.asPath.replace('/', '').replace('[searchText]', ''));
+  if (saveVideoServer)
+    document.cookie = cookie.serialize('videoServer', saveVideoServer, {
+      expires: new Date('2038-01-01'),
+    });
 
-  const [videoServer, setVideoServer] = useState<string | undefined>(undefined);
+  const videoServer = cookie.parse(document.cookie)['videoServer'];
+
+  const getSearchText = () => {
+    const [path, path2] = window.location.pathname.split('/').filter((segment) => segment);
+
+    if (path === 'channel' || path === 'c' || path === 'user') return path2;
+
+    if (path === 'playlist' || path === 'watch')
+      return typeof router.query.list === 'string' ? router.query.list : undefined;
+
+    return path;
+  };
+
+  const searchText = getSearchText() ?? '';
+
   const [qualitySelection, setQualitySelection] = useState<Quality | 'VideoServer'>(
-    Quality.Default
+    videoServer ? 'VideoServer' : Quality.Default
   );
   const [excludeShorts, setExcludeShorts] = useState<boolean>(false);
 
@@ -39,25 +56,11 @@ const MainPage = () => {
     defaultValues: { searchText },
   });
 
-  useEffect(() => {
-    if (saveVideoServer)
-      document.cookie = cookie.serialize('videoServer', saveVideoServer, {
-        expires: new Date('2038-01-01'),
-      });
-
-    setVideoServer(cookie.parse(document.cookie)['videoServer']);
-  }, []);
-
-  useEffect(() => {
-    if (videoServer) setQualitySelection('VideoServer');
-  }, [videoServer]);
-
   useEffect(() => setFocus('searchText'), []);
   useEffect(() => setValue('searchText', searchText), [searchText]);
 
   const onSubmit = handleSubmit(async (values) => {
-    if (values.searchText)
-      await router.push(`/${encodeURIComponent(values.searchText)}`, undefined, { scroll: false });
+    if (values.searchText) await router.push(`/${values.searchText}`, undefined, { scroll: false });
   });
 
   return (

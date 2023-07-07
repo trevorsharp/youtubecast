@@ -28,13 +28,13 @@ const RssLinks = ({ id, qualitySelection, excludeShorts, videoServer }: RssLinks
 
     if (excludeShorts) searchParams.append('excludeShorts', '');
 
-    return `${window.location.host}/${id}/feed${searchParams.toString() ? '?' : ''}${searchParams
+    return `${window.location.origin}/${id}/feed${searchParams.toString() ? '?' : ''}${searchParams
       .toString()
       .replace('excludeShorts=', 'excludeShorts')}`;
   };
 
   const copyRssLink = () => {
-    void navigator.clipboard.writeText(`http://${getRssLink()}`).then(() => {
+    void navigator.clipboard.writeText(getRssLink()).then(() => {
       setCopiedText('Copied link to RSS feed 🎉');
       setTimeout(() => setCopiedText(''), 2000);
     });

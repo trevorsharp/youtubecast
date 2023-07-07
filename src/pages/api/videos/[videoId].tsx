@@ -1,6 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { getStream } from '../../../services/videoService';
-import { Quality } from '../../../types';
+import { getStream } from '~/services/videoService';
+import { Quality } from '~/types';
 
 const getVideoUrl = async (req: NextApiRequest, res: NextApiResponse) => {
   let quality = !Array.isArray(req.query.quality)

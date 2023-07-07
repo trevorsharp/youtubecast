@@ -1,4 +1,4 @@
-import { Source, Video } from '../types';
+import type { Source, Video } from '~/types';
 import cacheService from './cacheService';
 import { searchChannels } from './searchService';
 import { getChannelDetails, getPlaylistDetails, getVideosForPlaylist } from './youtubeService';

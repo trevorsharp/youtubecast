@@ -1,6 +1,7 @@
 import ytdl from 'ytdl-core';
 import cacheService from './cacheService';
-import { Quality } from '../types';
+import { Quality } from '~/types';
+import { env } from '~/env.mjs';
 
 const getStream = async (
   videoId: string,
@@ -34,7 +35,7 @@ const getStream = async (
 
 const getVideoUrl = async (videoId: string, quality: Quality): Promise<string | undefined> => {
   const videoInfo = await ytdl.getInfo(`https://www.youtube.com/watch?v=${videoId}`, {
-    requestOptions: { headers: { cookie: process.env.COOKIES ?? '' } },
+    requestOptions: { headers: { cookie: env.COOKIES ?? '' } },
   });
 
   const formats = videoInfo.formats

@@ -1,18 +1,17 @@
-import type { Source, Video } from '../types';
 import { createHash } from 'crypto';
 import { google } from 'googleapis';
 import { z } from 'zod';
 import cacheService from './cacheService';
 import { getPlaylistVideoIds } from './playlistService';
-
-const isPlaylistSortingEnabled = process.env.ENABLE_PLAYLIST_SORTING?.toLowerCase() === 'true';
+import type { Source, Video } from '~/types';
+import { env } from '~/env.mjs';
 
 const youtubeInstances =
-  process.env.YOUTUBE_API_KEY?.split(',').map((auth) => google.youtube({ version: 'v3', auth })) ??
-  [];
+  env.YOUTUBE_API_KEY.split(',').map((auth) => google.youtube({ version: 'v3', auth })) ?? [];
 
 const getYoutube = () => {
   if (youtubeInstances.length === 0) throw 'No API Key Provided';
+  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
   return youtubeInstances[Math.floor((new Date().getMinutes() * youtubeInstances.length) / 60)]!;
 };
 
@@ -22,7 +21,7 @@ const getChannelDetails = async (channelId: string): Promise<Source> => {
       part: ['snippet'],
       id: [channelId],
     })
-    .then((response: any) => response?.data?.items?.shift())
+    .then((response) => response?.data?.items?.shift())
     .catch((error) => console.log(error));
 
   const channelResult = z
@@ -58,7 +57,7 @@ const getPlaylistDetails = async (playlistId: string): Promise<Source> => {
       part: ['snippet'],
       id: [playlistId],
     })
-    .then((response: any) => response?.data?.items?.shift())
+    .then((response) => response?.data?.items?.shift())
     .catch((error) => console.log(error));
 
   const playlistResult = z
@@ -81,7 +80,7 @@ const getPlaylistDetails = async (playlistId: string): Promise<Source> => {
       part: ['snippet', 'statistics'],
       id: [channelId],
     })
-    .then((response: any) => response?.data?.items?.shift())
+    .then((response) => response?.data?.items?.shift())
     .catch((error) => console.log(error));
 
   const channelResult = z
@@ -132,7 +131,7 @@ const getPlaylistPage = async (playlistId: string, pageToken?: string) => {
       playlistId,
       pageToken,
     })
-    .then((response: any) => [response?.data?.items?.map((x: any) => x?.snippet), response?.data])
+    .then((response) => [response?.data?.items?.map((x) => x?.snippet), response?.data])
     .catch((error) => {
       console.log(error);
       return [undefined, undefined];
@@ -178,10 +177,10 @@ const getPlaylistItems = async (playlistId: string): Promise<{ id: string; date:
     const newPlaylistItems = playlistPage.items;
 
     const playlistIsNotSortedByDateAdded = playlistItems.some(
-      (item, index, arr) => index !== 0 && item.publishedAt >= arr[index - 1]!.publishedAt
+      (item, index, arr) => index !== 0 && item.publishedAt >= (arr[index - 1]?.publishedAt ?? '')
     );
 
-    if (isPlaylistSortingEnabled && playlistIsNotSortedByDateAdded) {
+    if (env.ENABLE_PLAYLIST_SORTING && playlistIsNotSortedByDateAdded) {
       for (let i = 0; i < 100 && playlistPage.nextPageToken; i++) {
         playlistPage = await getPlaylistPage(playlistId, playlistPage.nextPageToken);
         newPlaylistItems.push(...playlistPage.items);
@@ -205,7 +204,7 @@ const getVideosForPlaylist = async (playlistId: string): Promise<Video[]> => {
   let playlistItems: { id: string; date: string }[] = [];
   let videoIds = (await getPlaylistVideoIds(playlistId)) ?? [];
 
-  if (videoIds.length === 0 || isPlaylistSortingEnabled) {
+  if (videoIds.length === 0 || env.ENABLE_PLAYLIST_SORTING) {
     playlistItems = await getPlaylistItems(playlistId);
     videoIds = playlistItems.map((item) => item.id);
   }
@@ -228,7 +227,7 @@ const getVideosForPlaylist = async (playlistId: string): Promise<Video[]> => {
       maxResults: 50,
       id: videoIds,
     })
-    .then((response: any) => response?.data?.items)
+    .then((response) => response?.data?.items)
     .catch((error) => console.log(error));
 
   const videoDetailsResults = z

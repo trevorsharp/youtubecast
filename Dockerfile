@@ -9,6 +9,7 @@ COPY ./yarn.lock ./yarn.lock
 RUN yarn
 
 COPY . .
+ENV SKIP_ENV_VALIDATION=1
 RUN yarn build
 
 CMD yarn start

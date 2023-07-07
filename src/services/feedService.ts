@@ -1,10 +1,11 @@
 import { Podcast } from 'podcast';
-import { Quality, Video } from '../types';
+import { Quality, type Video } from '~/types';
 import { getSourceData, getVideos } from './sourceService';
+import getFeedUrlParams from '~/utils/getFeedUrlParams';
 
 const getRssFeed = async (
   sourceId: string,
-  hostname: string,
+  host: string,
   quality: Quality,
   excludeShorts: boolean,
   videoServer?: string | undefined
@@ -23,14 +24,16 @@ const getRssFeed = async (
     videoQueryParams.append('videoServer', videoServer);
   }
 
+  const feedUrlParams = getFeedUrlParams(quality, excludeShorts, videoServer);
+
   const rssFeed = new Podcast({
     title: source.displayName,
     description: source.description,
     author: source.displayName,
-    feedUrl: `http://${hostname}/${sourceId}/feed`,
+    feedUrl: `http://${host}/${sourceId}/feed${feedUrlParams}`,
     siteUrl: source.url,
     imageUrl: source.profileImageUrl.startsWith('/')
-      ? `http://${hostname}${source.profileImageUrl}`
+      ? `http://${host}${source.profileImageUrl}`
       : source.profileImageUrl,
   });
 
@@ -43,7 +46,7 @@ const getRssFeed = async (
         description: video.description + '\n' + '\n' + video.url,
         date: new Date(video.date),
         enclosure: {
-          url: `http://${hostname}/videos/${video.id}?${videoQueryParams.toString()}`,
+          url: `http://${host}/videos/${video.id}?${videoQueryParams.toString()}`,
           type: quality === Quality.Audio ? 'audio/aac' : 'video/mp4',
         },
         url: video.url,

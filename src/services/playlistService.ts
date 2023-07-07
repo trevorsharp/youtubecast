@@ -1,10 +1,18 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-unsafe-return */
+/* eslint-disable @typescript-eslint/no-unsafe-call */
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
+
 const getPlaylistVideoIds = async (playlistId: string): Promise<string[]> => {
   try {
-    const playlistRes: any = await fetch(
+    const playlistRes = await fetch(
       `https://www.youtube.com/playlist?list=${encodeURIComponent(playlistId.trim())}`
     ).then((response) => response.text());
 
-    const data = JSON.parse(playlistRes?.split('ytInitialData = ')[1]?.split(';</script>')[0]);
+    const data = JSON.parse(
+      playlistRes?.split('ytInitialData = ')[1]?.split(';</script>')[0] ?? '{}'
+    );
 
     const videoIds: string[] | undefined =
       data?.contents?.twoColumnBrowseResultsRenderer?.tabs?.[0]?.tabRenderer?.content?.sectionListRenderer?.contents?.[0]?.itemSectionRenderer?.contents?.[0]?.playlistVideoListRenderer?.contents

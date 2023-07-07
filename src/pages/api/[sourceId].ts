@@ -1,6 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { getRssFeed } from '../../services/feedService';
-import { Quality } from '../../types';
+import { getRssFeed } from '~/services/feedService';
+import { Quality } from '~/types';
 
 const getRssFeedForSource = async (req: NextApiRequest, res: NextApiResponse<string>) => {
   let quality = !Array.isArray(req.query.quality)
@@ -28,7 +28,7 @@ const getRssFeedForSource = async (req: NextApiRequest, res: NextApiResponse<str
     videoServer
   )
     .then((rssFeed) => res.status(200).send(rssFeed))
-    .catch((e) => res.status(500).send(e ?? 'Unexpected Error'));
+    .catch((errorMessage: string) => res.status(500).send(errorMessage ?? 'Unexpected Error'));
 };
 
 export default getRssFeedForSource;

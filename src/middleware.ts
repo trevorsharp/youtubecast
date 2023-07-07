@@ -15,7 +15,7 @@ export function middleware(request: NextRequest) {
 
   if (request.nextUrl.pathname.startsWith('/playlist')) {
     url.pathname = `/${encodeURIComponent(
-      `youtube.com/playlist?list=${request.nextUrl.searchParams.get('list')}`
+      `youtube.com/playlist?list=${request.nextUrl.searchParams.get('list') ?? ''}`
     )}`;
     return NextResponse.redirect(url);
   }

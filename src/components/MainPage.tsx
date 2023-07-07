@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-misused-promises */
 import React, { useEffect, useState } from 'react';
 import Head from 'next/head';
 import { useRouter } from 'next/router';
@@ -10,46 +11,53 @@ import SearchInput from './SearchInput';
 import QualitySelection from './QualitySelection';
 import RssLinks from './RssLinks';
 import DisplayName from './DisplayName';
-import { Quality, Source } from '../types';
 import ExcludeShortsSelection from './ShortsSelection';
+import { Quality } from '~/types';
+import { api } from '~/utils/api';
 
-type MainPageProps = {
-  searchText?: string;
-  source?: Source;
-  errorMessage?: string;
-  host?: string;
-  videoServer?: string;
-};
-
-const MainPage = ({ searchText, source, errorMessage, host, videoServer }: MainPageProps) => {
+const MainPage = () => {
   const router = useRouter();
-  const { setVideoServer } = router.query;
 
-  if (typeof window !== 'undefined' && typeof setVideoServer === 'string')
-    document.cookie = cookie.serialize('videoServer', setVideoServer, {
-      expires: new Date('2038-01-01'),
-    });
+  const saveVideoServer =
+    typeof router.query.setVideoServer === 'string' ? router.query.setVideoServer : undefined;
 
-  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const searchText = decodeURI(router.asPath.replace('/', '').replace('[searchText]', ''));
+
+  const [videoServer, setVideoServer] = useState<string | undefined>(undefined);
   const [qualitySelection, setQualitySelection] = useState<Quality | 'VideoServer'>(
-    videoServer ? 'VideoServer' : Quality.Default
+    Quality.Default
   );
   const [excludeShorts, setExcludeShorts] = useState<boolean>(false);
 
-  const { register, handleSubmit, setFocus } = useForm({
+  const source = api.source.getSourceData.useQuery(
+    { searchText },
+    { enabled: !!searchText, retry: false }
+  );
+
+  const { register, handleSubmit, setFocus, setValue } = useForm({
     resolver: zodResolver(z.object({ searchText: z.string() })),
     defaultValues: { searchText },
   });
 
-  useEffect(() => setFocus('searchText'), []);
+  useEffect(() => {
+    if (saveVideoServer)
+      document.cookie = cookie.serialize('videoServer', saveVideoServer, {
+        expires: new Date('2038-01-01'),
+      });
 
-  const onSubmit = handleSubmit((values) => {
-    if (values.searchText) {
-      setIsLoading(true);
-      router
-        .push(`/${encodeURIComponent(values.searchText)}`, undefined, { scroll: false })
-        .then(() => setIsLoading(false));
-    }
+    setVideoServer(cookie.parse(document.cookie)['videoServer']);
+  }, []);
+
+  useEffect(() => {
+    if (videoServer) setQualitySelection('VideoServer');
+  }, [videoServer]);
+
+  useEffect(() => setFocus('searchText'), []);
+  useEffect(() => setValue('searchText', searchText), [searchText]);
+
+  const onSubmit = handleSubmit(async (values) => {
+    if (values.searchText)
+      await router.push(`/${encodeURIComponent(values.searchText)}`, undefined, { scroll: false });
   });
 
   return (
@@ -76,16 +84,20 @@ const MainPage = ({ searchText, source, errorMessage, host, videoServer }: MainP
           <button type="submit">
             <img
               className="h-8 w-8 text-youtube"
-              src={isLoading ? '/loading.svg' : '/next.svg'}
+              src={searchText && source.isLoading ? '/loading.svg' : '/next.svg'}
               alt="Submit"
             />
           </button>
         </form>
-        {source && (
+        {source.data && (
           <div className="flex flex-col items-center gap-8">
-            <a className="flex items-center gap-4" target="_new" href={source.url}>
-              <img className="h-16 w-16 rounded-full" src={source.profileImageUrl} alt="Profile" />
-              <DisplayName text={source.displayName} />
+            <a className="flex items-center gap-4" target="_new" href={source.data.url}>
+              <img
+                className="h-16 w-16 rounded-full"
+                src={source.data.profileImageUrl}
+                alt="Profile"
+              />
+              <DisplayName text={source.data.displayName} />
             </a>
             <div className="flex flex-col items-center gap-4">
               <QualitySelection
@@ -96,19 +108,17 @@ const MainPage = ({ searchText, source, errorMessage, host, videoServer }: MainP
               <ExcludeShortsSelection selection={excludeShorts} onSelect={setExcludeShorts} />
             </div>
             <RssLinks
-              host={host}
-              id={source.id}
+              id={source.data.id}
               qualitySelection={qualitySelection}
               excludeShorts={excludeShorts}
               videoServer={videoServer}
             />
           </div>
         )}
-        {errorMessage && <p>{errorMessage}</p>}
+        {source.error && <p>{source.error.message}</p>}
       </div>
     </>
   );
 };
 
 export default MainPage;
-export type { MainPageProps };

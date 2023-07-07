@@ -4,7 +4,7 @@ import { getSourceData, getVideos } from './sourceService';
 
 const getRssFeed = async (
   sourceId: string,
-  origin: string,
+  host: string,
   quality: Quality,
   excludeShorts: boolean,
   videoServer?: string | undefined
@@ -27,10 +27,10 @@ const getRssFeed = async (
     title: source.displayName,
     description: source.description,
     author: source.displayName,
-    feedUrl: `${origin}/${sourceId}/feed`,
+    feedUrl: `http://${host}/${sourceId}/feed`,
     siteUrl: source.url,
     imageUrl: source.profileImageUrl.startsWith('/')
-      ? `${origin}${source.profileImageUrl}`
+      ? `http://${host}${source.profileImageUrl}`
       : source.profileImageUrl,
   });
 
@@ -43,7 +43,7 @@ const getRssFeed = async (
         description: video.description + '\n' + '\n' + video.url,
         date: new Date(video.date),
         enclosure: {
-          url: `${origin}/videos/${video.id}?${videoQueryParams.toString()}`,
+          url: `http://${host}/videos/${video.id}?${videoQueryParams.toString()}`,
           type: quality === Quality.Audio ? 'audio/aac' : 'video/mp4',
         },
         url: video.url,

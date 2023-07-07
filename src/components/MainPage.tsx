@@ -29,7 +29,10 @@ const MainPage = () => {
   const videoServer = cookie.parse(document.cookie)['videoServer'];
 
   const getSearchText = () => {
-    const [path, path2] = window.location.pathname.split('/').filter((segment) => segment);
+    const [path, path2] = window.location.pathname
+      .split('/')
+      .filter((segment) => segment)
+      .map((segment) => decodeURI(segment));
 
     if (path === 'channel' || path === 'c' || path === 'user') return path2;
 

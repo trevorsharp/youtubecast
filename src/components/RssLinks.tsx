@@ -12,13 +12,15 @@ type RssLinksProps = {
 const RssLinks = ({ id, qualitySelection, excludeShorts, videoServer }: RssLinksProps) => {
   const [copiedText, setCopiedText] = useState<string>('');
 
-  const getRssLink = () => {
+  const getRssLink = ({ withProtocol }: { withProtocol: boolean } = { withProtocol: true }) => {
     const feedUrlParams =
       qualitySelection === 'VideoServer'
         ? getFeedUrlParams(Quality.Default, excludeShorts, videoServer)
         : getFeedUrlParams(qualitySelection, excludeShorts, undefined);
 
-    return `${window.location.origin}/${id}/feed${feedUrlParams}`;
+    return `${
+      withProtocol ? window.location.origin : window.location.host
+    }/${id}/feed${feedUrlParams}`;
   };
 
   const copyRssLink = () => {
@@ -31,10 +33,10 @@ const RssLinks = ({ id, qualitySelection, excludeShorts, videoServer }: RssLinks
   return (
     <div className="flex h-24 flex-col items-center gap-6">
       <div className="flex gap-4">
-        <a href={`podcast://${getRssLink()}`}>
+        <a href={`podcast://${getRssLink({ withProtocol: false })}`}>
           <img className="h-10 w-10" src="/applepodcasts.svg" alt="Apple Podcasts" />
         </a>
-        <a href={`pktc://subscribe/${getRssLink()}`}>
+        <a href={`pktc://subscribe/${getRssLink({ withProtocol: false })}`}>
           <img className="h-10 w-10" src="/pocketcasts.svg" alt="Pocket Casts" />
         </a>
         <img className="h-10 w-10 cursor-pointer" src="/rss.svg" alt="RSS" onClick={copyRssLink} />

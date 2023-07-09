@@ -33,6 +33,9 @@ jobs:
             TAGS="$TAGS,${DOCKER_IMAGE}:latest"
           fi
 
+          # Tag with the GitHub run id to create a unique tag for this run
+          TAGS="$TAGS,${DOCKER_IMAGE}:${GITHUB_RUN_ID}"
+
           # Set output parameters.
           echo ::set-output name=tags::${TAGS}
           echo ::set-output name=docker_image::${DOCKER_IMAGE}

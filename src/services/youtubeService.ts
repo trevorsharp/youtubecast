@@ -5,6 +5,7 @@ import cacheService from './cacheService';
 import { getPlaylistVideoIds } from './playlistService';
 import type { Source, Video } from '~/types';
 import { env } from '~/env.mjs';
+import sourceRouter from '~/server/api/routers/sourceRouter';
 
 const youtubeInstances =
   env.YOUTUBE_API_KEY.split(',').map((auth) => google.youtube({ version: 'v3', auth })) ?? [];
@@ -15,7 +16,7 @@ const getYoutube = () => {
   return youtubeInstances[Math.floor((new Date().getMinutes() * youtubeInstances.length) / 60)]!;
 };
 
-const getChannelDetails = async (channelId: string): Promise<Source> => {
+const getChannelDetails = async (channelId: string) => {
   const rawChannelResult = await getYoutube()
     .channels.list({
       part: ['snippet'],
@@ -41,7 +42,7 @@ const getChannelDetails = async (channelId: string): Promise<Source> => {
 
   if (!channelResult.success) throw `Could not find YouTube channel for id ${channelId} 🤷`;
 
-  return {
+  const source: Source = {
     type: 'channel',
     id: channelResult.data.id,
     displayName: channelResult.data.snippet.title,
@@ -49,9 +50,11 @@ const getChannelDetails = async (channelId: string): Promise<Source> => {
     profileImageUrl: channelResult.data.snippet.thumbnails.high.url,
     url: `https://youtube.com/channel/${channelResult.data.id}`,
   };
+
+  return source;
 };
 
-const getPlaylistDetails = async (playlistId: string): Promise<Source> => {
+const getPlaylistDetails = async (playlistId: string) => {
   const rawPlaylistResult = await getYoutube()
     .playlists.list({
       part: ['snippet'],
@@ -113,14 +116,16 @@ const getPlaylistDetails = async (playlistId: string): Promise<Source> => {
       ? '/playlist.png'
       : channelResult.data.snippet.thumbnails.high.url;
 
-  return Promise.resolve({
+  const source: Source = {
     type: 'playlist',
     id: playlistResult.data.id,
     displayName,
     description: playlistResult.data.snippet.description,
     url: `https://youtube.com/playlist?list=${playlistResult.data.id}`,
     profileImageUrl,
-  });
+  };
+
+  return source;
 };
 
 const getPlaylistPage = async (playlistId: string, pageToken?: string) => {
@@ -164,7 +169,7 @@ const getPlaylistPage = async (playlistId: string, pageToken?: string) => {
   return { ...playlistResults.data, items: playlistItemResults.data };
 };
 
-const getPlaylistItems = async (playlistId: string): Promise<{ id: string; date: string }[]> => {
+const getPlaylistItems = async (playlistId: string) => {
   const cacheKey = `youtube-playlist-items-${playlistId}`;
   const cacheResult = await cacheService.get<Awaited<ReturnType<typeof getPlaylistPage>>['items']>(
     cacheKey
@@ -200,7 +205,7 @@ const getPlaylistItems = async (playlistId: string): Promise<{ id: string; date:
   }));
 };
 
-const getVideosForPlaylist = async (playlistId: string): Promise<Video[]> => {
+const getVideosForPlaylist = async (playlistId: string) => {
   let playlistItems: { id: string; date: string }[] = [];
   let videoIds = (await getPlaylistVideoIds(playlistId)) ?? [];
 
@@ -254,27 +259,29 @@ const getVideosForPlaylist = async (playlistId: string): Promise<Video[]> => {
   if (!videoDetailsResults.success) throw `Could not find videos on YouTube 🤷`;
 
   const videoDetails = await Promise.all(
-    videoDetailsResults.data.map(async (video) => {
-      const uploadDate = new Date(video.snippet.publishedAt).toISOString();
-      const addedToPlaylistDate = playlistItems.find((v) => v.id === video.id)?.date;
+    videoDetailsResults.data.map(async (rawVideo) => {
+      const uploadDate = new Date(rawVideo.snippet.publishedAt).toISOString();
+      const addedToPlaylistDate = playlistItems.find((v) => v.id === rawVideo.id)?.date;
 
       const date =
         addedToPlaylistDate && addedToPlaylistDate > uploadDate ? addedToPlaylistDate : uploadDate;
 
-      return {
-        id: video.id,
-        title: video.snippet.title,
-        description: video.snippet.description,
+      const video: Video = {
+        id: rawVideo.id,
+        title: rawVideo.snippet.title,
+        description: rawVideo.snippet.description,
         date,
-        url: `https://youtu.be/${video.id}`,
-        duration: getDuration(video.contentDetails.duration),
-        isYouTubeShort: await getIsYouTubeShort(video.contentDetails.duration, video.id),
+        url: `https://youtu.be/${rawVideo.id}`,
+        duration: getDuration(rawVideo.contentDetails.duration),
+        isYouTubeShort: await getIsYouTubeShort(rawVideo.contentDetails.duration, rawVideo.id),
         isAvailable: getIsAvailable(
-          video.status.uploadStatus,
-          video.snippet.liveBroadcastContent,
-          video.status.privacyStatus
+          rawVideo.status.uploadStatus,
+          rawVideo.snippet.liveBroadcastContent,
+          rawVideo.status.privacyStatus
         ),
       };
+
+      return video;
     })
   );
 
@@ -296,7 +303,7 @@ const getIsYouTubeShort = async (duration: string, videoId: string) =>
     method: 'HEAD',
   }).then((response) => !response.redirected));
 
-const getDuration = (duration: string | undefined): number => {
+const getDuration = (duration: string | undefined) => {
   if (!duration) return 0;
 
   const getTimePart = (letter: 'H' | 'M' | 'S') =>

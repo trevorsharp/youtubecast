@@ -3,7 +3,7 @@ import cacheService from './cacheService';
 import { searchChannels } from './searchService';
 import { getChannelDetails, getPlaylistDetails, getVideosForPlaylist } from './youtubeService';
 
-const searchForSource = async (searchText: string): Promise<Source> => {
+const searchForSource = async (searchText: string) => {
   searchText = searchText
     .trim()
     .replace(/http(s){0,1}:\/\//i, '')
@@ -22,7 +22,7 @@ const searchForSource = async (searchText: string): Promise<Source> => {
   return source;
 };
 
-const getSourceData = async (id: string): Promise<Source> => {
+const getSourceData = async (id: string) => {
   const cacheKey = `source-${id}`;
   const cacheResult = await cacheService.get<Source>(cacheKey);
   if (cacheResult) return cacheResult;
@@ -40,7 +40,7 @@ const getSourceData = async (id: string): Promise<Source> => {
   return source;
 };
 
-const getVideos = async (sourceId: string): Promise<Video[]> => {
+const getVideos = async (sourceId: string) => {
   const cacheKey = `source-videos-${sourceId}`;
   const cacheResult = await cacheService.get<Video[]>(cacheKey);
   if (cacheResult) return cacheResult;

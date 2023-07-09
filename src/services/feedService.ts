@@ -9,7 +9,7 @@ const getRssFeed = async (
   quality: Quality,
   excludeShorts: boolean,
   videoServer?: string | undefined
-): Promise<string> => {
+) => {
   const source = await getSourceData(sourceId);
   const videos = await getVideos(source.id);
   const videoQueryParams = new URLSearchParams();

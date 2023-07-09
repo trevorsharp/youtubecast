@@ -4,7 +4,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 
-const getPlaylistVideoIds = async (playlistId: string): Promise<string[]> => {
+const getPlaylistVideoIds = async (playlistId: string) => {
   try {
     const playlistRes = await fetch(
       `https://www.youtube.com/playlist?list=${encodeURIComponent(playlistId.trim())}`

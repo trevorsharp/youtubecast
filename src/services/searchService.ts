@@ -7,7 +7,7 @@
 
 // Sourced from https://github.com/appit-online/youtube-search
 
-const searchChannels = async (searchQuery: string): Promise<string | undefined> => {
+const searchChannels = async (searchQuery: string) => {
   try {
     const searchRes: any = await fetch(
       `https://www.youtube.com/results?q=${encodeURIComponent(
@@ -62,7 +62,8 @@ const searchChannels = async (searchQuery: string): Promise<string | undefined> 
     }
 
     if (details)
-      return details.find((detail) => detail.channelRenderer?.channelId).channelRenderer.channelId;
+      return details.find((detail) => detail.channelRenderer?.channelId).channelRenderer
+        .channelId as string | undefined;
   } catch (error) {
     console.log(error);
   }

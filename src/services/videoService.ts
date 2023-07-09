@@ -3,11 +3,7 @@ import cacheService from './cacheService';
 import { Quality } from '~/types';
 import { env } from '~/env.mjs';
 
-const getStream = async (
-  videoId: string,
-  quality: Quality,
-  videoServer?: string | undefined
-): Promise<string> => {
+const getStream = async (videoId: string, quality: Quality, videoServer?: string | undefined) => {
   if (videoServer) {
     const timeout = new Promise<Response>((_, reject) =>
       setTimeout(() => reject(new Error('Video server request timed out')), 2000)
@@ -33,7 +29,7 @@ const getStream = async (
   return videoUrl;
 };
 
-const getVideoUrl = async (videoId: string, quality: Quality): Promise<string | undefined> => {
+const getVideoUrl = async (videoId: string, quality: Quality) => {
   const videoInfo = await ytdl.getInfo(`https://www.youtube.com/watch?v=${videoId}`, {
     requestOptions: { headers: { cookie: env.COOKIES ?? '' } },
   });

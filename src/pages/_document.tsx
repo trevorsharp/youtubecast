@@ -4,6 +4,7 @@ const Document = () => (
   <Html lang="en" className="text-base tiny:text-tiny mobile:text-mobile normal:text-normal">
     <Head>
       <meta name="description" content="Create podcast feeds from YouTube channels" />
+      <meta name="theme-color" content="#ED0000" />
       <link rel="shortcut icon" href="/favicon.ico" />
       <link rel="apple-touch-icon" sizes="112x112" href="/apple-touch-icon.png" />
     </Head>

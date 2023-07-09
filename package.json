@@ -21,7 +21,7 @@
     "@upstash/redis": "1.18.1",
     "cookie": "0.5.0",
     "googleapis": "105.0.0",
-    "next": "13.4.2",
+    "next": "13.4.9",
     "node-cache": "5.1.2",
     "podcast": "2.0.0",
     "react": "18.2.0",
@@ -32,7 +32,7 @@
     "zod": "3.21.4"
   },
   "devDependencies": {
-    "@types/cookie": "^0.5.1",
+    "@types/cookie": "0.5.1",
     "@types/eslint": "8.37.0",
     "@types/node": "18.16.0",
     "@types/prettier": "2.7.2",
@@ -43,7 +43,7 @@
     "autoprefixer": "10.4.14",
     "eslint": "8.40.0",
     "eslint-config-next": "13.4.2",
-    "eslint-config-prettier": "^8.8.0",
+    "eslint-config-prettier": "8.8.0",
     "eslint-plugin-prettier": "4.2.1",
     "postcss": "8.4.21",
     "prettier": "2.8.8",

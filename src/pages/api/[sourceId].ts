@@ -1,6 +1,6 @@
-import type { NextApiRequest, NextApiResponse } from 'next';
 import { getRssFeed } from '~/services/feedService';
 import { Quality } from '~/types';
+import type { NextApiRequest, NextApiResponse } from 'next';
 
 const getRssFeedForSource = async (req: NextApiRequest, res: NextApiResponse<string>) => {
   let quality = !Array.isArray(req.query.quality)

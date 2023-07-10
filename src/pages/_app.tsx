@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
-import { type AppType } from 'next/app';
-import { api } from '~/utils/api';
 import '~/styles/globals.css';
+import { api } from '~/utils/api';
+import type { AppType } from 'next/app';
 
 const App: AppType = ({ Component, pageProps }) => {
   const [render, setRender] = useState(false);

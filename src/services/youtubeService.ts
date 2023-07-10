@@ -1,10 +1,10 @@
 import { createHash } from 'crypto';
 import { google } from 'googleapis';
 import { z } from 'zod';
+import { env } from '~/env.mjs';
 import cacheService from './cacheService';
 import { getPlaylistVideoIds } from './playlistService';
 import type { Source, Video } from '~/types';
-import { env } from '~/env.mjs';
 
 const youtubeInstances =
   env.YOUTUBE_API_KEY.split(',').map((auth) => google.youtube({ version: 'v3', auth })) ?? [];

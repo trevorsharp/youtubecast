@@ -1,7 +1,8 @@
 import { Podcast } from 'podcast';
-import { Quality, type Video } from '~/types';
-import { getSourceData, getVideos } from './sourceService';
+import { Quality } from '~/types';
 import getFeedUrlParams from '~/utils/getFeedUrlParams';
+import { getSourceData, getVideos } from './sourceService';
+import type { Video } from '~/types';
 
 const getRssFeed = async (
   sourceId: string,

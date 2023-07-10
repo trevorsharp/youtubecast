@@ -1,7 +1,7 @@
 import ytdl from 'ytdl-core';
-import cacheService from './cacheService';
-import { Quality } from '~/types';
 import { env } from '~/env.mjs';
+import { Quality } from '~/types';
+import cacheService from './cacheService';
 
 const getStream = async (videoId: string, quality: Quality, videoServer?: string | undefined) => {
   if (videoServer) {

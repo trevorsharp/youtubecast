@@ -1,5 +1,5 @@
-import NodeCache from 'node-cache';
 import { Redis } from '@upstash/redis';
+import NodeCache from 'node-cache';
 import { env } from '~/env.mjs';
 
 const redis =

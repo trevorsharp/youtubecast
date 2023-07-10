@@ -263,7 +263,7 @@
   resolved "https://registry.yarnpkg.com/@trpc/server/-/server-10.26.0.tgz#22b0cc16641111550a071da3ccdd588c344fe3a3"
   integrity sha512-+Wt0NFAeflVSNiUnHIDNN3C8jP7XIRmYrcgJ6IsAnm0lK4p/FkpCpeu1aig5qxrgZx30PHNDLZ/3FttVSEW2aQ==
 
-"@types/cookie@^0.5.1":
+"@types/cookie@0.5.1":
   version "0.5.1"
   resolved "https://registry.yarnpkg.com/@types/cookie/-/cookie-0.5.1.tgz#b29aa1f91a59f35e29ff8f7cb24faf1a3a750554"
   integrity sha512-COUnqfB2+ckwXXSFInsFdOAWQzCCx+a5hq2ruyj+Vjund94RJQd4LG2u9hnvJrTgunKAaax7ancBYlDrNYxA0g==
@@ -1021,7 +1021,7 @@ eslint-config-next@13.4.2:
     eslint-plugin-react "^7.31.7"
     eslint-plugin-react-hooks "^4.5.0"
 
-eslint-config-prettier@^8.8.0:
+eslint-config-prettier@8.8.0:
   version "8.8.0"
   resolved "https://registry.yarnpkg.com/eslint-config-prettier/-/eslint-config-prettier-8.8.0.tgz#bfda738d412adc917fd7b038857110efe98c9348"
   integrity sha512-wLbQiFre3tdGgpDv67NQKnJuTlcUVYHas3k+DZCc2U2BadthoEY4B7hLPvAxaqdyOGCzuLfii2fqGph10va7oA==
@@ -1131,6 +1131,11 @@ eslint-plugin-react@^7.31.7:
     resolve "^2.0.0-next.4"
     semver "^6.3.0"
     string.prototype.matchall "^4.0.8"
+
+eslint-plugin-simple-import-sort@10.0.0:
+  version "10.0.0"
+  resolved "https://registry.yarnpkg.com/eslint-plugin-simple-import-sort/-/eslint-plugin-simple-import-sort-10.0.0.tgz#cc4ceaa81ba73252427062705b64321946f61351"
+  integrity sha512-AeTvO9UCMSNzIHRkg8S6c3RPy5YEwKWSQPx3DYghLedo2ZQxowPFLGDN1AZ2evfg6r6mjBSZSLxLFsWSu3acsw==
 
 eslint-scope@^5.1.1:
   version "5.1.1"
@@ -2115,7 +2120,7 @@ natural-compare@^1.4.0:
   resolved "https://registry.yarnpkg.com/natural-compare/-/natural-compare-1.4.0.tgz#4abebfeed7541f2c27acfb29bdbbd15c8d5ba4f7"
   integrity sha512-OWND8ei3VtNC9h7V60qff3SVobHr996CTwgxubgyQYEpg290h9J0buyECNNJexkFm5sOajh5G116RYA1c8ZMSw==
 
-next@^13.4.9:
+next@13.4.9:
   version "13.4.9"
   resolved "https://registry.yarnpkg.com/next/-/next-13.4.9.tgz#473de5997cb4c5d7a4fb195f566952a1cbffbeba"
   integrity sha512-vtefFm/BWIi/eWOqf1GsmKG3cjKw1k3LjuefKRcL3iiLl3zWzFdPG3as6xtxrGO6gwTzzaO1ktL4oiHt/uvTjA==

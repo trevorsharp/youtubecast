@@ -1,7 +1,7 @@
-import type { Source, Video } from '~/types';
 import cacheService from './cacheService';
 import { searchChannels } from './searchService';
 import { getChannelDetails, getPlaylistDetails, getVideosForPlaylist } from './youtubeService';
+import type { Source, Video } from '~/types';
 
 const searchForSource = async (searchText: string) => {
   searchText = searchText
@@ -54,4 +54,4 @@ const getVideos = async (sourceId: string) => {
   return videos;
 };
 
-export { searchForSource, getSourceData, getVideos };
+export { getSourceData, getVideos, searchForSource };

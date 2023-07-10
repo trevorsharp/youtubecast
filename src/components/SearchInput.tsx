@@ -1,4 +1,4 @@
-import { forwardRef, useState, useEffect } from 'react';
+import { forwardRef, useEffect, useState } from 'react';
 
 const topChannels = [
   'H3 Podcast',

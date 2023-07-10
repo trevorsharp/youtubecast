@@ -46,7 +46,7 @@ const MainPage = () => {
   const [qualitySelection, setQualitySelection] = useState<Quality | 'VideoServer'>(
     videoServer ? 'VideoServer' : Quality.Default
   );
-  const [excludeShorts, setExcludeShorts] = useState<boolean>(false);
+  const [excludeShorts, setExcludeShorts] = useState<boolean>(true);
 
   const source = api.source.getSourceData.useQuery(
     { searchText },

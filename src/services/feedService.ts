@@ -12,16 +12,15 @@ const getRssFeed = async (
   videoServer?: string | undefined
 ) => {
   const source = await getSourceData(sourceId);
-  const videos = await getVideos(source.id);
+  const videos = (await getVideos(source.id))
+    .filter((video) => video.isAvailable && !(excludeShorts && video.isYouTubeShort))
+    .sort((a, b) => (a.date < b.date ? 1 : -1));
   const videoQueryParams = new URLSearchParams();
 
   if (quality != Quality.Default) videoQueryParams.append('quality', quality.toString());
 
   if (videoServer) {
-    await notifyVideoServer(
-      videoServer,
-      videos.filter((video) => video.isAvailable).sort((a, b) => (a.date < b.date ? 1 : -1))
-    );
+    await notifyVideoServer(videoServer, videos);
     videoQueryParams.append('videoServer', videoServer);
   }
 
@@ -38,22 +37,20 @@ const getRssFeed = async (
       : source.profileImageUrl,
   });
 
-  videos
-    .filter((video) => video.isAvailable && !(excludeShorts && video.isYouTubeShort))
-    .forEach((video) =>
-      rssFeed.addItem({
-        title: video.title,
-        itunesTitle: video.title,
-        description: video.description + '\n' + '\n' + video.url,
-        date: new Date(video.date),
-        enclosure: {
-          url: `http://${host}/videos/${video.id}?${videoQueryParams.toString()}`,
-          type: quality === Quality.Audio ? 'audio/aac' : 'video/mp4',
-        },
-        url: video.url,
-        itunesDuration: video.duration,
-      })
-    );
+  videos.forEach((video) =>
+    rssFeed.addItem({
+      title: video.title,
+      itunesTitle: video.title,
+      description: video.description + '\n' + '\n' + video.url,
+      date: new Date(video.date),
+      enclosure: {
+        url: `http://${host}/videos/${video.id}?${videoQueryParams.toString()}`,
+        type: quality === Quality.Audio ? 'audio/aac' : 'video/mp4',
+      },
+      url: video.url,
+      itunesDuration: video.duration,
+    })
+  );
 
   return rssFeed.buildXml();
 };

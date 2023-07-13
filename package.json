@@ -28,7 +28,7 @@
     "react-dom": "18.2.0",
     "react-hook-form": "7.33.1",
     "superjson": "1.12.2",
-    "ytdl-core": "git+https://github.com/khlevon/node-ytdl-core.git#v4.11.4-patch.1",
+    "ytdl-core": "git+https://github.com/gatecrasher777/node-ytdl-core.git",
     "zod": "3.21.4"
   },
   "devDependencies": {

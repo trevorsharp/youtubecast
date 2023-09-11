@@ -1,15 +1,23 @@
 import { forwardRef, useEffect, useState } from 'react';
 
 const topChannels = [
-  'H3 Podcast',
-  'MrBeast',
-  'PewDiePie',
+  'AlishaMarie',
   'Bay Area Buggs',
   'Casey Neistat',
-  'Marques Brownlee',
-  'Snazzy Labs',
-  'Mark Rober',
   'CGP Grey',
+  'emma chamberlain',
+  'H3 Podcast',
+  'iJustine',
+  'LaurDIY',
+  'Mark Rober',
+  'Marques Brownlee',
+  'MrBeast',
+  'PewDiePie',
+  'Pokimane',
+  'Rosanna Pansino',
+  'Safiya Nygaard',
+  'Snazzy Labs',
+  'Tana Mongeau',
   'Wendover Productions',
 ];
 

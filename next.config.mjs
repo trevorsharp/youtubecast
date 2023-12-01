@@ -18,6 +18,10 @@ const config = {
           source: '/videos/:path*',
           destination: '/api/videos/:path*',
         },
+        {
+          source: '/watch',
+          destination: '/api/watch',
+        },
       ],
       afterFiles: [],
       fallback: [],

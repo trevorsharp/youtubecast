@@ -195,7 +195,7 @@ const getPlaylistItems = async (playlistId: string) => {
       ...newPlaylistItems.sort((a, b) => (a.publishedAt < b.publishedAt ? 1 : -1)).splice(0, 50)
     );
 
-    await cacheService.set(cacheKey, playlistItems, 1800);
+    await cacheService.set(cacheKey, playlistItems, 1200);
   }
 
   return playlistItems.map((item) => ({

@@ -17,15 +17,7 @@ import ExcludeShortsSelection from './ShortsSelection';
 const MainPage = () => {
   const router = useRouter();
 
-  const saveVideoServer =
-    typeof router.query.setVideoServer === 'string' ? router.query.setVideoServer : undefined;
-
-  if (saveVideoServer)
-    document.cookie = cookie.serialize('videoServer', saveVideoServer, {
-      expires: new Date('2038-01-01'),
-    });
-
-  const videoServer = cookie.parse(document.cookie)['videoServer'];
+  const [videoServer, setVideoServer] = useState<string | undefined>();
 
   const getSearchText = () => {
     const [path, path2] = window.location.pathname
@@ -46,6 +38,7 @@ const MainPage = () => {
   const [qualitySelection, setQualitySelection] = useState<Quality | 'VideoServer'>(
     videoServer ? 'VideoServer' : Quality.Default
   );
+
   const [excludeShorts, setExcludeShorts] = useState<boolean>(true);
 
   const source = api.source.getSourceData.useQuery(
@@ -61,9 +54,43 @@ const MainPage = () => {
   useEffect(() => setFocus('searchText'), []);
   useEffect(() => setValue('searchText', searchText), [searchText]);
 
+  useEffect(() => {
+    const videoServerValue = router.query.setVideoServer;
+    let saveVideoServer = typeof videoServerValue === 'string' ? videoServerValue : undefined;
+    if (saveVideoServer) {
+      document.cookie = cookie.serialize('videoServer', saveVideoServer, {
+        expires: new Date('2038-01-01'),
+      });
+      setQualitySelection('VideoServer');
+    } else {
+      saveVideoServer = cookie.parse(document.cookie)['videoServer'] || undefined;
+    }
+    setVideoServer(saveVideoServer);
+  }, [router.query.setVideoServer]);
+
+  useEffect(() => {
+    const qualityValue = router.query.quality;
+    if (qualityValue) {
+      setQualitySelection(getQuality(qualityValue));
+    }
+  }, [router.query.quality]);
+
   const onSubmit = handleSubmit(async (values) => {
     if (values.searchText) await router.push(`/${values.searchText}`, undefined, { scroll: false });
   });
+
+  const syncQualitySelection = (quality: Quality | 'VideoServer') => {
+    setQualitySelection(quality);
+    let query = {};
+    if (quality === 'VideoServer') {
+      query = { setVideoServer: videoServer };
+    } else {
+      query = { quality: getQualityString(quality) };
+    }
+    router.push({ query: { path: router.query.path, ...query } }, undefined, {
+      scroll: false,
+    });
+  };
 
   return (
     <>
@@ -108,7 +135,7 @@ const MainPage = () => {
               <QualitySelection
                 selection={qualitySelection}
                 videoServer={videoServer}
-                onSelect={setQualitySelection}
+                onSelect={syncQualitySelection}
               />
               <ExcludeShortsSelection selection={excludeShorts} onSelect={setExcludeShorts} />
             </div>
@@ -125,5 +152,32 @@ const MainPage = () => {
     </>
   );
 };
+
+function getQuality(quality: string | string[] | undefined): Quality | 'VideoServer' {
+  if (typeof quality === 'string') {
+    switch (quality) {
+      case 'audio':
+        return Quality.Audio;
+      case '360p':
+        return Quality.P360;
+      case '720p':
+        return Quality.Default;
+      case 'VideoServer':
+        return 'VideoServer';
+    }
+  }
+  return Quality.Default;
+}
+
+function getQualityString(quality: Quality): string {
+  switch (quality) {
+    case Quality.Audio:
+      return 'audio';
+    case Quality.P360:
+      return '360p';
+    case Quality.Default:
+      return '720p';
+  }
+}
 
 export default MainPage;

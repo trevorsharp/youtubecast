@@ -1,10 +1,10 @@
 import { useState } from 'react';
-import { Quality } from '~/types';
 import getFeedUrlParams from '~/utils/getFeedUrlParams';
+import type { Quality } from '~/types';
 
 type RssLinksProps = {
   id: string;
-  qualitySelection: Quality | 'VideoServer';
+  qualitySelection: Quality;
   excludeShorts: boolean;
   videoServer: string | undefined;
 };
@@ -13,10 +13,7 @@ const RssLinks = ({ id, qualitySelection, excludeShorts, videoServer }: RssLinks
   const [copiedText, setCopiedText] = useState<string>('');
 
   const getRssLink = ({ withProtocol }: { withProtocol: boolean } = { withProtocol: true }) => {
-    const feedUrlParams =
-      qualitySelection === 'VideoServer'
-        ? getFeedUrlParams(Quality.Default, excludeShorts, videoServer)
-        : getFeedUrlParams(qualitySelection, excludeShorts, undefined);
+    const feedUrlParams = getFeedUrlParams(qualitySelection, excludeShorts, videoServer);
 
     return `${
       withProtocol ? window.location.origin : window.location.host

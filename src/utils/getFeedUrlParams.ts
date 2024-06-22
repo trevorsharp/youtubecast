@@ -8,7 +8,8 @@ const getFeedUrlParams = (
   const searchParams = new URLSearchParams();
 
   if (videoServer) searchParams.append('videoServer', videoServer);
-  if (quality !== Quality.Default) searchParams.append('quality', quality.toString());
+  if (quality !== Quality.Default && quality !== Quality.VideoServer)
+    searchParams.append('quality', quality.toString());
   if (excludeShorts) searchParams.append('excludeShorts', '');
 
   const searchParamsString = searchParams.toString().replace('excludeShorts=', 'excludeShorts');

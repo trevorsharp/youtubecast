@@ -1,9 +1,9 @@
 import { Quality } from '~/types';
 
 type QualitySelectionProps = {
-  selection: Quality | 'VideoServer';
+  selection: Quality;
   videoServer: string | undefined;
-  onSelect: (selection: Quality | 'VideoServer') => void;
+  onSelect: (selection: Quality) => void;
 };
 
 const QualitySelection = ({ selection, videoServer, onSelect }: QualitySelectionProps) => {
@@ -15,8 +15,8 @@ const QualitySelection = ({ selection, videoServer, onSelect }: QualitySelection
             id="VideoServer"
             label={`Video Server - ${videoServer}`}
             value={Quality.Audio}
-            checked={selection === 'VideoServer'}
-            onClick={() => onSelect('VideoServer')}
+            checked={selection === Quality.VideoServer}
+            onClick={() => onSelect(Quality.VideoServer)}
           />
         </div>
       )}

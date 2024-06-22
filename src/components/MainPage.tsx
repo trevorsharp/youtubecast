@@ -8,6 +8,10 @@ import { useRouter } from 'next/router';
 import { z } from 'zod';
 import { Quality } from '~/types';
 import { api } from '~/utils/api';
+import getCookieWithMaxExpiration from '~/utils/getCookieWithMaxExpiration';
+import getQualityFromString from '~/utils/getQualityFromString';
+import getQualityString from '~/utils/getQualityString';
+import getSearchText from '~/utils/getSearchText';
 import DisplayName from './DisplayName';
 import QualitySelection from './QualitySelection';
 import RssLinks from './RssLinks';
@@ -19,27 +23,13 @@ const MainPage = () => {
 
   const [videoServer, setVideoServer] = useState<string | undefined>();
 
-  const getSearchText = () => {
-    const [path, path2] = window.location.pathname
-      .split('/')
-      .filter((segment) => segment)
-      .map((segment) => decodeURI(segment));
-
-    if (path === 'channel' || path === 'c' || path === 'user') return path2;
-
-    if (path === 'playlist' || path === 'watch')
-      return typeof router.query.list === 'string' ? router.query.list : undefined;
-
-    return path;
-  };
-
-  const searchText = getSearchText() ?? '';
-
-  const [qualitySelection, setQualitySelection] = useState<Quality | 'VideoServer'>(
-    videoServer ? 'VideoServer' : Quality.Default
+  const [qualitySelection, setQualitySelection] = useState<Quality>(
+    videoServer ? Quality.VideoServer : Quality.Default
   );
 
   const [excludeShorts, setExcludeShorts] = useState<boolean>(true);
+
+  const searchText = getSearchText(router.asPath);
 
   const source = api.source.getSourceData.useQuery(
     { searchText },
@@ -52,43 +42,48 @@ const MainPage = () => {
   });
 
   useEffect(() => setFocus('searchText'), []);
+
   useEffect(() => setValue('searchText', searchText), [searchText]);
 
   useEffect(() => {
-    const videoServerValue = router.query.setVideoServer;
-    let saveVideoServer = typeof videoServerValue === 'string' ? videoServerValue : undefined;
-    if (saveVideoServer) {
-      document.cookie = cookie.serialize('videoServer', saveVideoServer, {
-        expires: new Date('2038-01-01'),
-      });
-      setQualitySelection('VideoServer');
-    } else {
-      saveVideoServer = cookie.parse(document.cookie)['videoServer'] || undefined;
+    if (typeof router.query.setVideoServer === 'string')
+      document.cookie = getCookieWithMaxExpiration('videoServer', router.query.setVideoServer);
+
+    const videoServer =
+      typeof router.query.setVideoServer === 'string'
+        ? router.query.setVideoServer
+        : typeof router.query.videoServer === 'string'
+        ? router.query.videoServer
+        : cookie.parse(document.cookie)['videoServer'];
+
+    if (videoServer) {
+      setVideoServer(videoServer);
+      setQualitySelection(Quality.VideoServer);
     }
-    setVideoServer(saveVideoServer);
-  }, [router.query.setVideoServer]);
+  }, [router.query.videoServer, router.query.setVideoServer]);
 
   useEffect(() => {
-    const qualityValue = router.query.quality;
-    if (qualityValue) {
-      setQualitySelection(getQuality(qualityValue));
-    }
+    if (typeof router.query.quality === 'string')
+      setQualitySelection(getQualityFromString(router.query.quality));
   }, [router.query.quality]);
 
   const onSubmit = handleSubmit(async (values) => {
-    if (values.searchText) await router.push(`/${values.searchText}`, undefined, { scroll: false });
+    if (values.searchText) {
+      await router.push(`/${getSearchText(values.searchText)}`, undefined, { scroll: false });
+    }
   });
 
-  const syncQualitySelection = (quality: Quality | 'VideoServer') => {
-    setQualitySelection(quality);
-    let query = {};
-    if (quality === 'VideoServer') {
-      query = { setVideoServer: videoServer };
-    } else {
-      query = { quality: getQualityString(quality) };
+  const onSetQualitySelection = async (quality: Quality) => {
+    const searchParams = new URLSearchParams();
+
+    searchParams.append('quality', getQualityString(quality));
+
+    if (quality === Quality.VideoServer && videoServer) {
+      searchParams.append('videoServer', videoServer);
     }
-    router.push({ query: { path: router.query.path, ...query } }, undefined, {
-      scroll: false,
+
+    await router.replace(`/${searchText}?${searchParams.toString()}`, undefined, {
+      shallow: true,
     });
   };
 
@@ -135,7 +130,7 @@ const MainPage = () => {
               <QualitySelection
                 selection={qualitySelection}
                 videoServer={videoServer}
-                onSelect={syncQualitySelection}
+                onSelect={onSetQualitySelection}
               />
               <ExcludeShortsSelection selection={excludeShorts} onSelect={setExcludeShorts} />
             </div>
@@ -152,32 +147,5 @@ const MainPage = () => {
     </>
   );
 };
-
-function getQuality(quality: string | string[] | undefined): Quality | 'VideoServer' {
-  if (typeof quality === 'string') {
-    switch (quality) {
-      case 'audio':
-        return Quality.Audio;
-      case '360p':
-        return Quality.P360;
-      case '720p':
-        return Quality.Default;
-      case 'VideoServer':
-        return 'VideoServer';
-    }
-  }
-  return Quality.Default;
-}
-
-function getQualityString(quality: Quality): string {
-  switch (quality) {
-    case Quality.Audio:
-      return 'audio';
-    case Quality.P360:
-      return '360p';
-    case Quality.Default:
-      return '720p';
-  }
-}
 
 export default MainPage;

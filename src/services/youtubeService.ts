@@ -1,7 +1,7 @@
 import { createHash } from 'crypto';
 import { google } from 'googleapis';
 import { z } from 'zod';
-import { env } from '~/env.mjs';
+import { env } from '~/env';
 import cacheService from './cacheService';
 import { getPlaylistVideoIds } from './playlistService';
 import type { Source, Video } from '~/types';
@@ -148,7 +148,7 @@ const getPlaylistPage = async (playlistId: string, pageToken?: string) => {
         resourceId: z.object({
           videoId: z.string(),
         }),
-      })
+      }),
     )
     .safeParse(rawPlaylistItemResults);
 
@@ -170,9 +170,8 @@ const getPlaylistPage = async (playlistId: string, pageToken?: string) => {
 
 const getPlaylistItems = async (playlistId: string) => {
   const cacheKey = `youtube-playlist-items-${playlistId}`;
-  const cacheResult = await cacheService.get<Awaited<ReturnType<typeof getPlaylistPage>>['items']>(
-    cacheKey
-  );
+  const cacheResult =
+    await cacheService.get<Awaited<ReturnType<typeof getPlaylistPage>>['items']>(cacheKey);
 
   const playlistItems = cacheResult ?? [];
 
@@ -181,7 +180,7 @@ const getPlaylistItems = async (playlistId: string) => {
     const newPlaylistItems = playlistPage.items;
 
     const playlistIsNotSortedByDateAdded = playlistItems.some(
-      (item, index, arr) => index !== 0 && item.publishedAt >= (arr[index - 1]?.publishedAt ?? '')
+      (item, index, arr) => index !== 0 && item.publishedAt >= (arr[index - 1]?.publishedAt ?? ''),
     );
 
     if (env.ENABLE_PLAYLIST_SORTING && playlistIsNotSortedByDateAdded) {
@@ -192,7 +191,7 @@ const getPlaylistItems = async (playlistId: string) => {
     }
 
     playlistItems.push(
-      ...newPlaylistItems.sort((a, b) => (a.publishedAt < b.publishedAt ? 1 : -1)).splice(0, 50)
+      ...newPlaylistItems.sort((a, b) => (a.publishedAt < b.publishedAt ? 1 : -1)).splice(0, 50),
     );
 
     await cacheService.set(cacheKey, playlistItems, 1200);
@@ -251,7 +250,7 @@ const getVideosForPlaylist = async (playlistId: string) => {
           publishedAt: z.string(),
           liveBroadcastContent: z.string(),
         }),
-      })
+      }),
     )
     .safeParse(rawVideoDetailsResults);
 
@@ -276,12 +275,12 @@ const getVideosForPlaylist = async (playlistId: string) => {
         isAvailable: getIsAvailable(
           rawVideo.status.uploadStatus,
           rawVideo.snippet.liveBroadcastContent,
-          rawVideo.status.privacyStatus
+          rawVideo.status.privacyStatus,
         ),
       };
 
       return video;
-    })
+    }),
   );
 
   if (!videoDetails.some((video) => !video.isAvailable))
@@ -293,7 +292,7 @@ const getVideosForPlaylist = async (playlistId: string) => {
 const getIsAvailable = (
   uploadStatus: string,
   liveBroadcastContent: string,
-  privacyStatus: string
+  privacyStatus: string,
 ) => uploadStatus === 'processed' && liveBroadcastContent === 'none' && privacyStatus !== 'private';
 
 const getIsYouTubeShort = async (duration: string, videoId: string) =>

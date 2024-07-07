@@ -1,9 +1,9 @@
-type ExcludeShortsSelectionProps = {
+type ShortsSelectionProps = {
   selection: boolean;
   onSelect: (selection: boolean) => void;
 };
 
-const ExcludeShortsSelection = ({ selection, onSelect }: ExcludeShortsSelectionProps) => {
+const ShortsSelection = ({ selection, onSelect }: ShortsSelectionProps) => {
   return (
     <div className="form-check flex gap-1">
       <input
@@ -20,4 +20,4 @@ const ExcludeShortsSelection = ({ selection, onSelect }: ExcludeShortsSelectionP
   );
 };
 
-export default ExcludeShortsSelection;
+export default ShortsSelection;

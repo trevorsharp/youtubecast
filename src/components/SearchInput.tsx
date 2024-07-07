@@ -1,3 +1,5 @@
+'use client';
+
 import { forwardRef, useEffect, useState } from 'react';
 
 const topChannels = [
@@ -32,7 +34,7 @@ const SearchInput = forwardRef<HTMLInputElement>((props, ref) => {
     channelList.forEach((channel) => {
       channel.split('').forEach((_, i) => {
         animationTimeouts.push(
-          setTimeout(() => setInputPlaceholder(channel.substring(0, i + 1)), timeout)
+          setTimeout(() => setInputPlaceholder(channel.substring(0, i + 1)), timeout),
         );
         timeout += 200;
       });

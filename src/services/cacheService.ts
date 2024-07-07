@@ -1,6 +1,6 @@
 import { Redis } from '@upstash/redis';
 import NodeCache from 'node-cache';
-import { env } from '~/env.mjs';
+import { env } from '~/env';
 
 const redis =
   env.UPSTASH_REDIS_REST_URL && env.UPSTASH_REDIS_REST_TOKEN

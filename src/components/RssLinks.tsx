@@ -1,8 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import type { Quality } from '~/types';
 import getFeedUrlParams from '~/utils/getFeedUrlParams';
+import type { Quality } from '~/types';
 
 type RssLinksProps = {
   sourceId: string;

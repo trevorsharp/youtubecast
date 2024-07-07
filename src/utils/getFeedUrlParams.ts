@@ -3,7 +3,7 @@ import { Quality } from '~/types';
 const getFeedUrlParams = (
   quality: Quality,
   excludeShorts: boolean,
-  videoServer?: string | undefined
+  videoServer?: string | undefined,
 ) => {
   const searchParams = new URLSearchParams();
 

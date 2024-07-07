@@ -11,7 +11,6 @@ const youtubeInstances =
 
 const getYoutube = () => {
   if (youtubeInstances.length === 0) throw 'No API Key Provided';
-  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
   return youtubeInstances[Math.floor((new Date().getMinutes() * youtubeInstances.length) / 60)]!;
 };
 

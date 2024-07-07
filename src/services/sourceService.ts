@@ -30,8 +30,8 @@ const getSourceData = async (id: string) => {
   const source = id.startsWith('UC')
     ? await getChannelDetails(id)
     : id.startsWith('PL') || id.startsWith('UU')
-    ? await getPlaylistDetails(id)
-    : null;
+      ? await getPlaylistDetails(id)
+      : null;
 
   if (!source) throw `Could not find a YouTube source for id ${id} 🤷`;
 

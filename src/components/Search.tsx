@@ -5,6 +5,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useRouter } from 'next/navigation';
 import { z } from 'zod';
+import getSearchText from '~/utils/getSearchText';
 import SearchInput from './SearchInput';
 
 const Search = ({ initialSearch }: { initialSearch?: string }) => {
@@ -20,9 +21,10 @@ const Search = ({ initialSearch }: { initialSearch?: string }) => {
   useEffect(() => setFocus('searchText'), []);
 
   const onSubmit = handleSubmit((values) => {
-    if (values.searchText && values.searchText !== initialSearch) {
+    const searchText = getSearchText(values.searchText ?? '');
+    if (searchText && searchText !== initialSearch) {
       setIsLoading(true);
-      router.push(values.searchText, { scroll: false });
+      router.push(searchText, { scroll: false });
     }
   });
 

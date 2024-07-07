@@ -24,3 +24,4 @@ const GET = async (request: Request, { params }: { params: { sourceId: string } 
 };
 
 export { GET };
+export const fetchCache = 'default-no-store';

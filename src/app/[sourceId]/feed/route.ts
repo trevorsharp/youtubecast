@@ -15,7 +15,9 @@ const GET = async (request: Request, { params }: { params: { sourceId: string } 
 
     const rssFeed = await getRssFeed(sourceId, hostname, quality, excludeShorts, videoServer);
 
-    return new NextResponse(rssFeed, { headers: { 'Cache-Control': 's-maxage=1200' } });
+    return new NextResponse(rssFeed, {
+      headers: { 'Content-Type': 'application/xml', 'Cache-Control': 's-maxage=1200' },
+    });
   } catch (errorMessage) {
     return new NextResponse((errorMessage as string | undefined) ?? 'Unexpected Error', {
       status: 500,

@@ -7,11 +7,11 @@
 const getPlaylistVideoIds = async (playlistId: string) => {
   try {
     const playlistRes = await fetch(
-      `https://www.youtube.com/playlist?list=${encodeURIComponent(playlistId.trim())}`
+      `https://www.youtube.com/playlist?list=${encodeURIComponent(playlistId.trim())}`,
     ).then((response) => response.text());
 
     const data = JSON.parse(
-      playlistRes?.split('ytInitialData = ')[1]?.split(';</script>')[0] ?? '{}'
+      playlistRes?.split('ytInitialData = ')[1]?.split(';</script>')[0] ?? '{}',
     );
 
     const videoIds: string[] | undefined =

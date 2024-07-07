@@ -9,7 +9,7 @@ const getRssFeed = async (
   host: string,
   quality: Quality,
   excludeShorts: boolean,
-  videoServer?: string | undefined
+  videoServer?: string | undefined,
 ) => {
   const source = await getSourceData(sourceId);
   const videos = (await getVideos(source.id))
@@ -49,7 +49,7 @@ const getRssFeed = async (
       },
       url: video.url,
       itunesDuration: video.duration,
-    })
+    }),
   );
 
   return rssFeed.buildXml();
@@ -57,7 +57,7 @@ const getRssFeed = async (
 
 const notifyVideoServer = async (videoServer: string, videoList: Video[]) => {
   const timeout = new Promise<Response>((_, reject) =>
-    setTimeout(() => reject(new Error('Video server request timed out')), 2000)
+    setTimeout(() => reject(new Error('Video server request timed out')), 2000),
   );
 
   await Promise.race([

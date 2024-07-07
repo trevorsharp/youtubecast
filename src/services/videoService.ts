@@ -1,12 +1,12 @@
 import ytdl from 'ytdl-core';
-import { env } from '~/env.mjs';
+import { env } from '~/env';
 import { Quality } from '~/types';
 import cacheService from './cacheService';
 
 const getStream = async (videoId: string, quality: Quality, videoServer?: string | undefined) => {
   if (videoServer) {
     const timeout = new Promise<Response>((_, reject) =>
-      setTimeout(() => reject(new Error('Video server request timed out')), 2000)
+      setTimeout(() => reject(new Error('Video server request timed out')), 2000),
     );
 
     const videoLink = await Promise.race([await fetch(`http://${videoServer}/${videoId}`), timeout])
@@ -39,7 +39,7 @@ const getVideoUrl = async (videoId: string, quality: Quality) => {
       (format) =>
         format.hasAudio &&
         format.container === 'mp4' &&
-        (!format.hasVideo || format.videoCodec?.includes('avc'))
+        (!format.hasVideo || format.videoCodec?.includes('avc')),
     )
     .sort((a, b) => (b.audioBitrate ?? 0) - (a.audioBitrate ?? 0))
     .sort((a, b) => (b.height ?? 0) - (a.height ?? 0));

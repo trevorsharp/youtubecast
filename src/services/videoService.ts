@@ -1,4 +1,4 @@
-import ytdl from 'ytdl-core';
+import ytdl from '@distube/ytdl-core';
 import { env } from '~/env';
 import { Quality } from '~/types';
 import cacheService from './cacheService';

@@ -32,3 +32,4 @@ const Layout = ({ children }: LayoutProps) => {
 };
 
 export default Layout;
+export const fetchCache = 'default-no-store';

@@ -7,7 +7,7 @@ import { getPlaylistVideoIds } from './playlistService';
 import type { Source, Video } from '~/types';
 
 const youtubeInstances =
-  env.YOUTUBE_API_KEY.split(',').map((auth) => google.youtube({ version: 'v3', auth })) ?? [];
+  env.YOUTUBE_API_KEY?.split(',')?.map((auth) => google.youtube({ version: 'v3', auth })) ?? [];
 
 const getYoutube = () => {
   if (youtubeInstances.length === 0) throw 'No API Key Provided';

@@ -21,7 +21,7 @@ const getChannelDetails = async (channelId: string) => {
       id: [channelId],
     })
     .then((response) => response?.data?.items?.shift())
-    .catch((error) => console.log(error));
+    .catch((error) => console.error(error));
 
   const channelResult = z
     .object({
@@ -59,7 +59,7 @@ const getPlaylistDetails = async (playlistId: string) => {
       id: [playlistId],
     })
     .then((response) => response?.data?.items?.shift())
-    .catch((error) => console.log(error));
+    .catch((error) => console.error(error));
 
   const playlistResult = z
     .object({
@@ -82,7 +82,7 @@ const getPlaylistDetails = async (playlistId: string) => {
       id: [channelId],
     })
     .then((response) => response?.data?.items?.shift())
-    .catch((error) => console.log(error));
+    .catch((error) => console.error(error));
 
   const channelResult = z
     .object({
@@ -136,7 +136,7 @@ const getPlaylistPage = async (playlistId: string, pageToken?: string) => {
     })
     .then((response) => [response?.data?.items?.map((x) => x?.snippet), response?.data])
     .catch((error) => {
-      console.log(error);
+      console.error(error);
       return [undefined, undefined];
     });
 
@@ -168,38 +168,31 @@ const getPlaylistPage = async (playlistId: string, pageToken?: string) => {
 };
 
 const getPlaylistItems = async (playlistId: string) => {
-  const cacheKey = `youtube-playlist-items-${playlistId}`;
-  const cacheResult =
-    await cacheService.get<Awaited<ReturnType<typeof getPlaylistPage>>['items']>(cacheKey);
+  const firstPlaylistPage = await getPlaylistPage(playlistId);
+  const playlistItems = firstPlaylistPage.items;
 
-  const playlistItems = cacheResult ?? [];
-
-  if (playlistItems.length === 0) {
-    let playlistPage = await getPlaylistPage(playlistId);
-    const newPlaylistItems = playlistPage.items;
-
+  if (env.ENABLE_PLAYLIST_SORTING) {
     const playlistIsNotSortedByDateAdded = playlistItems.some(
       (item, index, arr) => index !== 0 && item.publishedAt >= (arr[index - 1]?.publishedAt ?? ''),
     );
 
-    if (env.ENABLE_PLAYLIST_SORTING && playlistIsNotSortedByDateAdded) {
-      for (let i = 0; i < 100 && playlistPage.nextPageToken; i++) {
-        playlistPage = await getPlaylistPage(playlistId, playlistPage.nextPageToken);
-        newPlaylistItems.push(...playlistPage.items);
+    if (playlistIsNotSortedByDateAdded) {
+      let nextPageToken = firstPlaylistPage.nextPageToken;
+      for (let i = 0; i < 100 && nextPageToken; i++) {
+        const nextPlaylistPage = await getPlaylistPage(playlistId, nextPageToken);
+        playlistItems.push(...nextPlaylistPage.items);
+        nextPageToken = nextPlaylistPage.nextPageToken;
       }
     }
-
-    playlistItems.push(
-      ...newPlaylistItems.sort((a, b) => (a.publishedAt < b.publishedAt ? 1 : -1)).splice(0, 50),
-    );
-
-    await cacheService.set(cacheKey, playlistItems, 1200);
   }
 
-  return playlistItems.map((item) => ({
-    id: item.resourceId.videoId,
-    date: new Date(item.publishedAt).toISOString(),
-  }));
+  return playlistItems
+    .sort((a, b) => (a.publishedAt < b.publishedAt ? 1 : -1))
+    .splice(0, 50)
+    .map((item) => ({
+      id: item.resourceId.videoId,
+      date: new Date(item.publishedAt).toISOString(),
+    }));
 };
 
 const getVideosForPlaylist = async (playlistId: string) => {
@@ -230,7 +223,7 @@ const getVideosForPlaylist = async (playlistId: string) => {
       id: videoIds,
     })
     .then((response) => response?.data?.items)
-    .catch((error) => console.log(error));
+    .catch((error) => console.error(error));
 
   const videoDetailsResults = z
     .array(

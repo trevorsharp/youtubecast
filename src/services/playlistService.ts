@@ -23,7 +23,7 @@ const getPlaylistVideoIds = async (playlistId: string) => {
 
     return videoIds;
   } catch (error) {
-    console.log(error);
+    console.error(error);
   }
 
   throw 'Sorry, something went wrong getting playlist items 🤷';

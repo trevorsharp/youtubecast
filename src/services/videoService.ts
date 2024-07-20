@@ -1,7 +1,6 @@
 import ytdl from '@distube/ytdl-core';
 import { env } from '~/env';
 import { Quality } from '~/types';
-import cacheService from './cacheService';
 
 const getStream = async (videoId: string, quality: Quality, videoServer?: string | undefined) => {
   if (videoServer) {
@@ -16,15 +15,9 @@ const getStream = async (videoId: string, quality: Quality, videoServer?: string
     if (videoLink) return `http://${videoServer}${videoLink}`;
   }
 
-  const cacheKey = `video-url-${videoId}-${quality}`;
-  const cacheResult = await cacheService.get<string>(cacheKey);
-  if (cacheResult) return cacheResult;
-
   const videoUrl = await getVideoUrl(videoId, quality);
 
   if (!videoUrl) throw `Video not found with id ${videoId}`;
-
-  await cacheService.set(cacheKey, videoUrl, 3600);
 
   return videoUrl;
 };

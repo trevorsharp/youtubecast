@@ -65,9 +65,9 @@ const notifyVideoServer = async (videoServer: string, videoList: Video[]) => {
       method: 'POST',
       headers: { 'Content-type': 'application/json' },
       body: JSON.stringify(videoList.map((x) => x.id)),
-    }).catch((error) => console.log(error)),
+    }).catch((error) => console.error(error)),
     timeout,
-  ]).catch((error) => console.log(error));
+  ]).catch((error) => console.error(error));
 };
 
 export { getRssFeed };

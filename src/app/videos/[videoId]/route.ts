@@ -12,7 +12,10 @@ const GET = async (request: Request, { params }: { params: { videoId: string } }
 
     const videoUrl = await getStream(videoId, quality, videoServer);
 
-    return NextResponse.redirect(encodeURI(videoUrl).replaceAll('%25', '%'), { status: 307 });
+    return NextResponse.redirect(encodeURI(videoUrl).replaceAll('%25', '%'), {
+      status: 307,
+      headers: { 'Cache-Control': 's-maxage=1800' },
+    });
   } catch (errorMessage) {
     return new NextResponse((errorMessage as string | undefined) ?? 'Unexpected Error', {
       status: 500,

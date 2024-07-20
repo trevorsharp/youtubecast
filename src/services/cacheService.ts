@@ -28,14 +28,6 @@ const set = async <T>(key: string, value: T, ttl: number) => {
   return cache.set<T>(key, value, ttl);
 };
 
-const del = async (key: string | string[]) => {
-  if (redis) {
-    return await redis.del(...(typeof key === 'string' ? [key] : key));
-  }
-
-  return cache.del(key);
-};
-
-const cacheService = { get, set, del };
+const cacheService = { get, set };
 
 export default cacheService;

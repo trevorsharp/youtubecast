@@ -64,7 +64,7 @@ const searchChannels = async (searchQuery: string) => {
       return details.find((detail) => detail.channelRenderer?.channelId).channelRenderer
         .channelId as string | undefined;
   } catch (error) {
-    console.log(error);
+    console.error(error);
   }
 
   throw 'Sorry, something went wrong with your search 🤷';

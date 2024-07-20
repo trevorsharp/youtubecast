@@ -1,7 +1,7 @@
 import cacheService from './cacheService';
 import { searchChannels } from './searchService';
 import { getChannelDetails, getPlaylistDetails, getVideosForPlaylist } from './youtubeService';
-import type { Source, Video } from '~/types';
+import type { Source } from '~/types';
 
 const searchForSource = async (searchText: string) => {
   searchText = searchText
@@ -41,17 +41,8 @@ const getSourceData = async (id: string) => {
 };
 
 const getVideos = async (sourceId: string) => {
-  const cacheKey = `source-videos-${sourceId}`;
-  const cacheResult = await cacheService.get<Video[]>(cacheKey);
-  if (cacheResult) return cacheResult;
-
   const playlistId = sourceId.replace(/^UC/, 'UU');
-
-  const videos = await getVideosForPlaylist(playlistId);
-
-  await cacheService.set(cacheKey, videos, 1200);
-
-  return videos;
+  return await getVideosForPlaylist(playlistId);
 };
 
 export { getSourceData, getVideos, searchForSource };

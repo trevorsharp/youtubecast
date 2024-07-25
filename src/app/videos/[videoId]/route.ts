@@ -16,8 +16,9 @@ const GET = async (request: Request, { params }: { params: { videoId: string } }
       status: 307,
       headers: { 'Cache-Control': `s-maxage=${isVideoServer ? '60' : '600'}` },
     });
-  } catch (errorMessage) {
-    return new NextResponse((errorMessage as string | undefined) ?? 'Unexpected Error', {
+  } catch (error) {
+    console.error(error);
+    return new NextResponse(typeof error === 'string' ? error : 'Unexpected Error', {
       status: 500,
     });
   }

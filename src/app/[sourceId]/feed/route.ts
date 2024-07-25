@@ -18,8 +18,9 @@ const GET = async (request: Request, { params }: { params: { sourceId: string } 
     return new NextResponse(rssFeed, {
       headers: { 'Content-Type': 'application/xml', 'Cache-Control': 's-maxage=1800' },
     });
-  } catch (errorMessage) {
-    return new NextResponse((errorMessage as string | undefined) ?? 'Unexpected Error', {
+  } catch (error) {
+    console.error(error);
+    return new NextResponse(typeof error === "string" ? error :'Unexpected Error', {
       status: 500,
     });
   }

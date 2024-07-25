@@ -15,13 +15,17 @@ const getYoutube = () => {
 };
 
 const getChannelDetails = async (channelId: string) => {
-  const rawChannelResult = await getYoutube()
+  const rawChannelResults = await getYoutube()
     .channels.list({
       part: ['snippet'],
       id: [channelId],
     })
-    .then((response) => response?.data?.items?.shift())
+    .then((response) => response?.data?.items)
     .catch((error) => console.error(error));
+
+  console.log(rawChannelResults);
+
+  if (rawChannelResults === undefined || rawChannelResults.length === 0) throw 'Channel Not Found';
 
   const channelResult = z
     .object({
@@ -36,7 +40,7 @@ const getChannelDetails = async (channelId: string) => {
         }),
       }),
     })
-    .safeParse(rawChannelResult);
+    .safeParse(rawChannelResults.shift());
 
   if (!channelResult.success) throw `Could not find YouTube channel for id ${channelId} 🤷`;
 
@@ -53,13 +57,16 @@ const getChannelDetails = async (channelId: string) => {
 };
 
 const getPlaylistDetails = async (playlistId: string) => {
-  const rawPlaylistResult = await getYoutube()
+  const rawPlaylistResults = await getYoutube()
     .playlists.list({
       part: ['snippet'],
       id: [playlistId],
     })
-    .then((response) => response?.data?.items?.shift())
+    .then((response) => response?.data?.items)
     .catch((error) => console.error(error));
+
+  if (rawPlaylistResults === undefined || rawPlaylistResults.length === 0)
+    throw 'Playlist Not Found';
 
   const playlistResult = z
     .object({
@@ -70,7 +77,7 @@ const getPlaylistDetails = async (playlistId: string) => {
         channelId: z.string(),
       }),
     })
-    .safeParse(rawPlaylistResult);
+    .safeParse(rawPlaylistResults?.shift());
 
   if (!playlistResult.success) throw `Could not find YouTube playlist for id ${playlistId} 🤷`;
 

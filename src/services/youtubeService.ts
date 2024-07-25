@@ -2,7 +2,7 @@ import { createHash } from 'crypto';
 import { google } from 'googleapis';
 import { z } from 'zod';
 import { env } from '~/env';
-import cacheService from './cacheService';
+import { withCache } from './cacheService';
 import { getPlaylistVideoIds } from './playlistService';
 import type { Source, Video } from '~/types';
 
@@ -126,6 +126,46 @@ const getPlaylistDetails = async (playlistId: string) => {
   return source;
 };
 
+const getVideosForPlaylist = async (playlistId: string) => {
+  if (env.ENABLE_PLAYLIST_SORTING) return await fetchPlaylistVideos(playlistId);
+
+  const videoIds = await getPlaylistVideoIds(playlistId);
+
+  if (videoIds.length === 0) return await fetchPlaylistVideos(playlistId);
+
+  return getVideoDetails(videoIds.map((videoId) => ({ id: videoId })));
+};
+
+const fetchPlaylistVideos = async (playlistId: string): Promise<Video[]> => {
+  const firstPlaylistPage = await getPlaylistPage(playlistId);
+  const playlistItems = firstPlaylistPage.items;
+
+  if (env.ENABLE_PLAYLIST_SORTING) {
+    const playlistIsNotSortedByDateAdded = playlistItems.some(
+      (item, index, arr) => index !== 0 && item.publishedAt >= (arr[index - 1]?.publishedAt ?? ''),
+    );
+
+    if (playlistIsNotSortedByDateAdded) {
+      let nextPageToken = firstPlaylistPage.nextPageToken;
+      for (let i = 0; i < 100 && nextPageToken; i++) {
+        const nextPlaylistPage = await getPlaylistPage(playlistId, nextPageToken);
+        playlistItems.push(...nextPlaylistPage.items);
+        nextPageToken = nextPlaylistPage.nextPageToken;
+      }
+    }
+  }
+
+  const videos = playlistItems
+    .sort((a, b) => (a.publishedAt < b.publishedAt ? 1 : -1))
+    .splice(0, 50)
+    .map((item) => ({
+      id: item.resourceId.videoId,
+      date: new Date(item.publishedAt),
+    }));
+
+  return await getVideoDetails(videos);
+};
+
 const getPlaylistPage = async (playlistId: string, pageToken?: string) => {
   const [rawPlaylistItemResults, rawPlaylistResults] = await getYoutube()
     .playlistItems.list({
@@ -167,100 +207,55 @@ const getPlaylistPage = async (playlistId: string, pageToken?: string) => {
   return { ...playlistResults.data, items: playlistItemResults.data };
 };
 
-const getPlaylistItems = async (playlistId: string) => {
-  const firstPlaylistPage = await getPlaylistPage(playlistId);
-  const playlistItems = firstPlaylistPage.items;
-
-  if (env.ENABLE_PLAYLIST_SORTING) {
-    const playlistIsNotSortedByDateAdded = playlistItems.some(
-      (item, index, arr) => index !== 0 && item.publishedAt >= (arr[index - 1]?.publishedAt ?? ''),
-    );
-
-    if (playlistIsNotSortedByDateAdded) {
-      let nextPageToken = firstPlaylistPage.nextPageToken;
-      for (let i = 0; i < 100 && nextPageToken; i++) {
-        const nextPlaylistPage = await getPlaylistPage(playlistId, nextPageToken);
-        playlistItems.push(...nextPlaylistPage.items);
-        nextPageToken = nextPlaylistPage.nextPageToken;
-      }
-    }
-  }
-
-  return playlistItems
-    .sort((a, b) => (a.publishedAt < b.publishedAt ? 1 : -1))
-    .splice(0, 50)
-    .map((item) => ({
-      id: item.resourceId.videoId,
-      date: new Date(item.publishedAt).toISOString(),
-    }));
-};
-
-const getVideosForPlaylist = async (playlistId: string) => {
-  let playlistItems: { id: string; date: string }[] = [];
-  let videoIds = (await getPlaylistVideoIds(playlistId)) ?? [];
-
-  if (videoIds.length === 0 || env.ENABLE_PLAYLIST_SORTING) {
-    playlistItems = await getPlaylistItems(playlistId);
-    videoIds = playlistItems.map((item) => item.id);
-  }
-
-  if (videoIds.length === 0) return [];
-
-  const videoIdHash = createHash('sha256').update(videoIds.sort().join('-')).digest('hex');
-
-  const cacheKey = `youtube-videos-${videoIdHash}`;
-  const cacheResult = await cacheService.get<Video[]>(cacheKey);
-  if (cacheResult) return cacheResult;
-
-  if (playlistItems.length === 0 && !playlistId.startsWith('UU')) {
-    playlistItems = await getPlaylistItems(playlistId);
-  }
-
-  const rawVideoDetailsResults = await getYoutube()
-    .videos.list({
-      part: ['snippet,contentDetails,status'],
-      maxResults: 50,
-      id: videoIds,
-    })
-    .then((response) => response?.data?.items)
-    .catch((error) => console.error(error));
-
-  const videoDetailsResults = z
-    .array(
-      z.object({
-        id: z.string(),
-        contentDetails: z.object({
-          duration: z.string(),
-        }),
-        status: z.object({
-          uploadStatus: z.string(),
-          privacyStatus: z.string(),
-        }),
-        snippet: z.object({
-          title: z.string(),
-          description: z.string(),
-          publishedAt: z.string(),
-          liveBroadcastContent: z.string(),
-        }),
-      }),
+const getVideoDetails = (videos: { id: string; date?: Date | undefined }[]): Promise<Video[]> => {
+  const videoIdHash = createHash('sha256')
+    .update(
+      videos
+        .map((v) => v.id)
+        .sort()
+        .join('-'),
     )
-    .safeParse(rawVideoDetailsResults);
+    .digest('hex');
 
-  if (!videoDetailsResults.success) throw `Could not find videos on YouTube 🤷`;
+  return withCache({ cacheKey: `video-details-${videoIdHash}`, ttl: 24 * 60 * 60 }, async () => {
+    const rawVideoDetailsResults = await getYoutube()
+      .videos.list({
+        part: ['snippet,contentDetails,status'],
+        maxResults: 50,
+        id: videos.map((v) => v.id),
+      })
+      .then((response) => response?.data?.items)
+      .catch((error) => console.error(error));
 
-  const videoDetails = await Promise.all(
-    videoDetailsResults.data.map(async (rawVideo) => {
-      const uploadDate = new Date(rawVideo.snippet.publishedAt).toISOString();
-      const addedToPlaylistDate = playlistItems.find((v) => v.id === rawVideo.id)?.date;
+    const videoDetailsResults = z
+      .array(
+        z.object({
+          id: z.string(),
+          contentDetails: z.object({
+            duration: z.string(),
+          }),
+          status: z.object({
+            uploadStatus: z.string(),
+            privacyStatus: z.string(),
+          }),
+          snippet: z.object({
+            title: z.string(),
+            description: z.string(),
+            publishedAt: z.string(),
+            liveBroadcastContent: z.string(),
+          }),
+        }),
+      )
+      .safeParse(rawVideoDetailsResults);
 
-      const date =
-        addedToPlaylistDate && addedToPlaylistDate > uploadDate ? addedToPlaylistDate : uploadDate;
+    if (!videoDetailsResults.success) throw `Could not find videos on YouTube 🤷`;
 
-      const video: Video = {
+    const videoDetails = await Promise.all(
+      videoDetailsResults.data.map(async (rawVideo) => ({
         id: rawVideo.id,
         title: rawVideo.snippet.title,
         description: rawVideo.snippet.description,
-        date,
+        date: getDate(rawVideo.snippet.publishedAt, videos.find((v) => v.id === rawVideo.id)?.date),
         url: `https://youtu.be/${rawVideo.id}`,
         duration: getDuration(rawVideo.contentDetails.duration),
         isYouTubeShort: await getIsYouTubeShort(rawVideo.contentDetails.duration, rawVideo.id),
@@ -269,29 +264,18 @@ const getVideosForPlaylist = async (playlistId: string) => {
           rawVideo.snippet.liveBroadcastContent,
           rawVideo.status.privacyStatus,
         ),
-      };
+      })),
+    );
 
-      return video;
-    }),
-  );
-
-  if (!videoDetails.some((video) => !video.isAvailable))
-    await cacheService.set(cacheKey, videoDetails, 86400);
-
-  return videoDetails;
+    return videoDetails;
+  })();
 };
 
-const getIsAvailable = (
-  uploadStatus: string,
-  liveBroadcastContent: string,
-  privacyStatus: string,
-) => uploadStatus === 'processed' && liveBroadcastContent === 'none' && privacyStatus !== 'private';
-
-const getIsYouTubeShort = async (duration: string, videoId: string) =>
-  getDuration(duration) <= 60 &&
-  (await fetch(`https://www.youtube.com/shorts/${videoId}`, {
-    method: 'HEAD',
-  }).then((response) => !response.redirected));
+const getDate = (uploadDate: Date | string, addedToPlaylistDate: Date | string | undefined) =>
+  (addedToPlaylistDate && new Date(addedToPlaylistDate) > new Date(uploadDate)
+    ? new Date(addedToPlaylistDate)
+    : new Date(uploadDate)
+  ).toISOString();
 
 const getDuration = (duration: string | undefined) => {
   if (!duration) return 0;
@@ -306,4 +290,16 @@ const getDuration = (duration: string | undefined) => {
   return hours * 3600 + minutes * 60 + seconds;
 };
 
-export { getChannelDetails, getPlaylistDetails, getPlaylistItems, getVideosForPlaylist };
+const getIsAvailable = (
+  uploadStatus: string,
+  liveBroadcastContent: string,
+  privacyStatus: string,
+) => uploadStatus === 'processed' && liveBroadcastContent === 'none' && privacyStatus !== 'private';
+
+const getIsYouTubeShort = async (duration: string, videoId: string) =>
+  getDuration(duration) <= 60 &&
+  (await fetch(`https://www.youtube.com/shorts/${videoId}`, {
+    method: 'HEAD',
+  }).then((response) => !response.redirected));
+
+export { getChannelDetails, getPlaylistDetails, getVideosForPlaylist };

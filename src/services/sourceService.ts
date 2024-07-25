@@ -1,7 +1,6 @@
-import cacheService from './cacheService';
+import { withCache } from './cacheService';
 import { searchChannels } from './searchService';
 import { getChannelDetails, getPlaylistDetails, getVideosForPlaylist } from './youtubeService';
-import type { Source } from '~/types';
 
 const searchForSource = async (searchText: string) => {
   searchText = searchText
@@ -22,23 +21,20 @@ const searchForSource = async (searchText: string) => {
   return source;
 };
 
-const getSourceData = async (id: string) => {
-  const cacheKey = `source-${id}`;
-  const cacheResult = await cacheService.get<Source>(cacheKey);
-  if (cacheResult) return cacheResult;
+const getSourceData = withCache(
+  { cacheKey: 'source', ttl: Math.floor(3 * (1 + Math.random()) * 86400) },
+  async (id: string) => {
+    const source = id.startsWith('UC')
+      ? await getChannelDetails(id)
+      : id.startsWith('PL') || id.startsWith('UU')
+        ? await getPlaylistDetails(id)
+        : null;
 
-  const source = id.startsWith('UC')
-    ? await getChannelDetails(id)
-    : id.startsWith('PL') || id.startsWith('UU')
-      ? await getPlaylistDetails(id)
-      : null;
+    if (!source) throw `Could not find a YouTube source for id ${id} 🤷`;
 
-  if (!source) throw `Could not find a YouTube source for id ${id} 🤷`;
-
-  const cacheTtl = Math.floor(3 * (1 + Math.random()) * 86400);
-  await cacheService.set(cacheKey, source, cacheTtl);
-  return source;
-};
+    return source;
+  },
+);
 
 const getVideos = async (sourceId: string) => {
   const playlistId = sourceId.replace(/^UC/, 'UU');

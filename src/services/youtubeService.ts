@@ -232,7 +232,7 @@ const getVideoDetails = (videos: { id: string; date?: Date | undefined }[]): Pro
         z.object({
           id: z.string(),
           contentDetails: z.object({
-            duration: z.string(),
+            duration: z.string().optional(),
           }),
           status: z.object({
             uploadStatus: z.string(),
@@ -296,7 +296,8 @@ const getIsAvailable = (
   privacyStatus: string,
 ) => uploadStatus === 'processed' && liveBroadcastContent === 'none' && privacyStatus !== 'private';
 
-const getIsYouTubeShort = async (duration: string, videoId: string) =>
+const getIsYouTubeShort = async (duration: string | undefined, videoId: string) =>
+  !!duration &&
   getDuration(duration) <= 60 &&
   (await fetch(`https://www.youtube.com/shorts/${videoId}`, {
     method: 'HEAD',

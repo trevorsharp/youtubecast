@@ -19,7 +19,7 @@ const GET = async (request: Request, { params }: { params: { sourceId: string } 
       headers: { 'Content-Type': 'application/xml', 'Cache-Control': 's-maxage=1800' },
     });
   } catch (error) {
-    if (typeof error === 'string' && error.includes('Not Found'))
+    if (typeof error === 'string' && error.toLowerCase().includes('not found'))
       return new NextResponse(error, { status: 404 });
 
     console.error(error);

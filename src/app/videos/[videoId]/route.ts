@@ -17,7 +17,11 @@ const GET = async (request: Request, { params }: { params: { videoId: string } }
       headers: { 'Cache-Control': `s-maxage=${isVideoServer ? '60' : '600'}` },
     });
   } catch (error) {
+    if (typeof error === 'string' && error.toLowerCase().includes('video unavailable'))
+      return new NextResponse('Video Unavailable', { status: 403 });
+
     console.error(error);
+
     return new NextResponse(typeof error === 'string' ? error : 'Unexpected Error', {
       status: 500,
     });

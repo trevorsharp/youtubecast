@@ -19,7 +19,7 @@ const getPlaylistVideoIds = async (playlistId: string) => {
         ?.map((x: any) => x?.playlistVideoRenderer?.videoId)
         .slice(0, 50);
 
-    if (videoIds === undefined) throw `Could not find playlist items for playlist id ${playlistId}`;
+    if (videoIds === undefined) return [];
 
     return videoIds;
   } catch (error) {

@@ -11,7 +11,7 @@ const GET = (request: Request) => {
       return NextResponse.redirect(`http://${hostname}`);
     }
 
-    return NextResponse.redirect(`http://${hostname}/videos/${videoId}`);
+    return NextResponse.redirect(`http://${hostname}/videos/${videoId}?${searchParams.toString()}`);
   } catch (errorMessage) {
     return new NextResponse((errorMessage as string | undefined) ?? 'Unexpected Error', {
       status: 500,

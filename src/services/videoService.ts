@@ -2,7 +2,7 @@ import ytdl from '@distube/ytdl-core';
 import { env } from '~/env';
 import { Quality } from '~/types';
 
-const getStream = async (videoId: string, quality: Quality, videoServer?: string | undefined) => {
+const getStream = async (videoId: string, quality: Quality, videoServer?: string | undefined): Promise<[string, boolean]> => {
   if (videoServer) {
     const timeout = new Promise<Response>((_, reject) =>
       setTimeout(() => reject(new Error('Video server request timed out')), 2000),
@@ -12,14 +12,14 @@ const getStream = async (videoId: string, quality: Quality, videoServer?: string
       .then((response) => (response.status === 200 ? response.text() : undefined))
       .catch(() => undefined);
 
-    if (videoLink) return `http://${videoServer}${videoLink}`;
+    if (videoLink) return [`http://${videoServer}${videoLink}`, true];
   }
 
   const videoUrl = await getVideoUrl(videoId, quality);
 
   if (!videoUrl) throw `Video not found with id ${videoId}`;
 
-  return videoUrl;
+  return [videoUrl, false];
 };
 
 const getVideoUrl = async (videoId: string, quality: Quality) => {

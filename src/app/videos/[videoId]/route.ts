@@ -10,11 +10,11 @@ const GET = async (request: Request, { params }: { params: { videoId: string } }
     const quality = parseInt(searchParams.get('quality') ?? '') || Quality.Default;
     const videoServer = searchParams.get('videoServer') ?? undefined;
 
-    const videoUrl = await getStream(videoId, quality, videoServer);
+    const [videoUrl, isVideoServer] = await getStream(videoId, quality, videoServer);
 
     return NextResponse.redirect(encodeURI(videoUrl).replaceAll('%25', '%'), {
       status: 307,
-      headers: { 'Cache-Control': 's-maxage=1800' },
+      headers: { 'Cache-Control': `s-maxage=${isVideoServer ? '60' : '600'}` },
     });
   } catch (errorMessage) {
     return new NextResponse((errorMessage as string | undefined) ?? 'Unexpected Error', {

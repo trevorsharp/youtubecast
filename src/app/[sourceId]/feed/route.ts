@@ -20,7 +20,7 @@ const GET = async (request: Request, { params }: { params: { sourceId: string } 
     });
   } catch (error) {
     console.error(error);
-    return new NextResponse(typeof error === "string" ? error :'Unexpected Error', {
+    return new NextResponse(typeof error === 'string' ? error : 'Unexpected Error', {
       status: 500,
     });
   }

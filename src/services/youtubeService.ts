@@ -163,6 +163,8 @@ const fetchPlaylistVideos = async (playlistId: string): Promise<Video[]> => {
       date: new Date(item.publishedAt),
     }));
 
+  if (videos.length === 0) return [];
+
   return await getVideoDetails(videos);
 };
 
@@ -176,6 +178,8 @@ const getPlaylistPage = async (playlistId: string, pageToken?: string) => {
     })
     .then((response) => [response?.data?.items?.map((x) => x?.snippet), response?.data])
     .catch((error) => {
+      if (typeof error === 'object' && (error as { code: unknown }).code === 404)
+        return [[], { pageInfo: { totalResults: 0 } }];
       console.error(error);
       return [undefined, undefined];
     });

@@ -44,7 +44,7 @@ const getRssFeed = async (
       description: video.description + '\n' + '\n' + video.url,
       date: new Date(video.date),
       enclosure: {
-        url: `http://${host}/videos/${video.id}?${videoQueryParams.toString()}`,
+        url: `http://${host}/videos/${video.id}${videoQueryParams.size > 0 ? '?' : ''}${videoQueryParams.toString()}`,
         type: quality === Quality.Audio ? 'audio/aac' : 'video/mp4',
       },
       url: video.url,

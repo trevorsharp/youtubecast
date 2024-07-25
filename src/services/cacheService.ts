@@ -42,8 +42,6 @@ const withCache =
   async (...args: Parameters<TFunc>): Promise<Awaited<ReturnType<TFunc>>> => {
     const fullCacheKey = `${cacheKey}${args.length > 0 ? '-' : ''}${args.join('-')}`;
 
-    console.log('Hitting cache for ', fullCacheKey);
-
     if (env.USE_UNSTABLE_CACHE) {
       return await unstable_cache(() => func(...args), [fullCacheKey], { revalidate: ttl })();
     }

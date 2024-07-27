@@ -228,7 +228,7 @@ const getVideoDetails = (videos: { id: string; date?: Date | undefined }[]): Pro
     )
     .digest('hex');
 
-  return withCache({ cacheKey: `video-details-${videoIdHash}`, ttl: 24 * 60 * 60 }, async () => {
+  return withCache({ cacheKey: `video-details-${videoIdHash}`, ttl: 2 * 60 * 60 }, async () => {
     const rawVideoDetailsResults = await getYoutube()
       .videos.list({
         part: ['snippet,contentDetails,status'],

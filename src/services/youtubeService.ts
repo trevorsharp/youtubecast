@@ -23,8 +23,6 @@ const getChannelDetails = async (channelId: string) => {
     .then((response) => response?.data?.items)
     .catch((error) => console.error(error));
 
-  console.log(rawChannelResults);
-
   if (rawChannelResults === undefined || rawChannelResults.length === 0) throw 'Channel Not Found';
 
   const channelResult = z

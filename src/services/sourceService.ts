@@ -38,7 +38,7 @@ const getSourceAndVideos = async (sourceId: string) => {
     !playlistVideoIds.some((videoId) => !cachedVideos.some((v) => v.id === videoId));
 
   if (cachedSource && cacheContainsAllVideos) {
-    return [cachedSource, cachedVideos];
+    return [cachedSource, cachedVideos] as const;
   }
 
   const [source, videos] = await Promise.all([getSource(sourceId), getPlaylistVideos(playlistId)]);
@@ -46,7 +46,7 @@ const getSourceAndVideos = async (sourceId: string) => {
   const cacheHours = videos.some((v) => (v.isProcessing || v.isLive) && !v.isPrivate) ? 1 : 6;
   await cacheService.set(cacheKey, [source, videos], cacheHours * 60 * 60);
 
-  return [source, videos];
+  return [source, videos] as const;
 };
 
 const getSource = async (id: string) => {

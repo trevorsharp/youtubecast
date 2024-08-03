@@ -1,7 +1,7 @@
 import { Podcast } from 'podcast';
 import { Quality } from '~/types';
 import getFeedUrlParams from '~/utils/getFeedUrlParams';
-import { getSourceData, getVideos } from './sourceService';
+import { getSourceAndVideos } from './sourceService';
 import type { Video } from '~/types';
 
 const getRssFeed = async (
@@ -11,10 +11,11 @@ const getRssFeed = async (
   excludeShorts: boolean,
   videoServer?: string | undefined,
 ) => {
-  const source = await getSourceData(sourceId);
-  const videos = (await getVideos(source.id))
+  const [source, allVideos] = await getSourceAndVideos(sourceId);
+  const videos = allVideos
     .filter((video) => video.isAvailable && !(excludeShorts && video.isYouTubeShort))
     .sort((a, b) => (a.date < b.date ? 1 : -1));
+
   const videoQueryParams = new URLSearchParams();
 
   if (quality != Quality.Default) videoQueryParams.append('quality', quality.toString());

@@ -16,10 +16,6 @@ export const env = createEnv({
       .string()
       .optional()
       .transform((val) => val?.toLowerCase() === 'true'),
-    USE_UNSTABLE_CACHE: z
-      .string()
-      .optional()
-      .transform((val) => val?.toLowerCase() === 'true'),
   },
 
   /**
@@ -42,7 +38,6 @@ export const env = createEnv({
     UPSTASH_REDIS_REST_TOKEN: process.env.UPSTASH_REDIS_REST_TOKEN,
     COOKIES: process.env.COOKIES,
     ENABLE_PLAYLIST_SORTING: process.env.ENABLE_PLAYLIST_SORTING,
-    USE_UNSTABLE_CACHE: process.env.USE_UNSTABLE_CACHE,
     // NEXT_PUBLIC_CLIENTVAR: process.env.NEXT_PUBLIC_CLIENTVAR,
   },
   /**

@@ -1,6 +1,8 @@
-import { withCache } from './cacheService';
+import cacheService from './cacheService';
+import { getPlaylistVideoIds } from './playlistService';
 import { searchChannels } from './searchService';
-import { getChannelDetails, getPlaylistDetails, getVideosForPlaylist } from './youtubeService';
+import { getChannelDetails, getPlaylistDetails, getPlaylistVideos } from './youtubeService';
+import type { Source, Video } from '~/types';
 
 const searchForSource = async (searchText: string) => {
   searchText = searchText
@@ -16,29 +18,56 @@ const searchForSource = async (searchText: string) => {
 
   if (!sourceId) throw `Could not find YouTube channel for ${searchText} 🤷`;
 
-  const source = await getSourceData(sourceId);
+  const source = await getSource(sourceId);
 
   return source;
 };
 
-const getSourceData = withCache(
-  { cacheKey: 'source', ttl: Math.floor(3 * (1 + Math.random()) * 86400) },
-  async (id: string) => {
-    const source = id.startsWith('UC')
-      ? await getChannelDetails(id)
-      : id.startsWith('PL') || id.startsWith('UU')
-        ? await getPlaylistDetails(id)
-        : null;
+const getSourceAndVideos = async (sourceId: string) => {
+  const playlistId = getPlaylistId(sourceId);
+  const cacheKey = `source-and-videos-${sourceId}`;
 
-    if (!source) throw `Could not find a YouTube source for id ${id} 🤷`;
+  const [playlistVideoIds, cacheResult] = await Promise.all([
+    getPlaylistVideoIds(playlistId),
+    cacheService.get<[Source, Video[]]>(cacheKey),
+  ]);
 
-    return source;
-  },
-);
+  const [cachedSource, cachedVideos] = cacheResult ?? [undefined, undefined];
+  const cacheContainsAllVideos =
+    cachedVideos &&
+    !playlistVideoIds.some((videoId) => !cachedVideos.some((v) => v.id === videoId));
 
-const getVideos = async (sourceId: string) => {
-  const playlistId = sourceId.replace(/^UC/, 'UU');
-  return await getVideosForPlaylist(playlistId);
+  if (cachedSource && cacheContainsAllVideos) {
+    return [cachedSource, cachedVideos];
+  }
+
+  const [source, videos] = await Promise.all([getSource(sourceId), getPlaylistVideos(playlistId)]);
+
+  const cacheHours = videos.some((v) => (v.isProcessing || v.isLive) && !v.isPrivate) ? 1 : 6;
+  await cacheService.set(cacheKey, [source, videos], cacheHours * 60 * 60);
+
+  return [source, videos];
 };
 
-export { getSourceData, getVideos, searchForSource };
+const getSource = async (id: string) => {
+  const cacheKey = `source-${id}`;
+  const cacheResult = await cacheService.get<Source>(cacheKey);
+  if (cacheResult) return cacheResult;
+
+  const source = id.startsWith('UC')
+    ? await getChannelDetails(id)
+    : id.startsWith('PL') || id.startsWith('UU')
+      ? await getPlaylistDetails(id)
+      : null;
+
+  if (!source) throw `Could not find a YouTube source for id ${id} 🤷`;
+
+  const cacheDays = 5 + 2 * Math.random();
+  await cacheService.set(cacheKey, source, Math.floor(cacheDays * 24 * 60 * 60));
+
+  return source;
+};
+
+const getPlaylistId = (sourceId: string) => sourceId.replace(/^UC/, 'UU');
+
+export { getSourceAndVideos, searchForSource };

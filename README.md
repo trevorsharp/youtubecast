@@ -25,7 +25,6 @@ To run this application using Docker:
 ### docker-compose.yml
 
 ```
-version: '3'
 services:
   youtubecast:
     image: trevorsharp/youtubecast:latest
@@ -36,7 +35,7 @@ services:
     environment:
       - YOUTUBE_API_KEY="XXXXX"
       - COOKIES="XXXXX"
-      - ENABLE_PLAYLIST_SORTING=true
+      - ENABLE_PLAYLIST_SORTING=false
 ```
 
 Create a file named `docker-compose.yml` with the contents above. Add in your YouTube API key.

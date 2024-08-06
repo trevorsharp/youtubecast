@@ -13,8 +13,6 @@ const redis =
 const cache = new NodeCache({ checkperiod: 120 });
 
 const get = async <T>(key: string) => {
-  console.log('Getting ', key);
-
   if (redis) {
     return await redis.get<T>(key);
   }
@@ -23,8 +21,6 @@ const get = async <T>(key: string) => {
 };
 
 const set = async <T>(key: string, value: T, ttl: number) => {
-  console.log('Setting ', key);
-
   if (redis) {
     return (await redis.set<T>(key, value, { ex: ttl })) !== null;
   }

@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import cookie from 'cookie';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import { env } from '~/env';
 import { Quality } from '~/types';
 import getCookieWithMaxExpiration from '~/utils/getCookieWithMaxExpiration';
 import getQualityFromString from '~/utils/getQualityFromString';
@@ -10,6 +11,7 @@ import getQualityString from '~/utils/getQualityString';
 import QualitySelection from './QualitySelection';
 import RssLinks from './RssLinks';
 import ShortsSelection from './ShortsSelection';
+import VideoServerInput from './VideoServerInput';
 
 type AddFeedProps = {
   sourceId: string;
@@ -63,11 +65,15 @@ const AddFeed = ({ sourceId, hostname }: AddFeedProps) => {
 
   return (
     <>
-      <QualitySelection
-        selection={qualitySelection}
-        onSelect={onSetQualitySelection}
-        videoServer={videoServer}
-      />
+      {env.NEXT_PUBLIC_VIDEO_SERVER_ONLY ? (
+        <VideoServerInput videoServer={videoServer} setVideoServer={setVideoServer} />
+      ) : (
+        <QualitySelection
+          selection={qualitySelection}
+          onSelect={onSetQualitySelection}
+          videoServer={videoServer}
+        />
+      )}
       <ShortsSelection selection={excludeShorts} onSelect={setExcludeShorts} />
       <RssLinks
         sourceId={sourceId}

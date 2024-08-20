@@ -2,17 +2,28 @@ import ytdl from '@distube/ytdl-core';
 import { env } from '~/env';
 import { Quality } from '~/types';
 
-const getStream = async (videoId: string, quality: Quality, videoServer?: string | undefined): Promise<[string, boolean]> => {
+const getStream = async (
+  videoId: string,
+  quality: Quality,
+  videoServer?: string | undefined,
+): Promise<[string, boolean]> => {
   if (videoServer) {
     const timeout = new Promise<Response>((_, reject) =>
-      setTimeout(() => reject(new Error('Video server request timed out')), 2000),
+      setTimeout(() => reject(new Error('Video server request timed out')), 10000),
     );
 
-    const videoLink = await Promise.race([await fetch(`http://${videoServer}/${videoId}`), timeout])
-      .then((response) => (response.status === 200 ? response.text() : undefined))
-      .catch(() => undefined);
+    const videoLink = await Promise.race([
+      await fetch(`http://${videoServer}/${videoId}`),
+      timeout,
+    ]).then((response) => (response.status === 200 ? response.text() : undefined));
 
-    if (videoLink) return [`http://${videoServer}${videoLink}`, true];
+    if (!videoLink) throw 'Video server did not respond';
+
+    if (videoLink.startsWith('http')) {
+      return [videoLink, true];
+    }
+
+    return [`http://${videoServer}${videoLink}`, true];
   }
 
   const videoUrl = await getVideoUrl(videoId, quality);

@@ -13,7 +13,6 @@ const topChannels = [
   'LaurDIY',
   'Mark Rober',
   'Marques Brownlee',
-  'MrBeast',
   'PewDiePie',
   'Pokimane',
   'Rosanna Pansino',

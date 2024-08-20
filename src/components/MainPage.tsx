@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import Search from './Search';
 import SearchResult from './SearchResult';
+import SetVideoServerCookies from './SetVideoServerCookies';
 
 type MainPageProps = {
   searchText?: string;
@@ -21,6 +22,7 @@ const MainPage = ({ searchText }: MainPageProps) => (
       </span>
     </p>
     <Search initialSearch={searchText} />
+    <SetVideoServerCookies />
     {searchText && <SearchResult searchText={searchText} />}
   </div>
 );

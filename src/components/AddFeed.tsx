@@ -5,7 +5,6 @@ import cookie from 'cookie';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { env } from '~/env';
 import { Quality } from '~/types';
-import getCookieWithMaxExpiration from '~/utils/getCookieWithMaxExpiration';
 import getQualityFromString from '~/utils/getQualityFromString';
 import getQualityString from '~/utils/getQualityString';
 import QualitySelection from './QualitySelection';
@@ -30,20 +29,15 @@ const AddFeed = ({ sourceId, hostname }: AddFeedProps) => {
   const [excludeShorts, setExcludeShorts] = useState<boolean>(true);
 
   const videoServerParam = searchParams.get('videoServer');
-  const setVideoServerParam = searchParams.get('setVideoServer');
 
   useEffect(() => {
-    if (setVideoServerParam)
-      document.cookie = getCookieWithMaxExpiration('videoServer', setVideoServerParam);
-
-    const videoServer =
-      setVideoServerParam || videoServerParam || cookie.parse(document.cookie)['videoServer'];
+    const videoServer = videoServerParam || cookie.parse(document.cookie)['videoServer'];
 
     if (videoServer) {
       setVideoServer(videoServer);
       setQualitySelection(Quality.VideoServer);
     }
-  }, [videoServerParam, setVideoServerParam]);
+  }, [videoServerParam]);
 
   const qualityParam = searchParams.get('quality');
 

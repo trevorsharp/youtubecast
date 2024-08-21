@@ -24,7 +24,7 @@ const AddFeed = ({ sourceId, hostname }: AddFeedProps) => {
 
   const [videoServer, setVideoServer] = useState<string | undefined>();
   const [qualitySelection, setQualitySelection] = useState<Quality>(
-    videoServer ? Quality.VideoServer : Quality.Default,
+    videoServer || env.NEXT_PUBLIC_VIDEO_SERVER_ONLY ? Quality.VideoServer : Quality.Default,
   );
   const [excludeShorts, setExcludeShorts] = useState<boolean>(true);
 

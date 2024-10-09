@@ -1,7 +1,7 @@
 {
   "rewrites": [
     {
-      "source": "/[sourceId]/feed",
+      "source": "/:sourceId/feed",
       "missing": [
         {
           "type": "query",

@@ -1,0 +1,14 @@
+{
+  "rewrites": [
+    {
+      "source": "/[sourceId]/feed",
+      "missing": [
+        {
+          "type": "query",
+          "key": "videoServer"
+        }
+      ],
+      "destination": "https://static.youtubecast.com/videoserver-error"
+    }
+  ]
+}

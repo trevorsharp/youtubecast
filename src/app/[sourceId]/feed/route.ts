@@ -17,7 +17,7 @@ const GET = async (request: Request, { params }: { params: { sourceId: string } 
     if (env.NEXT_PUBLIC_VIDEO_SERVER_ONLY && !videoServer) {
       return new NextResponse(
         `The 'videoServer' parameter is missing. This application is no longer supported without the use of YouTubeCast Video Server. Please see https://github.com/trevorsharp/youtubecast-videoserver/blob/main/setup.md for more information.`,
-        { status: 400 },
+        { status: 404 },
       );
     }
 

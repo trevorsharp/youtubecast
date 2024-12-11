@@ -291,7 +291,7 @@ const getIsAvailable = (
 
 const getIsYouTubeShort = async (duration: string | undefined, videoId: string) =>
   !!duration &&
-  getDuration(duration) <= 60 &&
+  getDuration(duration) <= 180 &&
   (await fetch(`https://www.youtube.com/shorts/${videoId}`, {
     method: 'HEAD',
   }).then((response) => !response.redirected));

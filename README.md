@@ -14,7 +14,8 @@ As of December 2024, YouTubeCast is no longer publicly hosted. YouTube has made 
 Additional Changes:
 
 - YouTubeCast Video Server is being deprecated in favor of unifying all of YouTubeCast's functionality in a single project. For now, support for videos in higher quality (above 720p) has been removed. This functionality may become available directly within YouTubeCast at a later date. If you want to keep this functionality in the interim, you can continue to use the Docker images for both YouTubeCast and YouTubeCast Video Server with the tag `legacy`.
-- Support for Redis cache has been removed as distributed hosting is no longer practical (in-memory cache will be used instead)
+- YouTube Shorts are now always exlcuded and the `excludeShorts` query parameter has been deprecated.
+- Support for Redis cache has been removed as distributed hosting is no longer practical (in-memory cache will be used instead).
 
 ## Self-Hosted Setup Using Docker
 

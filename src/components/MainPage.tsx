@@ -1,8 +1,6 @@
-import { Suspense } from 'react';
 import Link from 'next/link';
 import Search from './Search';
 import SearchResult from './SearchResult';
-import SetVideoServerCookies from './SetVideoServerCookies';
 
 type MainPageProps = {
   searchText?: string;
@@ -24,10 +22,6 @@ const MainPage = ({ searchText }: MainPageProps) => (
     </p>
     <Search initialSearch={searchText} />
     {searchText && <SearchResult searchText={searchText} />}
-
-    <Suspense>
-      <SetVideoServerCookies />
-    </Suspense>
   </div>
 );
 

@@ -2,24 +2,12 @@ import { Quality } from '~/types';
 
 type QualitySelectionProps = {
   selection: Quality;
-  videoServer: string | undefined;
   onSelect: (selection: Quality) => void;
 };
 
-const QualitySelection = ({ selection, videoServer, onSelect }: QualitySelectionProps) => {
+const QualitySelection = ({ selection, onSelect }: QualitySelectionProps) => {
   return (
     <div className="flex flex-col gap-2">
-      {videoServer && (
-        <div className="flex justify-center gap-4">
-          <RadioButton
-            id="VideoServer"
-            label={`Video Server - ${videoServer}`}
-            value={Quality.Audio}
-            checked={selection === Quality.VideoServer}
-            onClick={() => onSelect(Quality.VideoServer)}
-          />
-        </div>
-      )}
       <div className="flex justify-center gap-4">
         <RadioButton
           id="720p"

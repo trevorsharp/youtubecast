@@ -1,11 +1,10 @@
 enum Quality {
-  VideoServer = -1,
   Default = 0,
   Audio = 1,
   P360 = 2,
 }
 
-type QualityString = 'Audio' | '360p' | '720p' | 'VideoServer';
+type QualityString = 'Audio' | '360p' | '720p';
 
 type Source = {
   type: 'channel' | 'playlist';

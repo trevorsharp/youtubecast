@@ -1,11 +1,20 @@
 # YouTubeCast
 
-Create podcast feeds from YouTube channels and playlists. Go to [youtubecast.com](https://youtubecast.com) to check it out!
+Create podcast feeds from YouTube channels and playlists
 
 ## Features
 
 - Generate RSS feeds that can be added to podcast apps with support for video podcasts (e.g. Pocket Casts)
 - Simple web server for serving RSS feed data, video links, and UI
+
+## Changes as of December 2024 ‼️
+
+As of December 2024, YouTubeCast is no longer publicly hosted. YouTube has made changes to combat bot traffic that make it impractical to host a publicly available version of YouTubeCast. Self-hosting should be used instead moving forward.
+
+Additional Changes:
+
+- YouTubeCast Video Server is being deprecated in favor of unifying all of YouTubeCast's functionality in a single project. For now, support for videos in higher quality (above 720p) has been removed. This functionality may become available directly within YouTubeCast at a later date. If you want to keep this functionality in the interim, you can continue to use the Docker images for both YouTubeCast and YouTubeCast Video Server with the tag `legacy`.
+- Support for Redis cache has been removed as distributed hosting is no longer practical (in-memory cache will be used instead)
 
 ## Self-Hosted Setup Using Docker
 
@@ -42,7 +51,7 @@ Create a file named `docker-compose.yml` with the contents above. Add in your Yo
 
 ### COOKIES Environment Variable (Optional)
 
-If you want to download YouTube content that requires user authentication to download, you will need to add cookies to your configuration. One reason for needing this is to download members-only videos. Note that the source of these videos (channel, user, or playlist) still must be either public or unlisted. For members-only videos, I recommend going to the channel's home page and scrolling down to find an auto-generated playlist titled "Members-only videos" which will contain all the videos posted for members of the channel.
+If you want to download YouTube content that requires user authentication to download, you will need to add cookies to your configuration. One reason for needing this is to download members-only videos. Note that the source of these videos (channel, user, or playlist) still must be either public or unlisted. For members-only videos, go to the channel's home page and scroll down to find an auto-generated playlist titled "Members-only videos" which will contain all the videos posted for members of the channel.
 
 To generate this environment variable:
 
@@ -53,4 +62,4 @@ To generate this environment variable:
 
 ### Playlists With New Items Added to the End
 
-Note that for playlists, the podcast feed will return with the first 50 videos in the playlist (from the top). If the playlist has more than 50 videos and new videos are added to the end of the playlist, then the podcast feed may not include the newest videos. Unfortunately, YouTube's APIs make it cost-prohibitive to get the items at the end of long playlists. If you want to have these type of playlists in your podcast player, you can self-host this project (using the information above) and set the environment variable `ENABLE_PLAYLIST_SORTING=true`. Alternatively, if you are the creator of the playlist, you can set the playlist's sort order to newest on top.
+Note that for playlists, the podcast feed will return with the first 50 videos in the playlist (from the top). If the playlist has more than 50 videos and new videos are added to the end of the playlist, then the podcast feed may not include the newest videos. Unfortunately, YouTube's APIs make it cost-prohibitive to get the items at the end of long playlists. If you want to have these type of playlists in your podcast player, you can set the environment variable `ENABLE_PLAYLIST_SORTING=true`. Alternatively, if you are the creator of the playlist, you can set the playlist's sort order to newest on top.

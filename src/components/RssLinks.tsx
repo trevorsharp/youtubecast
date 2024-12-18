@@ -7,16 +7,13 @@ import type { Quality } from '~/types';
 type RssLinksProps = {
   sourceId: string;
   quality: Quality;
-  excludeShorts: boolean;
-  videoServer: string | undefined;
   hostname: string;
 };
 
-const RssLinks = ({ sourceId, quality, excludeShorts, videoServer, hostname }: RssLinksProps) => {
+const RssLinks = ({ sourceId, quality, hostname }: RssLinksProps) => {
   const [copiedText, setCopiedText] = useState<string>('');
 
-  const getRssLink = () =>
-    `${hostname}/${sourceId}/feed${getFeedUrlParams(quality, excludeShorts, videoServer)}`;
+  const getRssLink = () => `${hostname}/${sourceId}/feed${getFeedUrlParams(quality)}`;
 
   const copyRssLink = () => {
     void navigator.clipboard.writeText(`http://${getRssLink()}`).then(() => {

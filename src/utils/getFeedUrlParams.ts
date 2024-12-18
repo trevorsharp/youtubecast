@@ -1,21 +1,11 @@
 import { Quality } from '~/types';
 
-const getFeedUrlParams = (
-  quality: Quality,
-  excludeShorts: boolean,
-  videoServer?: string | undefined,
-) => {
+const getFeedUrlParams = (quality: Quality) => {
   const searchParams = new URLSearchParams();
 
-  if (quality !== Quality.Default && quality !== Quality.VideoServer)
-    searchParams.append('quality', quality.toString());
-  if (quality === Quality.VideoServer && videoServer)
-    searchParams.append('videoServer', videoServer);
-  if (excludeShorts) searchParams.append('excludeShorts', '');
+  if (quality !== Quality.Default) searchParams.append('quality', quality.toString());
 
-  const searchParamsString = searchParams.toString().replace('excludeShorts=', 'excludeShorts');
-
-  return searchParamsString ? `?${searchParamsString}` : '';
+  return searchParams.toString() ?? '';
 };
 
 export default getFeedUrlParams;

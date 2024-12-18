@@ -42,8 +42,8 @@ services:
     ports:
       - 80:3000
     environment:
-      - YOUTUBE_API_KEY="XXXXX"
-      - COOKIES="XXXXX"
+      - "YOUTUBE_API_KEY=XXXXX"
+      - "COOKIES=XXXXX"
       - ENABLE_PLAYLIST_SORTING=false
 ```
 

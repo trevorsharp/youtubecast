@@ -1,0 +1,17 @@
+{
+  "name": "youtubecast-ui",
+  "scripts": {
+    "dev": "vite --host --port 3000",
+    "build": "vite build"
+  },
+  "dependencies": {
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "devDependencies": {
+    "@types/react": "^19.0.2",
+    "@types/react-dom": "^19.0.2",
+    "@vitejs/plugin-react": "^4.3.4",
+    "vite": "^6.0.4"
+  }
+}

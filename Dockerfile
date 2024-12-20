@@ -1,13 +1,24 @@
-FROM node:lts
-
+FROM oven/bun:latest AS base
 WORKDIR /app
 
-COPY ./package.json ./package.json
-RUN npm install
+# Build UI
+FROM base AS build
 
-ENV SKIP_ENV_VALIDATION=true
+COPY ui/package.json ui/bun.lockb ./
+RUN bun install --frozen-lockfile
+COPY ./ui .
+ENV NODE_ENV=production
+RUN bun run build
 
-COPY . .
-RUN npm run build
+# Compose release container
+FROM base AS release
 
-CMD ["npm", "run", "start"]
+COPY package.json bun.lockb ./
+RUN bun install --frozen-lockfile --production
+COPY --from=build /app/dist ./ui/dist
+COPY index.ts .
+
+# Run application
+USER bun
+EXPOSE 3000/tcp
+ENTRYPOINT [ "bun", "run", "start" ]

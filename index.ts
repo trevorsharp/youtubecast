@@ -1,18 +1,18 @@
 const UI_FILE_PATH = './static';
 const CONTENT_FILE_PATH = './content';
 
-const server = Bun.serve({
+Bun.serve({
   port: 3000,
-  fetch: async (req) => {
-    const { pathname } = new URL(req.url);
+  fetch: async (request) => {
+    const { pathname } = new URL(request.url);
 
-    if (pathname.match(/^\/content\/[^\/]*$/i)) {
+    if (pathname.match(/^\/content\/[^\/]+$/i)) {
       const contentFileName = pathname.replace(/^\/content\//i, '');
       const contentFile = Bun.file(`${CONTENT_FILE_PATH}/${contentFileName}`);
       return new Response(contentFile);
     }
 
-    if (pathname.match(/^\/assets\/.*/i)) {
+    if (pathname.match(/^\/assets\/.+/i)) {
       const assetsFile = Bun.file(`${UI_FILE_PATH}${pathname}`);
       return new Response(assetsFile);
     }
@@ -29,4 +29,4 @@ const server = Bun.serve({
   },
 });
 
-console.log(`Listening on http://localhost:${server.port} ...`);
+console.log(`YouTubeCast server is up and running`);

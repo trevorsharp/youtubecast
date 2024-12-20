@@ -29,4 +29,4 @@ Bun.serve({
   },
 });
 
-console.log(`YouTubeCast server is up and running`);
+console.log('YouTubeCast server is up and running');

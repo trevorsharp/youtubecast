@@ -1,10 +1,8 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
-import Counter from './Counter';
 
-createRoot(document.getElementById('root') ?? document.createElement('div')).render(
+createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <div>Hello World!</div>
-    <Counter />
+    <div>YouTubeCast</div>
   </StrictMode>
 );

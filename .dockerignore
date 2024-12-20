@@ -10,3 +10,5 @@ LICENSE
 .env
 .editorconfig
 dist
+static
+content

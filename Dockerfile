@@ -1,7 +1,7 @@
 FROM oven/bun:latest AS base
 WORKDIR /app
 
-# Build UI
+# Build static UI
 FROM base AS build
 
 COPY ui/package.json ui/bun.lockb ./
@@ -15,7 +15,7 @@ FROM base AS release
 
 COPY package.json bun.lockb ./
 RUN bun install --frozen-lockfile --production
-COPY --from=build /app/dist ./ui/dist
+COPY --from=build /static ./static
 COPY index.ts .
 
 # Run application

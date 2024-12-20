@@ -16,7 +16,7 @@ FROM base AS release
 COPY package.json bun.lockb ./
 RUN bun install --frozen-lockfile --production
 COPY --from=build /static ./static
-COPY index.ts .
+COPY ./src .
 
 # Run application
 USER bun

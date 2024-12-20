@@ -3,7 +3,7 @@
   "module": "index.ts",
   "type": "module",
   "scripts": {
-    "start": "bun run index.ts",
+    "start": "bun run src/index.ts",
     "build": "cd ui && bun run build",
     "lint": "tsc --noEmit && prettier --check . && eslint .",
     "prettier": "prettier --write ."
@@ -15,5 +15,11 @@
     "prettier": "^3.4.2",
     "typescript-eslint": "^8.18.1",
     "typescript": "^5.7.2"
+  },
+  "dependencies": {
+    "googleapis": "^144.0.0",
+    "hono": "^4.6.14",
+    "podcast": "^2.0.1",
+    "zod": "^3.24.1"
   }
 }

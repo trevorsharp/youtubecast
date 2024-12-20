@@ -6,7 +6,7 @@ Bun.serve({
   fetch: async (request) => {
     const { pathname } = new URL(request.url);
 
-    if (pathname.match(/^\/content\/[^\/]+$/i)) {
+    if (pathname.match(/^\/content\/[^/]+$/i)) {
       const contentFileName = pathname.replace(/^\/content\//i, '');
       const contentFile = Bun.file(`${CONTENT_FILE_PATH}/${contentFileName}`);
       return new Response(contentFile);

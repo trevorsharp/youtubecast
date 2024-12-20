@@ -5,7 +5,7 @@ const getFeedUrlParams = (quality: Quality) => {
 
   if (quality !== Quality.Default) searchParams.append('quality', quality.toString());
 
-  return searchParams.toString() ?? '';
+  return searchParams.toString() ? `?${searchParams.toString()}` : '';
 };
 
 export default getFeedUrlParams;

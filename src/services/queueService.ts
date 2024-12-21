@@ -21,7 +21,8 @@ const getQueue = async () => {
   const queueFileContent = await queueFile
     .text()
     .then((text) => JSON.parse(text))
-    .catch(() => {
+    .catch((error) => {
+      console.error(error);
       throw errorMessage;
     });
 

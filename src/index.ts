@@ -17,7 +17,8 @@ Bun.serve({
 
     return router.fetch(request, server);
   },
-  error: () => {
+  error: (error) => {
+    console.error(error);
     return new Response('Not Found', { status: 404 });
   },
 });

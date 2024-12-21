@@ -1,4 +1,7 @@
 import router from './router';
+import configService from './services/configService';
+
+await configService.getConfig();
 
 Bun.serve({
   port: 3000,

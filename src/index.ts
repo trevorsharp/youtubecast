@@ -6,15 +6,16 @@ await configService.getConfig();
 
 Bun.serve({
   port: 3000,
-  fetch: async (request) => {
+  fetch: async (request, server) => {
     const { pathname } = new URL(request.url);
 
     if (pathname.match(/^\/content\//i)) {
+      server.timeout(request, 300);
       const contentFile = Bun.file(`.${pathname}`);
       return new Response(contentFile);
     }
 
-    return router.fetch(request);
+    return router.fetch(request, server);
   },
   error: () => {
     return new Response('Not Found', { status: 404 });

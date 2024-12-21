@@ -18,11 +18,11 @@ const getConfig = async () => {
     await Bun.write(
       configFile,
       JSON.stringify({
-        youtubeApiKey: '',
+        youtubeApiKey: process.env['YOUTUBE_API_KEY'] ?? '',
       }),
     );
 
-    throw 'Please open the settings.json file in your config folder and enter the required fields.';
+    throw 'Please open the settings.json file in your config folder and verify the required fields.';
   }
 
   const errorMessage =

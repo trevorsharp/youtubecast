@@ -66,10 +66,12 @@ const getPlaylist = async (playlistId: string) => {
 
   const channel = await getChannel(channelId);
 
+  const playlistName = playlistId.startsWith('UU') ? `${channel?.name} (Members-Only)` : playlistResult.snippet?.title;
+
   const { data: playlist, error } = playlistValidator.safeParse({
     type: 'playlist',
     id: playlistResult.id,
-    name: playlistResult.snippet?.title,
+    name: playlistName,
     description: playlistResult.snippet?.description,
     imageUrl: channel?.imageUrl,
     link: `https://youtube.com/playlist?list=${playlistResult.id}`,

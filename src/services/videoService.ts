@@ -5,15 +5,7 @@ import getYoutubeLink from '../utils/getYoutubeLink';
 import configService from './configService';
 import getVideoFilePath from '../utils/getVideoFilePath';
 
-const getVideoUrl = async (videoId: string, isAudioOnly: boolean) => {
-  const videoFilePath = getVideoFilePath(videoId);
-  const videoFile = Bun.file(videoFilePath);
-
-  const videoFileExists = await videoFile.exists();
-  if (videoFileExists) {
-    return videoFilePath.replace(/^\.\//, '/');
-  }
-
+const getStreamingVideoUrl = async (videoId: string, isAudioOnly: boolean) => {
   const format = await getFormat({ isStreaming: true, isAudioOnly });
   const cookies = await getCookies();
   const youtubeLink = getYoutubeLink(videoId);
@@ -70,4 +62,4 @@ const getOutput = (videoId: string) => {
   return `--output=${getVideoFilePath(videoId)}`;
 };
 
-export default { getVideoUrl, downloadVideo };
+export default { getStreamingVideoUrl, downloadVideo };

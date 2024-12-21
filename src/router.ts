@@ -26,7 +26,7 @@ router.get('/videos/:videoId', async (context) => {
   const { videoId } = context.req.param();
   const isAudioOnly = context.req.query('audioOnly') !== undefined;
 
-  const videoUrl = await videoService.getVideoUrl(videoId, isAudioOnly);
+  const videoUrl = await videoService.getStreamingVideoUrl(videoId, isAudioOnly);
 
   if (!videoUrl) {
     return context.text('Server Error - Could not get url for video', 500);

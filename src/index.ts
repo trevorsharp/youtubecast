@@ -1,6 +1,7 @@
 import router from './router';
 import configService from './services/configService';
 import queueService from './services/queueService';
+import getVideoFilePath from './utils/getVideoFilePath';
 
 await configService.getConfig();
 
@@ -9,10 +10,16 @@ Bun.serve({
   fetch: async (request, server) => {
     const { pathname } = new URL(request.url);
 
-    if (pathname.match(/^\/content\//i)) {
-      server.timeout(request, 300);
-      const contentFile = Bun.file(`.${pathname}`);
-      return new Response(contentFile);
+    if (pathname.startsWith('/videos/')) {
+      const [_, videoId] = pathname.match(/^\/videos\/([^/]*)/) ?? ['', ''];
+      const videoFilePath = getVideoFilePath(videoId);
+      const videoFile = Bun.file(videoFilePath);
+
+      const videoFileExists = await videoFile.exists();
+      if (videoFileExists) {
+        server.timeout(request, 300);
+        return new Response(videoFile);
+      }
     }
 
     return router.fetch(request, server);

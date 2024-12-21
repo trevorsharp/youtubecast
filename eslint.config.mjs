@@ -5,13 +5,6 @@ export default tseslint.config(eslint.configs.recommended, tseslint.configs.reco
   ignores: ['node_modules/*', 'static/*'],
   rules: {
     'no-unused-vars': 'off',
-    '@typescript-eslint/no-unused-vars': [
-      'warn',
-      {
-        argsIgnorePattern: '^_',
-        varsIgnorePattern: '^_',
-        caughtErrorsIgnorePattern: '^_',
-      },
-    ],
+    '@typescript-eslint/no-unused-vars': ['warn', { varsIgnorePattern: '^_' }],
   },
 });

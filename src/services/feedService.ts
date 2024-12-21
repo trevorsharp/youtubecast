@@ -1,5 +1,6 @@
 import { Podcast } from 'podcast';
 import youtubeService from './youtubeService';
+import queueService from './queueService';
 
 const getFeedData = async (feedId: string) => {
   if (feedId.startsWith('UC')) {
@@ -19,6 +20,9 @@ const generatePodcastFeed = async (host: string, feedId: string, isAudioOnly: bo
   if (!feedData) {
     return undefined;
   }
+
+  const [firstVideo] = feedData.videos;
+  if (firstVideo) await queueService.addVideoToDownloadQueue(firstVideo);
 
   const rssFeed = new Podcast({
     title: feedData.name,

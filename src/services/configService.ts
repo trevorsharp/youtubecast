@@ -1,24 +1,24 @@
 import { readdir } from 'node:fs/promises';
 import configValidator from '../validators/configValidator';
+import logZodError from '../utils/logZodError';
+import env from '../env';
 
-const CONFIG_FILE_PATH = './config';
+const configFile = Bun.file(`${env.CONFIG_FOLDER_PATH}/settings.json`);
 
 const getConfig = async () => {
   try {
-    await readdir(CONFIG_FILE_PATH);
+    await readdir(env.CONFIG_FOLDER_PATH);
   } catch {
-    throw 'Config folder does not exist. Please mount a volume at the path "/app/config"';
+    throw 'Config folder does not exist. Please mount a volume at the path "/app/config".';
   }
 
-  const configFile = Bun.file(`${CONFIG_FILE_PATH}/settings.json`);
-
   const configFileExists = await configFile.exists();
-
   if (!configFileExists) {
     await Bun.write(
       configFile,
       JSON.stringify({
         youtubeApiKey: process.env['YOUTUBE_API_KEY'] ?? '',
+        maxVideoQuality: '720p',
       }),
     );
 
@@ -38,11 +38,16 @@ const getConfig = async () => {
   const { data: config, error } = configValidator.safeParse(configFileContents);
 
   if (error) {
-    error.errors.forEach((e) => {
-      console.error(e.path.join(' '), ':', e.message);
-    });
-
+    logZodError(error);
     throw errorMessage;
+  }
+
+  if (config.maxVideoQuality !== '720p') {
+    try {
+      await readdir(env.CONTENT_FOLDER_PATH);
+    } catch {
+      throw 'Content folder does not exist. Please mount a volume at the path "/app/content" or lower your "maxVideoQuality" setting to "720p".';
+    }
   }
 
   return config;

@@ -4,6 +4,7 @@ import channelValidator from '../validators/channelValidator';
 import playlistValidator from '../validators/playlistValidator';
 import { z } from 'zod';
 import videoValidator from '../validators/videoValidator';
+import getYoutubeLink from '../utils/getYoutubeLink';
 
 let youtubeInstance: youtube_v3.Youtube | undefined = undefined;
 
@@ -137,7 +138,7 @@ const getVideosForPlaylist = async (playlistId: string) => {
         description: video.snippet?.description,
         duration: getDuration(video.contentDetails?.duration),
         date: getDate(video.snippet?.publishedAt, playlistVideos.find((v) => v.id === video.id)?.publishedAt),
-        link: `https://youtu.be/${video.id}`,
+        link: video.id ? getYoutubeLink(video.id) : '',
       })),
   );
 

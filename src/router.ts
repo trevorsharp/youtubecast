@@ -2,12 +2,11 @@ import { Hono } from 'hono';
 import { serveStatic } from 'hono/bun';
 import feedService from './services/feedService';
 import videoService from './services/videoService';
-
-const UI_FILE_PATH = './static';
+import env from './env';
 
 const router = new Hono();
-router.get('/', serveStatic({ path: `${UI_FILE_PATH}/index.html` }));
-router.get('/assets/*', serveStatic({ root: `${UI_FILE_PATH}` }));
+router.get('/', serveStatic({ path: `${env.UI_FOLDER_PATH}/index.html` }));
+router.get('/assets/*', serveStatic({ root: `${env.UI_FOLDER_PATH}` }));
 router.get('/content/*', serveStatic({ root: '.' }));
 
 router.get('/:feedId/feed', async (context) => {

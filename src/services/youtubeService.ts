@@ -34,7 +34,10 @@ const getChannel = async (channelId: string) => {
     id: channelResult.id,
     name: channelResult.snippet?.title,
     description: channelResult.snippet?.description,
-    imageUrl: channelResult.snippet?.thumbnails?.high?.url,
+    imageUrl:
+      channelResult.snippet?.thumbnails?.maxres?.url ??
+      channelResult.snippet?.thumbnails?.high?.url ??
+      channelResult.snippet?.thumbnails?.default?.url,
     link: `https://youtube.com/channel/${channelResult.id}`,
   });
 

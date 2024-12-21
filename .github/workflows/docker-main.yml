@@ -24,10 +24,6 @@ jobs:
             VERSION=latest
           fi
 
-          if [[ $VERSION == develop ]]; then
-            VERSION=develop
-          fi
-
           TAGS="${DOCKER_IMAGE}:${VERSION},${DOCKER_IMAGE}:${GITHUB_RUN_ID}"
           echo "tags=${TAGS}" >> $GITHUB_OUTPUT
 

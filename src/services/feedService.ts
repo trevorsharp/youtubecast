@@ -22,7 +22,7 @@ const generatePodcastFeed = async (host: string, feedId: string, isAudioOnly: bo
   }
 
   const [firstVideo] = feedData.videos;
-  if (firstVideo) await queueService.addVideoToDownloadQueue(firstVideo);
+  if (firstVideo) await queueService.addVideoToDownloadQueue(firstVideo.id);
 
   const rssFeed = new Podcast({
     title: feedData.name,

@@ -12,7 +12,6 @@ const queueFile = Bun.file(env.QUEUE_FILE_PATH);
 const getQueue = async () => {
   const queueFileExists = await queueFile.exists();
   if (!queueFileExists) {
-    await saveQueue([]);
     return [];
   }
 
@@ -49,6 +48,7 @@ const addVideoToDownloadQueue = async (video: { id: string; title: string }) => 
   const queue = await getQueue();
 
   if (!queue.some((v) => v.id === video.id)) {
+    console.log(`Adding video to queue (${video.id})`);
     queue.push({ id: video.id, title: video.title });
     await saveQueue(queue);
   }

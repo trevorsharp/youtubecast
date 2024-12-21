@@ -6,7 +6,19 @@ await configService.getConfig();
 
 Bun.serve({
   port: 3000,
-  fetch: router.fetch,
+  fetch: async (request) => {
+    const { pathname } = new URL(request.url);
+
+    if (pathname.match(/^\/content\//i)) {
+      const contentFile = Bun.file(`.${pathname}`);
+      return new Response(contentFile);
+    }
+
+    return router.fetch(request);
+  },
+  error: () => {
+    return new Response('Not Found', { status: 404 });
+  },
 });
 
 console.log('YouTubeCast server is up and running');

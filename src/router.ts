@@ -7,7 +7,6 @@ import env from './env';
 const router = new Hono();
 router.get('/', serveStatic({ path: `${env.UI_FOLDER_PATH}/index.html` }));
 router.get('/assets/*', serveStatic({ root: `${env.UI_FOLDER_PATH}` }));
-router.get('/content/*', serveStatic({ root: '.' }));
 
 router.get('/:feedId/feed', async (context) => {
   const { host } = new URL(context.req.url);

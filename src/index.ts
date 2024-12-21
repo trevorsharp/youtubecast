@@ -12,21 +12,20 @@ Bun.serve({
 
     if (pathname.startsWith('/videos/')) {
       const [_, videoId] = pathname.match(/^\/videos\/([^/]*)/) ?? ['', ''];
-      const videoFilePath = getVideoFilePath(videoId);
-      const videoFile = Bun.file(videoFilePath);
 
-      const videoFileExists = await videoFile.exists();
-      if (videoFileExists) {
-        server.timeout(request, 300);
-        return new Response(videoFile);
+      if (videoId) {
+        const videoFilePath = getVideoFilePath(videoId);
+        const videoFile = Bun.file(videoFilePath);
+
+        const videoFileExists = await videoFile.exists();
+        if (videoFileExists) {
+          server.timeout(request, 600);
+          return new Response(videoFile);
+        }
       }
     }
 
     return router.fetch(request, server);
-  },
-  error: (error) => {
-    console.error(error);
-    return new Response('Not Found', { status: 404 });
   },
 });
 

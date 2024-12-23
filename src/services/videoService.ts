@@ -3,7 +3,6 @@ import { z } from 'zod';
 import env from '../env';
 import getYoutubeLink from '../utils/getYoutubeLink';
 import configService from './configService';
-import getVideoFilePath from '../utils/getVideoFilePath';
 
 const getStreamingVideoUrl = async (videoId: string, isAudioOnly: boolean) => {
   const format = await getFormat({ isStreaming: true, isAudioOnly });
@@ -40,10 +39,10 @@ const downloadVideo = async (videoId: string) => {
 
   if (!didDownload) return;
 
-  const videoFilePath = getVideoFilePath(videoId);
-  const tempVideoFilePath = getVideoFilePath(videoId + '.temp');
+  const tempVideoFilePath = `${env.CONTENT_FOLDER_PATH}/temp.${videoId}.mp4`;
+  const videoFilePath = `${env.CONTENT_FOLDER_PATH}/${videoId}.m3u8`;
 
-  await $`ffmpeg -i ${videoFilePath} -c copy -movflags +faststart ${tempVideoFilePath} && mv -f ${tempVideoFilePath} ${videoFilePath}`;
+  await $`ffmpeg -i ${tempVideoFilePath} -c copy -f hls -hls_playlist_type vod -hls_flags single_file ${videoFilePath} && rm ${tempVideoFilePath}`;
 };
 
 const getFormat = async (options?: { isStreaming: boolean | undefined; isAudioOnly: boolean | undefined }) => {
@@ -69,7 +68,7 @@ const getCookies = async () => {
 };
 
 const getOutput = (videoId: string) => {
-  return `--output=${getVideoFilePath(videoId)}`;
+  return `--output=${env.CONTENT_FOLDER_PATH}/temp.${videoId}.mp4`;
 };
 
 export default { getStreamingVideoUrl, downloadVideo };

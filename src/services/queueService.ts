@@ -1,10 +1,10 @@
+import env from '../env';
 import videoService from './videoService';
-import getVideoFilePath from '../utils/getVideoFilePath';
 
 const queue: string[] = [];
 
 const addVideoToDownloadQueue = async (videoId: string) => {
-  const videoFile = Bun.file(getVideoFilePath(videoId));
+  const videoFile = Bun.file(`${env.CONTENT_FOLDER_PATH}/${videoId}.m3u8`);
 
   const videoFileExists = await videoFile.exists();
   if (videoFileExists) return;

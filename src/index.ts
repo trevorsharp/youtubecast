@@ -12,10 +12,12 @@ Bun.serve({
     const { pathname } = new URL(request.url);
 
     if (pathname.startsWith('/videos/')) {
-      const [_, videoId, extension] = pathname.match(/^\/videos\/([^/]*)(\.ts)?/) ?? ['', ''];
+      const [_, urlPath] = pathname.match(/^\/videos\/([^/]*)/) ?? ['', ''];
 
-      if (videoId) {
-        return await serveWithRange(`${env.CONTENT_FOLDER_PATH}/${videoId}${extension ?? '.m3u8'}`, request);
+      if (urlPath) {
+        const videoId = urlPath.replace(/\.ts$/, '');
+        const fileExtension = urlPath.match(/\.ts$/) ? '.ts' : '.m3u8';
+        return await serveWithRange(`${env.CONTENT_FOLDER_PATH}/${videoId}${fileExtension}`, request);
       }
     }
 

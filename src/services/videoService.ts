@@ -31,9 +31,19 @@ const downloadVideo = async (videoId: string) => {
   const output = getOutput(videoId);
   const youtubeLink = getYoutubeLink(videoId);
 
-  await $`yt-dlp ${format} ${cookies} ${output} ${youtubeLink}`.catch((error) => {
-    console.error('' + error.info.stderr);
-  });
+  const didDownload = await $`yt-dlp ${format} ${cookies} ${output} ${youtubeLink}`
+    .then(() => true)
+    .catch((error) => {
+      console.error('' + error.info.stderr);
+      return false;
+    });
+
+  if (!didDownload) return;
+
+  const videoFilePath = getVideoFilePath(videoId);
+  const tempVideoFilePath = getVideoFilePath(videoId + '.temp');
+
+  await $`ffmpeg -i ${videoFilePath} -c copy -movflags +faststart ${tempVideoFilePath} && rm ${videoFilePath} && mv ${tempVideoFilePath} ${videoFilePath}`;
 };
 
 const getFormat = async (options?: { isStreaming: boolean | undefined; isAudioOnly: boolean | undefined }) => {

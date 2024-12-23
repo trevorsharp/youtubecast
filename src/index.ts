@@ -1,3 +1,4 @@
+import { stat } from 'fs/promises';
 import router from './router';
 import configService from './services/configService';
 import queueService from './services/queueService';
@@ -20,7 +21,39 @@ Bun.serve({
         const videoFileExists = await videoFile.exists();
         if (videoFileExists) {
           server.timeout(request, 600);
-          return new Response(videoFile);
+
+          const fileSize = await stat(videoFilePath).then((stats) => stats.size);
+
+          const rangeHeader = request.headers.get('range');
+
+          if (rangeHeader) {
+            const [startRange, endRange] = rangeHeader.replace('bytes=', '').split('-');
+
+            const end = parseInt(endRange, 10) || fileSize - 1;
+            const start = parseInt(startRange, 10) || 0;
+
+            const contentLength = end - start + 1;
+
+            if (start >= fileSize || end >= fileSize) {
+              return new Response(null, {
+                status: 416,
+                headers: {
+                  'Content-Range': `bytes */${fileSize}`,
+                },
+              });
+            }
+
+            return new Response(videoFile.slice(start, end), {
+              status: 206,
+              headers: {
+                'Accept-Ranges': 'bytes',
+                'Content-Range': `bytes ${start}-${end}/${fileSize}`,
+                'Content-Length': `${contentLength}`,
+              },
+            });
+          }
+
+          return new Response(videoFile, { headers: { 'Accept-Ranges': 'bytes' } });
         }
       }
     }

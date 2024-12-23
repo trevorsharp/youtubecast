@@ -43,7 +43,7 @@ const downloadVideo = async (videoId: string) => {
   const videoFilePath = getVideoFilePath(videoId);
   const tempVideoFilePath = getVideoFilePath(videoId + '.temp');
 
-  await $`ffmpeg -i ${videoFilePath} -c copy -movflags +faststart ${tempVideoFilePath} && rm ${videoFilePath} && mv ${tempVideoFilePath} ${videoFilePath}`;
+  await $`ffmpeg -i ${videoFilePath} -c copy -movflags +faststart ${tempVideoFilePath} && mv -f ${tempVideoFilePath} ${videoFilePath}`;
 };
 
 const getFormat = async (options?: { isStreaming: boolean | undefined; isAudioOnly: boolean | undefined }) => {

@@ -5,7 +5,7 @@ import getYoutubeLink from '../utils/getYoutubeLink';
 import configService from './configService';
 
 const getStreamingVideoUrl = async (videoId: string, isAudioOnly: boolean) => {
-  const format = await getFormat({ isStreaming: true, isAudioOnly });
+  const format = getStreamingFormat(isAudioOnly);
   const cookies = await getCookies();
   const youtubeLink = getYoutubeLink(videoId);
 
@@ -25,39 +25,38 @@ const getStreamingVideoUrl = async (videoId: string, isAudioOnly: boolean) => {
 };
 
 const downloadVideo = async (videoId: string) => {
-  const format = await getFormat();
+  const videoPartFilePath = `${env.CONTENT_FOLDER_PATH}/${videoId}.video`;
+  const audioPartFilePath = `${env.CONTENT_FOLDER_PATH}/${videoId}.audio`;
+  const outputVideoFilePath = `${env.CONTENT_FOLDER_PATH}/${videoId}.m3u8`;
+
   const cookies = await getCookies();
-  const output = getOutput(videoId);
   const youtubeLink = getYoutubeLink(videoId);
 
-  const didDownload = await $`yt-dlp ${format} ${cookies} ${output} ${youtubeLink}`
-    .then(() => true)
-    .catch((error) => {
-      console.error('' + error.info.stderr);
-      return false;
-    });
+  const videoOnlyFormat = await getVideoOnlyFormat();
+  const audioOnlyFormat = getAudioOnlyFormat();
 
-  if (!didDownload) return;
+  const ffmpegOptions = getFfmpegOptions();
 
-  const tempVideoFilePath = `${env.CONTENT_FOLDER_PATH}/temp.${videoId}.mp4`;
-  const videoFilePath = `${env.CONTENT_FOLDER_PATH}/${videoId}.m3u8`;
-
-  await $`ffmpeg -i ${tempVideoFilePath} -c copy -f hls -hls_playlist_type vod -hls_flags single_file ${videoFilePath} && rm ${tempVideoFilePath}`;
+  await $`\
+    yt-dlp ${videoOnlyFormat} ${cookies} --output=${videoPartFilePath} ${youtubeLink} && \
+    yt-dlp ${audioOnlyFormat} ${cookies} --output=${audioPartFilePath} ${youtubeLink} && \
+    ffmpeg -i ${videoPartFilePath} -i ${audioPartFilePath} ${ffmpegOptions} ${outputVideoFilePath} && \
+    rm ${videoPartFilePath} ${audioPartFilePath}
+  `
+    .then(() => console.log(`Finished downloading video (${videoId})`))
+    .catch((error) => console.error('' + error.info.stderr));
 };
 
-const getFormat = async (options?: { isStreaming: boolean | undefined; isAudioOnly: boolean | undefined }) => {
-  if (options?.isAudioOnly) {
-    return '--format=bestaudio[acodec^=mp4a][vcodec=none]';
-  }
+const getStreamingFormat = (isAudioOnly: boolean) =>
+  isAudioOnly ? getAudioOnlyFormat() : '--format=best[height<=720][vcodec^=avc1]';
 
-  if (options?.isStreaming) {
-    return '--format=best[height<=720][vcodec^=avc1]';
-  }
+const getAudioOnlyFormat = () => '--format=bestaudio[acodec^=mp4a][vcodec=none]';
 
+const getVideoOnlyFormat = async () => {
   const config = await configService.getConfig();
   const maxHeight = config.maxVideoQuality.replace('p', '');
 
-  return `--format=bestvideo[height<=${maxHeight}][vcodec^=avc1]+bestaudio[acodec^=mp4a]`;
+  return `--format=bestvideo[height<=${maxHeight}][vcodec^=avc1]`;
 };
 
 const getCookies = async () => {
@@ -67,8 +66,8 @@ const getCookies = async () => {
   return `--cookies=${env.COOKIES_TXT_FILE_PATH}`;
 };
 
-const getOutput = (videoId: string) => {
-  return `--output=${env.CONTENT_FOLDER_PATH}/temp.${videoId}.mp4`;
-};
+const getFfmpegOptions = () => ({
+  raw: '-hide_banner -c:v copy -c:a copy -f hls -hls_playlist_type vod -hls_flags single_file',
+});
 
 export default { getStreamingVideoUrl, downloadVideo };

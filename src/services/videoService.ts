@@ -37,6 +37,8 @@ const downloadVideo = async (videoId: string) => {
 
   const ffmpegOptions = getFfmpegOptions();
 
+  console.log(`Starting video download (${videoId})`);
+
   await $`\
     yt-dlp -q ${videoOnlyFormat} ${cookies} --output=${videoPartFilePath} ${youtubeLink} && \
     yt-dlp -q ${audioOnlyFormat} ${cookies} --output=${audioPartFilePath} ${youtubeLink} && \

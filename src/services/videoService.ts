@@ -69,7 +69,7 @@ const getCookies = async () => {
 };
 
 const getFfmpegOptions = () => ({
-  raw: '-hide_banner -c:v copy -c:a aac -r 30 -filter:v "setpts=PTS-STARTPTS" -async 1 -f hls -hls_playlist_type vod -hls_flags single_file',
+  raw: '-hide_banner -c:v libx264 -c:a aac -r 30 -filter:v "setpts=PTS-STARTPTS" -async 1 -f hls -hls_playlist_type vod -hls_flags single_file',
 });
 
 export default { getStreamingVideoUrl, downloadVideo };

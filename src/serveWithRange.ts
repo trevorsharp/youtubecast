@@ -1,11 +1,11 @@
 import { stat } from 'fs/promises';
 
-export default async (filePath: string, request: Request): Promise<Response> => {
+export default async (filePath: string, request: Request) => {
   const file = Bun.file(filePath);
   const fileExists = await file.exists();
 
   if (!fileExists) {
-    return new Response('Not Found', { status: 404 });
+    return undefined;
   }
 
   const rangeHeader = request.headers.get('range');

@@ -17,7 +17,9 @@ Bun.serve({
       if (urlPath) {
         const videoId = urlPath.replace(/\.ts$/, '');
         const fileExtension = urlPath.match(/\.ts$/) ? '.ts' : '.m3u8';
-        return await serveWithRange(`${env.CONTENT_FOLDER_PATH}/${videoId}${fileExtension}`, request);
+
+        const rangeResponse = await serveWithRange(`${env.CONTENT_FOLDER_PATH}/${videoId}${fileExtension}`, request);
+        if (rangeResponse) return rangeResponse;
       }
     }
 

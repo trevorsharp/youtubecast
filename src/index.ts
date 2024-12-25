@@ -15,7 +15,7 @@ Bun.serve({
       const [_, videoId] = pathname.match(/^\/videos\/([^/]*)/) ?? ['', ''];
 
       if (videoId) {
-        const rangeResponse = await serveWithRange(`${env.CONTENT_FOLDER_PATH}/${videoId}.mp4`, request);
+        const rangeResponse = await serveWithRange(`${env.CONTENT_FOLDER_PATH}/${videoId}.mp4`, request, server);
         if (rangeResponse) return rangeResponse;
       }
     }

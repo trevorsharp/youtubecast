@@ -13,7 +13,7 @@ RUN bun run build
 # Compose release container
 FROM base AS release
 
-RUN apk add --no-cache ffmpeg python3 py3-pip
+RUN apk add --no-cache ffmpeg python3 py3-pip nginx
 RUN set -x && \
   wget https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp -O /usr/bin/yt-dlp && \
   chmod a+x /usr/bin/yt-dlp
@@ -23,7 +23,8 @@ RUN bun install --frozen-lockfile --production
 COPY --from=build /static ./static
 COPY ./src ./src
 
+COPY nginx.conf /etc/nginx/nginx.conf
+
 # Run application
-USER bun
 EXPOSE 3000/tcp
-CMD /usr/bin/yt-dlp -U && bun run start
+CMD /usr/bin/yt-dlp -U && nginx && bun run start

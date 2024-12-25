@@ -4,7 +4,13 @@ import env from '../env';
 import getYoutubeLink from '../utils/getYoutubeLink';
 import configService from './configService';
 
-const getStreamingVideoUrl = async (videoId: string, isAudioOnly: boolean) => {
+const getVideoUrl = async (videoId: string, isAudioOnly: boolean) => {
+  const videoFileExists = await Bun.file(`${env.CONTENT_FOLDER_PATH}/${videoId}.mp4`).exists();
+
+  if (videoFileExists && !isAudioOnly) {
+    return `/content/${videoId}.mp4`;
+  }
+
   const format = getStreamingFormat(isAudioOnly);
   const cookies = await getCookies();
   const youtubeLink = getYoutubeLink(videoId);
@@ -72,4 +78,4 @@ const getFfmpegOptions = () => ({
   raw: '-hide_banner -c:v copy -c:a copy -movflags faststart',
 });
 
-export default { getStreamingVideoUrl, downloadVideo };
+export default { getVideoUrl, downloadVideo };

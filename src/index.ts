@@ -15,18 +15,17 @@ Bun.serve({
       const [_, videoId] = pathname.match(/^\/videos\/([^/]*)/) ?? ['', ''];
 
       if (videoId) {
-        const rangeResponse = await serveWithRange(`${env.CONTENT_FOLDER_PATH}/${videoId}.mp4`, request, server);
-        if (rangeResponse) return rangeResponse;
+        const videoFileExists = await Bun.file(`${env.CONTENT_FOLDER_PATH}/${videoId}.mp4`).exists();
+
+        if (videoFileExists) {
+          return Response.redirect(`/content/${videoId}.mp4`, 302);
+        }
       }
     }
 
     if (pathname.startsWith('/content/')) {
-      const filePath = `.${pathname}`;
-      const file = Bun.file(filePath);
-
-      if (await file.exists()) {
-        return new Response(file, { status: 200 });
-      }
+      const rangeResponse = await serveWithRange(`${env.CONTENT_FOLDER_PATH}/${pathname}`, request, server);
+      if (rangeResponse) return rangeResponse;
     }
 
     return router.fetch(request, server);

@@ -20,6 +20,15 @@ Bun.serve({
       }
     }
 
+    if (pathname.startsWith('/content/')) {
+      const filePath = `.${pathname}`;
+      const file = Bun.file(filePath);
+
+      if (await file.exists()) {
+        return new Response(file, { status: 200 });
+      }
+    }
+
     return router.fetch(request, server);
   },
 });

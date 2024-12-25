@@ -5,10 +5,10 @@ import getYoutubeLink from '../utils/getYoutubeLink';
 import configService from './configService';
 
 const getVideoUrl = async (videoId: string, isAudioOnly: boolean) => {
-  const videoFileExists = await Bun.file(`${env.CONTENT_FOLDER_PATH}/${videoId}.mp4`).exists();
+  const videoFileExists = await Bun.file(`${env.CONTENT_FOLDER_PATH}/${videoId}.m3u8`).exists();
 
   if (videoFileExists && !isAudioOnly) {
-    return `/content/${videoId}.mp4`;
+    return `/content/${videoId}.m3u8`;
   }
 
   const format = getStreamingFormat(isAudioOnly);
@@ -33,7 +33,7 @@ const getVideoUrl = async (videoId: string, isAudioOnly: boolean) => {
 const downloadVideo = async (videoId: string) => {
   const videoPartFilePath = `${env.CONTENT_FOLDER_PATH}/${videoId}.video`;
   const audioPartFilePath = `${env.CONTENT_FOLDER_PATH}/${videoId}.audio`;
-  const outputVideoFilePath = `${env.CONTENT_FOLDER_PATH}/${videoId}.mp4`;
+  const outputVideoFilePath = `${env.CONTENT_FOLDER_PATH}/${videoId}.m3u8`;
 
   const cookies = await getCookies();
   const youtubeLink = getYoutubeLink(videoId);
@@ -75,7 +75,7 @@ const getCookies = async () => {
 };
 
 const getFfmpegOptions = () => ({
-  raw: '-hide_banner -c:v copy -c:a copy -movflags faststart',
+  raw: '-hide_banner -c:v copy -c:a copy -f hls -hls_playlist_type vod -hls_flags single_file',
 });
 
 export default { getVideoUrl, downloadVideo };

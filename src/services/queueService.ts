@@ -4,7 +4,7 @@ import videoService from './videoService';
 const queue: string[] = [];
 
 const addVideoToDownloadQueue = async (videoId: string) => {
-  const videoFile = Bun.file(`${env.CONTENT_FOLDER_PATH}/${videoId}.m3u8`);
+  const videoFile = Bun.file(`${env.CONTENT_FOLDER_PATH}/${videoId}.mp4`);
 
   const videoFileExists = await videoFile.exists();
   if (videoFileExists) return;

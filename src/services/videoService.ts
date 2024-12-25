@@ -27,7 +27,7 @@ const getStreamingVideoUrl = async (videoId: string, isAudioOnly: boolean) => {
 const downloadVideo = async (videoId: string) => {
   const videoPartFilePath = `${env.CONTENT_FOLDER_PATH}/${videoId}.video`;
   const audioPartFilePath = `${env.CONTENT_FOLDER_PATH}/${videoId}.audio`;
-  const outputVideoFilePath = `${env.CONTENT_FOLDER_PATH}/${videoId}.m3u8`;
+  const outputVideoFilePath = `${env.CONTENT_FOLDER_PATH}/${videoId}.mp4`;
 
   const cookies = await getCookies();
   const youtubeLink = getYoutubeLink(videoId);
@@ -69,7 +69,7 @@ const getCookies = async () => {
 };
 
 const getFfmpegOptions = () => ({
-  raw: '-hide_banner -c:v libx264 -c:a aac -r 30 -filter:v "setpts=PTS-STARTPTS" -async 1 -f hls -hls_playlist_type vod -hls_flags single_file',
+  raw: '-hide_banner -c:v copy -c:a copy -movflags faststart',
 });
 
 export default { getStreamingVideoUrl, downloadVideo };

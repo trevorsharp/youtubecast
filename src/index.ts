@@ -24,7 +24,7 @@ Bun.serve({
     }
 
     if (pathname.startsWith('/content/')) {
-      const rangeResponse = await serveWithRange(`${env.CONTENT_FOLDER_PATH}/${pathname}`, request, server);
+      const rangeResponse = await serveWithRange(`.${pathname}`, request, server);
       if (rangeResponse) return rangeResponse;
     }
 

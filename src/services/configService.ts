@@ -44,7 +44,7 @@ const getConfig = async () => {
   try {
     await readdir(env.CONTENT_FOLDER_PATH);
   } catch {
-    throw 'Content folder does not exist. Please mount a volume at the path "/app/content" or lower your "maxVideoQuality" setting to "720p".';
+    throw 'Content folder does not exist. Please mount a volume at the path "/app/content".';
   }
 
   return config;

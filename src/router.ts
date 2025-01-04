@@ -28,7 +28,7 @@ router.get('/videos/:videoId', async (context) => {
   const videoUrl = await videoService.getVideoUrl(videoId);
 
   if (!videoUrl) {
-    await queueService.addVideoToDownloadQueue(videoId);
+    await queueService.addVideoToDownloadQueue(videoId, { addToFrontOfQueue: true });
     return context.text('Server Error - Video is not yet downloaded', 500);
   }
 

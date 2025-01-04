@@ -11,4 +11,4 @@ Bun.serve({
 
 console.log('YouTubeCast server is up and running');
 
-setInterval(() => queueService.downloadNextVideoInQueue(), 30 * 1000);
+setInterval(() => queueService.downloadNextVideoInQueue(), 2000);

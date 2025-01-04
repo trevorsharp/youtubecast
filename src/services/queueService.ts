@@ -3,16 +3,21 @@ import videoService from './videoService';
 
 const queue: string[] = [];
 
-const addVideoToDownloadQueue = async (videoId: string) => {
+const addVideoToDownloadQueue = async (videoId: string, options?: { addToFrontOfQueue?: boolean }) => {
   const videoFile = Bun.file(`${env.CONTENT_FOLDER_PATH}/${videoId}.m3u8`);
 
   const videoFileExists = await videoFile.exists();
-  if (videoFileExists) return;
+  if (videoFileExists) {
+    return;
+  }
 
   if (!queue.some((v) => v === videoId)) {
+    if (options?.addToFrontOfQueue) {
+      queue.unshift(videoId);
+    } else {
+      queue.push(videoId);
+    }
     console.log(`Adding video to queue (${videoId})`);
-    queue.push(videoId);
-    downloadNextVideoInQueue();
   }
 };
 
@@ -20,14 +25,13 @@ let isDownloadInProgress = false;
 
 const downloadNextVideoInQueue = async () => {
   try {
-    if (isDownloadInProgress) return;
+    if (isDownloadInProgress || queue.length === 0) {
+      return;
+    }
+
     isDownloadInProgress = true;
-
-    const nextVideoToDownload = queue.shift();
-
-    if (!nextVideoToDownload) return;
-
-    await videoService.downloadVideo(nextVideoToDownload);
+    await videoService.downloadVideo(queue[0]);
+    queue.shift();
   } finally {
     isDownloadInProgress = false;
   }

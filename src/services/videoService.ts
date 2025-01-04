@@ -12,7 +12,9 @@ const getVideoUrl = async (videoId: string, isAudioOnly: boolean) => {
     return `/content/${videoId}.m3u8`;
   }
 
-  await queueService.addVideoToDownloadQueue(videoId);
+  if (!isAudioOnly) {
+    await queueService.addVideoToDownloadQueue(videoId);
+  }
 
   const format = getStreamingFormat(isAudioOnly);
   const cookies = await getCookies();

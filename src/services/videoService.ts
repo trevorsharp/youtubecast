@@ -3,6 +3,7 @@ import { z } from 'zod';
 import env from '../env';
 import getYoutubeLink from '../utils/getYoutubeLink';
 import configService from './configService';
+import queueService from './queueService';
 
 const getVideoUrl = async (videoId: string, isAudioOnly: boolean) => {
   const videoFileExists = await Bun.file(`${env.CONTENT_FOLDER_PATH}/${videoId}.m3u8`).exists();
@@ -10,6 +11,8 @@ const getVideoUrl = async (videoId: string, isAudioOnly: boolean) => {
   if (videoFileExists && !isAudioOnly) {
     return `/content/${videoId}.m3u8`;
   }
+
+  await queueService.addVideoToDownloadQueue(videoId);
 
   const format = getStreamingFormat(isAudioOnly);
   const cookies = await getCookies();

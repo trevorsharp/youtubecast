@@ -3,6 +3,7 @@ import { serveStatic } from 'hono/bun';
 import feedService from './services/feedService';
 import videoService from './services/videoService';
 import env from './env';
+import queueService from './services/queueService';
 
 const router = new Hono();
 router.get('/', serveStatic({ path: `${env.UI_FOLDER_PATH}/index.html` }));
@@ -11,9 +12,8 @@ router.get('/assets/*', serveStatic({ root: `${env.UI_FOLDER_PATH}` }));
 router.get('/:feedId/feed', async (context) => {
   const { host } = new URL(context.req.url);
   const { feedId } = context.req.param();
-  const isAudioOnly = context.req.query('audioOnly') !== undefined;
 
-  const podcastFeed = await feedService.generatePodcastFeed(host, feedId, isAudioOnly);
+  const podcastFeed = await feedService.generatePodcastFeed(host, feedId);
 
   if (!podcastFeed) {
     return context.text('Server Error - Could not generate podcast feed', 500);
@@ -24,11 +24,11 @@ router.get('/:feedId/feed', async (context) => {
 
 router.get('/videos/:videoId', async (context) => {
   const { videoId } = context.req.param();
-  const isAudioOnly = context.req.query('audioOnly') !== undefined;
 
-  const videoUrl = await videoService.getVideoUrl(videoId, isAudioOnly);
+  const videoUrl = await videoService.getVideoUrl(videoId);
 
   if (!videoUrl) {
+    await queueService.addVideoToDownloadQueue(videoId);
     return context.text('Server Error - Could not get url for video', 500);
   }
 

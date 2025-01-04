@@ -1,13 +1,9 @@
 import env from '../env';
-import configService from './configService';
 import videoService from './videoService';
 
 const queue: string[] = [];
 
 const addVideoToDownloadQueue = async (videoId: string) => {
-  const config = await configService.getConfig();
-  if (config.maxVideoQuality !== '1080p') return;
-
   const videoFile = Bun.file(`${env.CONTENT_FOLDER_PATH}/${videoId}.m3u8`);
 
   const videoFileExists = await videoFile.exists();

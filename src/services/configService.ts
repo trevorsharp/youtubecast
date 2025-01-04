@@ -18,7 +18,6 @@ const getConfig = async () => {
       configFile,
       JSON.stringify({
         youtubeApiKey: process.env['YOUTUBE_API_KEY'] ?? '',
-        maxVideoQuality: '720p',
       }),
     );
 
@@ -42,12 +41,10 @@ const getConfig = async () => {
     throw errorMessage;
   }
 
-  if (config.maxVideoQuality !== '720p') {
-    try {
-      await readdir(env.CONTENT_FOLDER_PATH);
-    } catch {
-      throw 'Content folder does not exist. Please mount a volume at the path "/app/content" or lower your "maxVideoQuality" setting to "720p".';
-    }
+  try {
+    await readdir(env.CONTENT_FOLDER_PATH);
+  } catch {
+    throw 'Content folder does not exist. Please mount a volume at the path "/app/content" or lower your "maxVideoQuality" setting to "720p".';
   }
 
   return config;

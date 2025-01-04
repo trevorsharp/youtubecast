@@ -1,38 +1,10 @@
 import { $ } from 'bun';
-import { z } from 'zod';
 import env from '../env';
 import getYoutubeLink from '../utils/getYoutubeLink';
-import configService from './configService';
-import queueService from './queueService';
 
-const getVideoUrl = async (videoId: string, isAudioOnly: boolean) => {
+const getVideoUrl = async (videoId: string) => {
   const videoFileExists = await Bun.file(`${env.CONTENT_FOLDER_PATH}/${videoId}.m3u8`).exists();
-
-  if (videoFileExists && !isAudioOnly) {
-    return `/content/${videoId}.m3u8`;
-  }
-
-  if (!isAudioOnly) {
-    await queueService.addVideoToDownloadQueue(videoId);
-  }
-
-  const format = getStreamingFormat(isAudioOnly);
-  const cookies = await getCookies();
-  const youtubeLink = getYoutubeLink(videoId);
-
-  const ytdlpOutput = await $`yt-dlp -g ${format} ${cookies} ${youtubeLink}`.text().catch((error) => {
-    console.error('' + error.info.stderr);
-    return undefined;
-  });
-
-  const { data: videoUrl, error } = z.string().url().safeParse(ytdlpOutput);
-
-  if (error) {
-    console.error(`yt-dlp did not return a video url for video (${videoId})`);
-    return undefined;
-  }
-
-  return videoUrl;
+  return videoFileExists ? `/content/${videoId}.m3u8` : undefined;
 };
 
 const downloadVideo = async (videoId: string) => {
@@ -60,17 +32,9 @@ const downloadVideo = async (videoId: string) => {
     .catch((error) => console.error('' + error.info.stderr));
 };
 
-const getStreamingFormat = (isAudioOnly: boolean) =>
-  isAudioOnly ? getAudioOnlyFormat() : '--format=best[height<=720][vcodec^=avc1]';
-
 const getAudioOnlyFormat = () => '--format=bestaudio[acodec^=mp4a][vcodec=none]';
 
-const getVideoOnlyFormat = async () => {
-  const config = await configService.getConfig();
-  const maxHeight = config.maxVideoQuality.replace('p', '');
-
-  return `--format=bestvideo[height<=${maxHeight}][vcodec^=avc1]`;
-};
+const getVideoOnlyFormat = async () => `--format=bestvideo[height<=1080][vcodec^=avc1]`;
 
 const getCookies = async () => {
   const hasCookiesTxt = await Bun.file(env.COOKIES_TXT_FILE_PATH).exists();

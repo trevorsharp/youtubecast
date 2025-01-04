@@ -14,7 +14,7 @@ const getFeedData = async (feedId: string) => {
   return undefined;
 };
 
-const generatePodcastFeed = async (host: string, feedId: string, isAudioOnly: boolean) => {
+const generatePodcastFeed = async (host: string, feedId: string) => {
   const feedData = await getFeedData(feedId);
 
   if (!feedData) {
@@ -28,7 +28,7 @@ const generatePodcastFeed = async (host: string, feedId: string, isAudioOnly: bo
     title: feedData.name,
     description: feedData.description,
     author: feedData.name,
-    feedUrl: `http://${host}/${feedId}/feed${getUrlParams(isAudioOnly)}`,
+    feedUrl: `http://${host}/${feedId}/feed`,
     siteUrl: feedData.link,
     imageUrl: feedData.imageUrl,
   });
@@ -40,8 +40,8 @@ const generatePodcastFeed = async (host: string, feedId: string, isAudioOnly: bo
       description: `${video.description}\n\n${video.link}`,
       date: new Date(video.date),
       enclosure: {
-        url: `http://${host}/videos/${video.id}${getUrlParams(isAudioOnly)}`,
-        type: getContentType(isAudioOnly),
+        url: `http://${host}/videos/${video.id}`,
+        type: 'video/mp4',
       },
       url: video.link,
       itunesDuration: video.duration,
@@ -49,16 +49,6 @@ const generatePodcastFeed = async (host: string, feedId: string, isAudioOnly: bo
   );
 
   return rssFeed.buildXml();
-};
-
-const getUrlParams = (isVideoOnly: boolean) => {
-  if (isVideoOnly) return '?videoOnly';
-  return '';
-};
-
-const getContentType = (isVideoOnly: boolean) => {
-  if (isVideoOnly) return 'audio/aac';
-  return 'video/mp4';
 };
 
 export default { getFeedData, generatePodcastFeed };

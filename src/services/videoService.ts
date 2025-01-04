@@ -48,7 +48,6 @@ const downloadVideo = async (videoId: string) => {
   await $`\
     yt-dlp -q ${videoOnlyFormat} ${cookies} --output=${videoPartFilePath} ${youtubeLink} && \
     yt-dlp -q ${audioOnlyFormat} ${cookies} --output=${audioPartFilePath} ${youtubeLink} && \
-    ffmpeg -i ${videoPartFilePath} -i ${audioPartFilePath} -c copy -movflags +faststart ${`${env.CONTENT_FOLDER_PATH}/${videoId}.mp4`} && \
     ffmpeg -i ${videoPartFilePath} -i ${audioPartFilePath} ${ffmpegOptions} ${outputVideoFilePath} && \
     rm ${videoPartFilePath} ${audioPartFilePath}
   `

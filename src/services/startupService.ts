@@ -7,7 +7,7 @@ const startApplication = async () => {
 
   await $`/usr/bin/yt-dlp -U`;
 
-  await $`rm ${env.CONFIG_FOLDER_PATH}/*.video ${env.CONFIG_FOLDER_PATH}/*.audio`;
+  await $`rm -f ${env.CONFIG_FOLDER_PATH}/*.video ${env.CONFIG_FOLDER_PATH}/*.audio`;
 };
 
 export default { startApplication };

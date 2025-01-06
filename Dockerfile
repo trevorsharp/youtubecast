@@ -27,4 +27,4 @@ COPY nginx.conf /etc/nginx/nginx.conf
 
 # Run application
 EXPOSE 3000/tcp
-CMD /usr/bin/yt-dlp -U && nginx && bun run start
+CMD nginx && bun run start

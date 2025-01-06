@@ -1,8 +1,7 @@
 import router from './router';
-import configService from './services/configService';
-import queueService from './services/queueService';
+import startupService from './services/startupService';
 
-await configService.getConfig();
+await startupService.startApplication();
 
 Bun.serve({
   port: 3001,
@@ -10,5 +9,3 @@ Bun.serve({
 });
 
 console.log('YouTubeCast server is up and running');
-
-setInterval(() => queueService.downloadNextVideoInQueue(), 2000);

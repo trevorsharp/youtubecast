@@ -44,7 +44,7 @@ const getCookies = async () => {
 };
 
 const getFfmpegOptions = () => ({
-  raw: '-hide_banner -c:v copy -c:a copy -f hls -hls_playlist_type vod -hls_flags single_file',
+  raw: '-hide_banner -loglevel error -c:v copy -c:a copy -f hls -hls_playlist_type vod -hls_flags single_file',
 });
 
 export default { getVideoUrl, downloadVideo };

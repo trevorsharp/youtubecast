@@ -6,19 +6,22 @@ import logZodError from '../utils/logZodError';
 
 const getVideoUrl = async (videoId: string, isAudioOnly: boolean) => {
   if (isAudioOnly) {
-    return await getAudioStreamingUrl(videoId);
+    return await getStreamingUrl(videoId, 'audio');
   }
 
   const videoFileExists = await Bun.file(`${env.CONTENT_FOLDER_PATH}/${videoId}.m3u8`).exists();
-  return videoFileExists ? `/content/${videoId}.m3u8` : undefined;
+
+  if (videoFileExists) return `/content/${videoId}.m3u8`;
+
+  return await getStreamingUrl(videoId, 'video');
 };
 
-const getAudioStreamingUrl = async (videoId: string) => {
-  const audioOnlyFormat = getAudioOnlyFormat();
+const getStreamingUrl = async (videoId: string, type: 'video' | 'audio') => {
+  const format = type === 'video' ? getVideoStreamingFormat() : getAudioOnlyFormat();
   const cookies = await getCookies();
   const youtubeLink = getYoutubeLink(videoId);
 
-  const ytdlpResponse = await $`yt-dlp -q -g ${audioOnlyFormat} ${cookies} ${youtubeLink}`
+  const ytdlpResponse = await $`yt-dlp -q -g ${format} ${cookies} ${youtubeLink}`
     .text()
     .catch((error) => console.error('' + error.info.stderr));
 
@@ -56,6 +59,8 @@ const downloadVideo = async (videoId: string) => {
     .then(() => console.log(`Finished downloading video (${videoId})`))
     .catch((error) => console.error('' + error.info.stderr));
 };
+
+const getVideoStreamingFormat = async () => `--format=best[height<=720][vcodec^=avc1]`;
 
 const getAudioOnlyFormat = () => '--format=bestaudio[acodec^=mp4a][vcodec=none]';
 

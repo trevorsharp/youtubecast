@@ -33,7 +33,7 @@ router.get('/videos/:videoId', async (context) => {
 
   if (!videoUrl) {
     await queueService.addVideoToDownloadQueue(videoId, { addToFrontOfQueue: true });
-    return context.text('Server Error - Video is not yet downloaded', 500);
+    return context.text('Server Error - Video could not be found', 500);
   }
 
   return context.redirect(videoUrl, 302);

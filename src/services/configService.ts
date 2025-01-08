@@ -7,9 +7,15 @@ const configFile = Bun.file(`${env.CONFIG_FOLDER_PATH}/settings.json`);
 
 const getConfig = async () => {
   await verifyConfigFolderExists();
-  await verifyContentFolderExists();
   await verifyConfigFileExists();
-  return await validateConfigFile();
+
+  const config = await validateConfigFile();
+
+  if (config.downloadVideos) {
+    await verifyContentFolderExists();
+  }
+
+  return config;
 };
 
 const verifyConfigFolderExists = async () => {
@@ -36,10 +42,15 @@ const verifyConfigFileExists = async () => {
       configFile,
       JSON.stringify({
         youtubeApiKey: process.env['YOUTUBE_API_KEY'] ?? '',
+        downloadVideos: false,
       }),
     );
 
-    throw 'Please open the settings.json file in your config folder and verify the required fields are added.';
+    try {
+      await validateConfigFile();
+    } catch {
+      throw 'Please open the settings.json file in your config folder and verify the required fields have been added.';
+    }
   }
 };
 

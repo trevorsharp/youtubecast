@@ -4,7 +4,7 @@ import env from '../env';
 
 const startApplication = async () => {
   await configService.getConfig();
-  await $`/usr/bin/yt-dlp -U`;
+  await $`yt-dlp -U`;
   await $`find ${env.CONFIG_FOLDER_PATH} -name "*.video" -type f -delete`;
   await $`find ${env.CONFIG_FOLDER_PATH} -name "*.audio" -type f -delete`;
 };

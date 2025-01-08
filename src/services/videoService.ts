@@ -1,10 +1,35 @@
 import { $ } from 'bun';
 import env from '../env';
 import getYoutubeLink from '../utils/getYoutubeLink';
+import { z } from 'zod';
+import logZodError from '../utils/logZodError';
 
-const getVideoUrl = async (videoId: string) => {
+const getVideoUrl = async (videoId: string, isAudioOnly: boolean) => {
+  if (isAudioOnly) {
+    return await getAudioStreamingUrl(videoId);
+  }
+
   const videoFileExists = await Bun.file(`${env.CONTENT_FOLDER_PATH}/${videoId}.m3u8`).exists();
   return videoFileExists ? `/content/${videoId}.m3u8` : undefined;
+};
+
+const getAudioStreamingUrl = async (videoId: string) => {
+  const audioOnlyFormat = getAudioOnlyFormat();
+  const cookies = await getCookies();
+  const youtubeLink = getYoutubeLink(videoId);
+
+  const ytdlpResponse = await $`yt-dlp -q -g ${audioOnlyFormat} ${cookies} ${youtubeLink}`
+    .text()
+    .catch((error) => console.error('' + error.info.stderr));
+
+  const { data: audioStreamingUrl, error } = z.string().url().safeParse(ytdlpResponse);
+
+  if (error) {
+    logZodError(error);
+    return undefined;
+  }
+
+  return audioStreamingUrl;
 };
 
 const downloadVideo = async (videoId: string) => {

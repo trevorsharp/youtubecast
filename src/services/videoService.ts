@@ -13,7 +13,7 @@ const getVideoUrl = async (videoId: string, isAudioOnly: boolean) => {
 
   if (videoFileExists) return `/content/${videoId}.m3u8`;
 
-  return await getStreamingUrl(videoId, 'video');
+  return undefined;
 };
 
 const getStreamingUrl = async (videoId: string, type: 'video' | 'audio') => {

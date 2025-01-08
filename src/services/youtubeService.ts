@@ -69,7 +69,6 @@ const getPlaylist = async (playlistId: string) => {
   if (!channelId) return undefined;
 
   const channel = await getChannel(channelId);
-
   const playlistName = playlistId.startsWith('UU') ? `${channel?.name} (Members-Only)` : playlistResult.snippet?.title;
 
   const { data: playlist, error } = playlistValidator.safeParse({
@@ -127,22 +126,14 @@ const getVideosForPlaylist = async (playlistId: string) => {
   if (!videoDetailsResult) return [];
 
   const { data: videos, error } = z.array(videoValidator).safeParse(
-    videoDetailsResult
-      .filter(
-        (video) =>
-          video.status?.uploadStatus === 'processed' &&
-          video.snippet?.liveBroadcastContent === 'none' &&
-          video.status?.privacyStatus !== 'private' &&
-          !isLikelyYouTubeShort(video),
-      )
-      .map((video) => ({
-        id: video.id,
-        title: video.snippet?.title,
-        description: video.snippet?.description,
-        duration: getDuration(video.contentDetails?.duration),
-        date: getDate(video.snippet?.publishedAt, playlistVideos.find((v) => v.id === video.id)?.publishedAt),
-        link: video.id ? getYoutubeLink(video.id) : '',
-      })),
+    videoDetailsResult.filter(shouldIncludeVideoInFeed).map((video) => ({
+      id: video.id,
+      title: video.snippet?.title,
+      description: video.snippet?.description,
+      duration: getDuration(video.contentDetails?.duration),
+      date: getDate(video.snippet?.publishedAt, playlistVideos.find((v) => v.id === video.id)?.publishedAt),
+      link: video.id ? getYoutubeLink(video.id) : '',
+    })),
   );
 
   if (error) {
@@ -154,6 +145,12 @@ const getVideosForPlaylist = async (playlistId: string) => {
 
   return videos;
 };
+
+const shouldIncludeVideoInFeed = (video: youtube_v3.Schema$Video) =>
+  video.status?.uploadStatus === 'processed' &&
+  video.snippet?.liveBroadcastContent === 'none' &&
+  video.status?.privacyStatus !== 'private' &&
+  !isLikelyYouTubeShort(video);
 
 const isLikelyYouTubeShort = (video: youtube_v3.Schema$Video) => {
   const duration = getDuration(video.contentDetails?.duration);

@@ -17,11 +17,10 @@ const getFeedData = async (feedId: string) => {
 const generatePodcastFeed = async (host: string, feedId: string) => {
   const feedData = await getFeedData(feedId);
 
-  if (!feedData) {
-    return undefined;
-  }
+  if (!feedData) return undefined;
 
   const [firstVideo] = feedData.videos;
+
   if (firstVideo) await queueService.addVideoToDownloadQueue(firstVideo.id);
 
   const rssFeed = new Podcast({

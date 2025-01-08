@@ -8,9 +8,7 @@ const videosInQueue = new Set<string>();
 const addVideoToDownloadQueue = async (videoId: string, options?: { addToFrontOfQueue?: boolean }) => {
   const videoFileExists = await Bun.file(`${env.CONTENT_FOLDER_PATH}/${videoId}.m3u8`).exists();
 
-  if (videoFileExists || videosInQueue.has(videoId)) {
-    return;
-  }
+  if (videoFileExists || videosInQueue.has(videoId)) return;
 
   console.log(`Adding video to queue (${videoId})`);
 

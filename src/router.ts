@@ -13,7 +13,7 @@ router.get('/:feedId/feed', async (context) => {
   const { host } = new URL(context.req.url);
   const { feedId } = context.req.param();
   const { audioOnly } = context.req.query();
-  const isAudioOnly = !audioOnly || audioOnly === 'false';
+  const isAudioOnly = !!audioOnly && audioOnly !== 'false';
 
   const podcastFeed = await feedService.generatePodcastFeed(host, feedId, isAudioOnly);
 
@@ -27,7 +27,7 @@ router.get('/:feedId/feed', async (context) => {
 router.get('/videos/:videoId', async (context) => {
   const { videoId } = context.req.param();
   const { audioOnly } = context.req.query();
-  const isAudioOnly = !audioOnly || audioOnly === 'false';
+  const isAudioOnly = !!audioOnly && audioOnly !== 'false';
 
   const videoUrl = await videoService.getVideoUrl(videoId, isAudioOnly);
 

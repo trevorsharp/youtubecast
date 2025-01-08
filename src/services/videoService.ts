@@ -11,9 +11,11 @@ const getVideoUrl = async (videoId: string, isAudioOnly: boolean) => {
 
   const videoFileExists = await Bun.file(`${env.CONTENT_FOLDER_PATH}/${videoId}.m3u8`).exists();
 
-  if (videoFileExists) return `/content/${videoId}.m3u8`;
+  if (videoFileExists) {
+    return `/content/${videoId}.m3u8`;
+  }
 
-  return undefined;
+  return await getStreamingUrl(videoId, 'video');
 };
 
 const getStreamingUrl = async (videoId: string, type: 'video' | 'audio') => {

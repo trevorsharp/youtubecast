@@ -62,7 +62,7 @@ const downloadVideo = async (videoId: string) => {
     .catch((error) => console.error('' + error.info.stderr));
 };
 
-const getVideoStreamingFormat = async () => `--format=best[height<=720][vcodec^=avc1]`;
+const getVideoStreamingFormat = () => `--format=best[height<=720][vcodec^=avc1]`;
 
 const getAudioOnlyFormat = () => '--format=bestaudio[acodec^=mp4a][vcodec=none]';
 

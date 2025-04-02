@@ -175,15 +175,15 @@ const getDate = (videoPublishedAt: string | null | undefined, playlistVideoPubli
 
   const videoPublishedDate = new Date(videoPublishedAt);
 
-  if (playlistVideoPublishedAt) {
-    const playlistVideoPublishedDate = new Date(playlistVideoPublishedAt);
-
-    if (playlistVideoPublishedDate > videoPublishedDate) {
-      return playlistVideoPublishedDate.toISOString();
-    }
+  if (!playlistVideoPublishedAt) {
+    return videoPublishedDate.toISOString();
   }
 
-  return videoPublishedDate.toISOString();
+  const playlistVideoPublishedDate = new Date(playlistVideoPublishedAt);
+
+  return playlistVideoPublishedDate > videoPublishedDate
+    ? playlistVideoPublishedDate.toISOString()
+    : videoPublishedDate.toISOString();
 };
 
 export default { getChannel, getPlaylist };

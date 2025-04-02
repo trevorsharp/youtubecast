@@ -2,12 +2,13 @@ import { useState } from 'react';
 
 type RssLinksProps = {
   feedId: string;
+  audioOnly: boolean;
 };
 
-const RssLinks = ({ feedId }: RssLinksProps) => {
+const RssLinks = ({ feedId, audioOnly }: RssLinksProps) => {
   const [copiedText, setCopiedText] = useState<string>('');
 
-  const getRssLink = () => `${window.location.hostname}/${feedId}/feed`;
+  const getRssLink = () => `${window.location.hostname}/${feedId}/feed${audioOnly ? '?audioOnly' : ''}`;
 
   const copyRssLink = () => {
     void navigator.clipboard.writeText(`http://${getRssLink()}`).then(() => {

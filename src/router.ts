@@ -7,7 +7,6 @@ import queueService from './services/queueService';
 import searchService from './services/searchService';
 
 const router = new Hono();
-router.get('/', serveStatic({ path: `${env.UI_FOLDER_PATH}/index.html` }));
 router.get('/favicon.ico', serveStatic({ path: `${env.UI_FOLDER_PATH}/favicon.ico` }));
 router.get('/robots.txt', serveStatic({ path: `${env.UI_FOLDER_PATH}/robots.txt` }));
 router.get('/assets/*', serveStatic({ root: `${env.UI_FOLDER_PATH}` }));
@@ -59,5 +58,7 @@ router.get('/videos/:videoId', async (context) => {
 
   return context.redirect(videoUrl, 302);
 });
+
+router.get('/{.*}', serveStatic({ path: `${env.UI_FOLDER_PATH}/index.html` }));
 
 export default router;

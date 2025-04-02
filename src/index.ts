@@ -1,7 +1,7 @@
 import router from './router';
 import startupService from './services/startupService';
 
-// await startupService.startApplication();
+await startupService.startApplication();
 
 Bun.serve({
   port: 3001,

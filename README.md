@@ -73,7 +73,7 @@ To generate this file:
 
 ### Download Videos at 1080p Quality (Optional)
 
-If you want to serve videos at 1080p quality, you will have to enable the option to download videos to your machine. Note that this will significantly increase your disk usage.
+If you want to serve videos at 1080p quality, you will have to enable the option to download videos to your machine. Note that this will significantly increase your disk usage. Enabling this option may break the ability to download videos in within your podcast app.
 
 To enable this option:
 

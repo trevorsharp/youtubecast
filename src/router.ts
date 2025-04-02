@@ -8,6 +8,8 @@ import searchService from './services/searchService';
 
 const router = new Hono();
 router.get('/', serveStatic({ path: `${env.UI_FOLDER_PATH}/index.html` }));
+router.get('/favicon.ico', serveStatic({ path: `${env.UI_FOLDER_PATH}/favicon.ico` }));
+router.get('/robots.txt', serveStatic({ path: `${env.UI_FOLDER_PATH}/robots.txt` }));
 router.get('/assets/*', serveStatic({ root: `${env.UI_FOLDER_PATH}` }));
 
 router.get('/api/search/:searchText', async (context) => {

@@ -34,7 +34,11 @@ const Search = ({ initialSearch }: { initialSearch?: string }) => {
       <form className="flex items-center gap-4" onSubmit={onSubmit}>
         <SearchInput {...register('searchText')} />
         <button type="submit">
-          <img className="h-8 w-8 text-youtube" src={isLoading ? '/loading.svg' : '/next.svg'} alt="Submit" />
+          <img
+            className="h-8 w-8 text-youtube"
+            src={isLoading ? '/assets/loading.svg' : '/assets/next.svg'}
+            alt="Submit"
+          />
         </button>
       </form>
     </>

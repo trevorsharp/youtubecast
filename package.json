@@ -1,49 +1,25 @@
 {
   "name": "youtubecast",
-  "version": "1.1.0",
+  "module": "index.ts",
   "type": "module",
-  "license": "MIT",
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
-    "lint": "tsc --noEmit && prettier --check . && next lint",
+    "start": "bun run src/index.ts",
+    "build": "cd ui && bun run build",
+    "lint": "tsc --noEmit && prettier --check . && eslint .",
     "prettier": "prettier --write ."
   },
-  "dependencies": {
-    "@distube/ytdl-core": "^4.15.8",
-    "@hookform/resolvers": "3.9.0",
-    "@t3-oss/env-nextjs": "0.10.1",
-    "@tailwindcss/forms": "0.5.3",
-    "googleapis": "105.0.0",
-    "next": "14.2.4",
-    "node-cache": "5.1.2",
-    "podcast": "2.0.0",
-    "react": "18.3.1",
-    "react-dom": "18.3.1",
-    "react-hook-form": "7.52.1",
-    "zod": "3.23.3"
-  },
   "devDependencies": {
-    "@types/cookie": "0.5.1",
-    "@types/eslint": "8.56.10",
-    "@types/node": "20.14.10",
-    "@types/prettier": "2.7.2",
-    "@types/react-dom": "18.3.0",
-    "@types/react": "18.3.3",
-    "@typescript-eslint/eslint-plugin": "7.1.1",
-    "@typescript-eslint/parser": "7.1.1",
-    "eslint-config-next": "14.2.4",
-    "eslint-config-prettier": "8.8.0",
-    "eslint-plugin-simple-import-sort": "10.0.0",
-    "eslint": "8.57.0",
-    "postcss": "8.4.39",
-    "prettier-plugin-tailwindcss": "0.6.5",
-    "prettier": "3.3.2",
-    "tailwindcss": "3.4.3",
-    "typescript": "5.5.3"
+    "@eslint/js": "^9.17.0",
+    "@types/bun": "^1.1.14",
+    "eslint": "^9.17.0",
+    "prettier": "^3.4.2",
+    "typescript-eslint": "^8.18.1",
+    "typescript": "^5.7.2"
   },
-  "ct3aMetadata": {
-    "initVersion": "7.36.1"
+  "dependencies": {
+    "googleapis": "^144.0.0",
+    "hono": "^4.6.14",
+    "podcast": "^2.0.1",
+    "zod": "^3.24.1"
   }
 }

@@ -1,0 +1,14 @@
+@import 'tailwindcss';
+
+@theme {
+  --color-youtube: #ed0000;
+
+  --breakpoint-tiny: 340px;
+  --breakpoint-mobile: 400px;
+  --breakpoint-normal: 470px;
+
+  --text-base: 10px;
+  --text-tiny: 12px;
+  --text-mobile: 14px;
+  --text-normal: 16px;
+}

@@ -1,42 +1,49 @@
 import { Podcast } from 'podcast';
-import { Quality } from '~/types';
-import getFeedUrlParams from '~/utils/getFeedUrlParams';
-import { getSourceAndVideos } from './sourceService';
+import youtubeService from './youtubeService';
+import queueService from './queueService';
 
-const getRssFeed = async (sourceId: string, host: string, quality: Quality) => {
-  const [source, allVideos] = await getSourceAndVideos(sourceId);
-  const videos = allVideos
-    .filter((video) => video.isAvailable && !video.isYouTubeShort)
-    .sort((a, b) => (a.date < b.date ? 1 : -1));
+const getFeedData = async (feedId: string, excludeVideos: boolean = false) => {
+  if (feedId.startsWith('UC')) {
+    return await youtubeService.getChannel(feedId, excludeVideos);
+  }
 
-  const videoQueryParams = new URLSearchParams();
+  if (feedId.startsWith('PL') || feedId.startsWith('UU')) {
+    return await youtubeService.getPlaylist(feedId, excludeVideos);
+  }
 
-  if (quality != Quality.Default) videoQueryParams.append('quality', quality.toString());
+  return undefined;
+};
 
-  const feedUrlParams = getFeedUrlParams(quality);
+const generatePodcastFeed = async (host: string, feedId: string, isAudioOnly: boolean) => {
+  const feedData = await getFeedData(feedId);
+
+  if (!feedData) return undefined;
+
+  if (!isAudioOnly) {
+    const [firstVideo] = feedData.videos;
+    if (firstVideo) await queueService.addVideoToDownloadQueue(firstVideo.id);
+  }
 
   const rssFeed = new Podcast({
-    title: source.displayName,
-    description: source.description,
-    author: source.displayName,
-    feedUrl: `http://${host}/${sourceId}/feed${feedUrlParams}`,
-    siteUrl: source.url,
-    imageUrl: source.profileImageUrl.startsWith('/')
-      ? `http://${host}${source.profileImageUrl}`
-      : source.profileImageUrl,
+    title: feedData.name,
+    description: feedData.description,
+    author: feedData.name,
+    feedUrl: `http://${host}/${feedId}/feed${getQueryParams(isAudioOnly)}`,
+    siteUrl: feedData.link,
+    imageUrl: feedData.imageUrl,
   });
 
-  videos.forEach((video) =>
+  feedData.videos.forEach((video) =>
     rssFeed.addItem({
       title: video.title,
       itunesTitle: video.title,
-      description: video.description + '\n' + '\n' + video.url,
+      description: `${video.description}\n\n${video.link}`,
       date: new Date(video.date),
       enclosure: {
-        url: `http://${host}/videos/${video.id}${videoQueryParams.size > 0 ? '?' : ''}${videoQueryParams.toString()}`,
-        type: quality === Quality.Audio ? 'audio/aac' : 'video/mp4',
+        url: `http://${host}/videos/${video.id}${getQueryParams(isAudioOnly)}`,
+        type: isAudioOnly ? 'audio/mp3' : 'video/mp4',
       },
-      url: video.url,
+      url: video.link,
       itunesDuration: video.duration,
     }),
   );
@@ -44,4 +51,9 @@ const getRssFeed = async (sourceId: string, host: string, quality: Quality) => {
   return rssFeed.buildXml();
 };
 
-export { getRssFeed };
+const getQueryParams = (isAudioOnly: boolean) => {
+  if (isAudioOnly) return '?audioOnly';
+  return '';
+};
+
+export default { getFeedData, generatePodcastFeed };

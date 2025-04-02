@@ -1,38 +1,82 @@
-import ytdl from '@distube/ytdl-core';
-import { env } from '~/env';
-import { Quality } from '~/types';
+import { $ } from 'bun';
+import env from '../env';
+import getYoutubeLink from '../utils/getYoutubeLink';
+import { z } from 'zod';
+import logZodError from '../utils/logZodError';
 
-const getStream = async (videoId: string, quality: Quality): Promise<string> => {
-  const videoUrl = await getVideoUrl(videoId, quality);
-
-  if (!videoUrl) throw `Video not found with id ${videoId}`;
-
-  return videoUrl;
-};
-
-const getVideoUrl = async (videoId: string, quality: Quality) => {
-  const videoInfo = await ytdl.getInfo(`https://www.youtube.com/watch?v=${videoId}`, {
-    requestOptions: { headers: { cookie: env.COOKIES ?? '' } },
-  });
-
-  const formats = videoInfo.formats
-    .filter(
-      (format) =>
-        format.hasAudio &&
-        format.container === 'mp4' &&
-        (!format.hasVideo || format.videoCodec?.includes('avc')),
-    )
-    .sort((a, b) => (b.audioBitrate ?? 0) - (a.audioBitrate ?? 0))
-    .sort((a, b) => (b.height ?? 0) - (a.height ?? 0));
-
-  switch (quality) {
-    case Quality.Audio:
-      return formats.find((format) => !format.hasVideo)?.url;
-    case Quality.P360:
-      return formats.find((format) => format.qualityLabel === '360p')?.url;
-    default:
-      return formats.find((format) => format.hasVideo)?.url;
+const getVideoUrl = async (videoId: string, isAudioOnly: boolean) => {
+  if (isAudioOnly) {
+    return await getStreamingUrl(videoId, 'audio');
   }
+
+  const videoFileExists = await Bun.file(`${env.CONTENT_FOLDER_PATH}/${videoId}.m3u8`).exists();
+
+  if (videoFileExists) {
+    return `/content/${videoId}.m3u8`;
+  }
+
+  return await getStreamingUrl(videoId, 'video');
 };
 
-export { getStream };
+const getStreamingUrl = async (videoId: string, type: 'video' | 'audio') => {
+  const format = type === 'video' ? getVideoStreamingFormat() : getAudioOnlyFormat();
+  const cookies = await getCookies();
+  const youtubeLink = getYoutubeLink(videoId);
+
+  const ytdlpResponse = await $`yt-dlp -q -g ${format} ${cookies} ${youtubeLink}`
+    .text()
+    .catch((error) => console.error('' + error.info.stderr));
+
+  const { data: audioStreamingUrl, error } = z.string().url().safeParse(ytdlpResponse);
+
+  if (error) {
+    logZodError(error);
+    return undefined;
+  }
+
+  return audioStreamingUrl;
+};
+
+const downloadVideo = async (videoId: string) => {
+  const videoPartFilePath = `${env.CONTENT_FOLDER_PATH}/${videoId}.video`;
+  const audioPartFilePath = `${env.CONTENT_FOLDER_PATH}/${videoId}.audio`;
+  const outputVideoFilePath = `${env.CONTENT_FOLDER_PATH}/${videoId}.m3u8`;
+
+  const cookies = await getCookies();
+  const youtubeLink = getYoutubeLink(videoId);
+
+  const videoOnlyFormat = await getVideoOnlyFormat();
+  const audioOnlyFormat = getAudioOnlyFormat();
+
+  const ffmpegOptions = getFfmpegOptions();
+
+  console.log(`Starting video download (${videoId})`);
+
+  await $`\
+    yt-dlp -q ${videoOnlyFormat} ${cookies} --output=${videoPartFilePath} ${youtubeLink} && \
+    yt-dlp -q ${audioOnlyFormat} ${cookies} --output=${audioPartFilePath} ${youtubeLink} && \
+    ffmpeg -i ${videoPartFilePath} -i ${audioPartFilePath} ${ffmpegOptions} ${outputVideoFilePath} && \
+    rm ${videoPartFilePath} ${audioPartFilePath}
+  `
+    .then(() => console.log(`Finished downloading video (${videoId})`))
+    .catch((error) => console.error('' + error.info.stderr));
+};
+
+const getVideoStreamingFormat = () => `--format=best[height<=720][vcodec^=avc1]`;
+
+const getAudioOnlyFormat = () => '--format=bestaudio[acodec^=mp4a][vcodec=none]';
+
+const getVideoOnlyFormat = async () => `--format=bestvideo[height<=1080][vcodec^=avc1]`;
+
+const getCookies = async () => {
+  const hasCookiesTxt = await Bun.file(env.COOKIES_TXT_FILE_PATH).exists();
+  if (!hasCookiesTxt) return '';
+
+  return `--cookies=${env.COOKIES_TXT_FILE_PATH}`;
+};
+
+const getFfmpegOptions = () => ({
+  raw: '-hide_banner -loglevel error -c:v copy -c:a copy -f hls -hls_playlist_type vod -hls_flags single_file',
+});
+
+export default { getVideoUrl, downloadVideo };

@@ -1,280 +1,167 @@
-import { google } from 'googleapis';
+import { google, youtube_v3 } from 'googleapis';
+import configService from './configService';
+import channelValidator from '../validators/channelValidator';
+import playlistValidator from '../validators/playlistValidator';
 import { z } from 'zod';
-import { env } from '~/env';
-import type { Source } from '~/types';
+import videoValidator from '../validators/videoValidator';
+import getYoutubeLink from '../utils/getYoutubeLink';
 
-const youtubeInstances =
-  env.YOUTUBE_API_KEY?.split(',')?.map((auth) => google.youtube({ version: 'v3', auth })) ?? [];
+let youtubeInstance: youtube_v3.Youtube | undefined = undefined;
 
-const getYoutube = () => {
-  if (youtubeInstances.length === 0) throw 'No API Key Provided';
-  return youtubeInstances[Math.floor((new Date().getMinutes() * youtubeInstances.length) / 60)]!;
+const getYoutube = async () => {
+  if (youtubeInstance) return youtubeInstance;
+
+  const config = await configService.getConfig();
+  youtubeInstance = google.youtube({ version: 'v3', auth: config.youtubeApiKey });
+  return youtubeInstance;
 };
 
-const getChannelDetails = async (channelId: string) => {
-  const rawChannelResults = await getYoutube()
-    .channels.list({
-      part: ['snippet'],
-      id: [channelId],
-    })
-    .then((response) => response?.data?.items)
-    .catch((error) => console.error(error));
+const getChannel = async (channelId: string, excludeVideos: boolean) => {
+  const youtube = await getYoutube();
 
-  if (rawChannelResults === undefined || rawChannelResults.length === 0) throw 'Channel Not Found';
-
-  const channelResult = z
-    .object({
-      id: z.string(),
-      snippet: z.object({
-        title: z.string(),
-        description: z.string(),
-        thumbnails: z.object({
-          high: z.object({
-            url: z.string(),
-          }),
-        }),
-      }),
-    })
-    .safeParse(rawChannelResults.shift());
-
-  if (!channelResult.success) throw `Could not find YouTube channel for id ${channelId} 🤷`;
-
-  const source: Source = {
-    type: 'channel',
-    id: channelResult.data.id,
-    displayName: channelResult.data.snippet.title,
-    description: channelResult.data.snippet.description,
-    profileImageUrl: channelResult.data.snippet.thumbnails.high.url,
-    url: `https://youtube.com/channel/${channelResult.data.id}`,
-  };
-
-  return source;
-};
-
-const getPlaylistDetails = async (playlistId: string) => {
-  const rawPlaylistResults = await getYoutube()
-    .playlists.list({
-      part: ['snippet'],
-      id: [playlistId],
-    })
-    .then((response) => response?.data?.items)
-    .catch((error) => console.error(error));
-
-  if (rawPlaylistResults === undefined || rawPlaylistResults.length === 0)
-    throw 'Playlist Not Found';
-
-  const playlistResult = z
-    .object({
-      id: z.string(),
-      snippet: z.object({
-        title: z.string(),
-        description: z.string(),
-        channelId: z.string(),
-      }),
-    })
-    .safeParse(rawPlaylistResults?.shift());
-
-  if (!playlistResult.success) throw `Could not find YouTube playlist for id ${playlistId} 🤷`;
-
-  const channelId = playlistResult.data.snippet.channelId;
-
-  const rawChannelResult = await getYoutube()
-    .channels.list({
-      part: ['snippet', 'statistics'],
-      id: [channelId],
-    })
+  const channelResult = await youtube.channels
+    .list({ part: ['snippet'], id: [channelId] })
     .then((response) => response?.data?.items?.shift())
-    .catch((error) => console.error(error));
-
-  const channelResult = z
-    .object({
-      snippet: z.object({
-        title: z.string(),
-        thumbnails: z.object({
-          high: z.object({
-            url: z.string(),
-          }),
-        }),
-      }),
-      statistics: z.object({
-        subscriberCount: z
-          .string()
-          .regex(/^[0-9]+$/)
-          .transform((x) => parseInt(x)),
-      }),
-    })
-    .safeParse(rawChannelResult);
-
-  if (!channelResult.success) throw `Could not find YouTube channel for id ${channelId} 🤷`;
-
-  const displayName = playlistId.startsWith('UU')
-    ? `${channelResult.data.snippet.title} (Members-Only)`
-    : playlistResult.data.snippet.title;
-
-  const profileImageUrl =
-    channelResult.data.statistics.subscriberCount < 100
-      ? '/playlist.png'
-      : channelResult.data.snippet.thumbnails.high.url;
-
-  const source: Source = {
-    type: 'playlist',
-    id: playlistResult.data.id,
-    displayName,
-    description: playlistResult.data.snippet.description,
-    url: `https://youtube.com/playlist?list=${playlistResult.data.id}`,
-    profileImageUrl,
-  };
-
-  return source;
-};
-
-const getPlaylistVideos = async (playlistId: string) => {
-  const firstPlaylistPage = await getPlaylistPage(playlistId);
-  const playlistItems = firstPlaylistPage.items;
-
-  const shouldFetchFullPlaylist =
-    env.ENABLE_PLAYLIST_SORTING &&
-    playlistItems.some(
-      (item, index, arr) => index !== 0 && item.publishedAt >= (arr[index - 1]?.publishedAt ?? ''),
-    );
-
-  if (shouldFetchFullPlaylist) {
-    let nextPageToken = firstPlaylistPage.nextPageToken;
-    for (let i = 0; i < 100 && nextPageToken; i++) {
-      const nextPlaylistPage = await getPlaylistPage(playlistId, nextPageToken);
-      playlistItems.push(...nextPlaylistPage.items);
-      nextPageToken = nextPlaylistPage.nextPageToken;
-    }
-  }
-
-  const videos = playlistItems
-    .sort((a, b) => (a.publishedAt < b.publishedAt ? 1 : -1))
-    .splice(0, 50)
-    .map((item) => ({
-      id: item.resourceId.videoId,
-      addedToPlaylistDate: new Date(item.publishedAt),
-    }));
-
-  if (videos.length === 0) return [];
-
-  return await getVideoDetails(videos);
-};
-
-const getPlaylistPage = async (playlistId: string, pageToken?: string) => {
-  const [rawPlaylistItemResults, rawPlaylistResults] = await getYoutube()
-    .playlistItems.list({
-      part: ['snippet'],
-      maxResults: 50,
-      playlistId,
-      pageToken,
-    })
-    .then((response) => [response?.data?.items?.map((x) => x?.snippet), response?.data])
     .catch((error) => {
-      if (typeof error === 'object' && (error as { code: unknown }).code === 404)
-        return [[], { pageInfo: { totalResults: 0 } }];
       console.error(error);
-      return [undefined, undefined];
+      return undefined;
     });
 
-  const playlistItemResults = z
-    .array(
-      z.object({
-        publishedAt: z.string(),
-        resourceId: z.object({
-          videoId: z.string(),
-        }),
-      }),
-    )
-    .safeParse(rawPlaylistItemResults);
+  if (!channelResult) return undefined;
 
-  const playlistResults = z
-    .object({
-      nextPageToken: z.string().nullish(),
-      prevPageToken: z.string().nullish(),
-      pageInfo: z.object({
-        totalResults: z.number(),
-      }),
-    })
-    .safeParse(rawPlaylistResults);
+  const { data: channel, error } = channelValidator.safeParse({
+    type: 'channel',
+    id: channelResult.id,
+    name: channelResult.snippet?.title,
+    description: channelResult.snippet?.description,
+    imageUrl:
+      channelResult.snippet?.thumbnails?.maxres?.url ??
+      channelResult.snippet?.thumbnails?.high?.url ??
+      channelResult.snippet?.thumbnails?.default?.url,
+    link: `https://youtube.com/channel/${channelResult.id}`,
+  });
 
-  if (!playlistItemResults.success || !playlistResults.success)
-    throw `Could get playlist items for YouTube playlist with id ${playlistId} 🤷`;
+  if (error) {
+    console.error(error);
+    return undefined;
+  }
 
-  return { ...playlistResults.data, items: playlistItemResults.data };
+  const videos = excludeVideos ? [] : await getVideosForChannel(channelId);
+
+  return { ...channel, videos };
 };
 
-const getVideoDetails = async (
-  videos: { id: string; addedToPlaylistDate?: Date | undefined }[],
-) => {
-  const rawVideoDetailsResults = await getYoutube()
-    .videos.list({
-      part: ['snippet,contentDetails,status'],
-      maxResults: 50,
-      id: videos.map((v) => v.id),
-    })
+const getPlaylist = async (playlistId: string, excludeVideos: boolean) => {
+  const youtube = await getYoutube();
+
+  const playlistResult = await youtube.playlists
+    .list({ part: ['snippet'], id: [playlistId] })
+    .then((response) => response?.data?.items?.shift())
+    .catch((error) => {
+      console.error(error);
+      return undefined;
+    });
+
+  if (!playlistResult) return undefined;
+
+  const channelId = playlistResult.snippet?.channelId;
+
+  if (!channelId) return undefined;
+
+  const channel = await getChannel(channelId, excludeVideos);
+  const playlistName = playlistId.startsWith('UU') ? `${channel?.name} (Members-Only)` : playlistResult.snippet?.title;
+
+  const { data: playlist, error } = playlistValidator.safeParse({
+    type: 'playlist',
+    id: playlistResult.id,
+    name: playlistName,
+    description: playlistResult.snippet?.description,
+    imageUrl: channel?.imageUrl,
+    link: `https://youtube.com/playlist?list=${playlistResult.id}`,
+  });
+
+  if (error) {
+    console.error(error);
+    return undefined;
+  }
+
+  const videos = excludeVideos ? [] : await getVideosForPlaylist(playlistId);
+
+  return { ...playlist, videos };
+};
+
+const getVideosForChannel = async (channelId: string) => {
+  const playlistId = channelId.replace(/^UC/, 'UU');
+  return await getVideosForPlaylist(playlistId);
+};
+
+const getVideosForPlaylist = async (playlistId: string) => {
+  const youtube = await getYoutube();
+
+  const playlistItemsResult = await youtube.playlistItems
+    .list({ part: ['snippet'], maxResults: 50, playlistId })
     .then((response) => response?.data?.items)
-    .catch((error) => console.error(error));
+    .catch((error) => {
+      console.error(error);
+      return undefined;
+    });
 
-  const videoDetailsResults = z
-    .array(
-      z.object({
-        id: z.string(),
-        contentDetails: z.object({
-          duration: z.string().optional(),
-        }),
-        status: z.object({
-          uploadStatus: z.string(),
-          privacyStatus: z.string(),
-        }),
-        snippet: z.object({
-          title: z.string(),
-          description: z.string(),
-          publishedAt: z.string(),
-          liveBroadcastContent: z.string(),
-        }),
-      }),
-    )
-    .safeParse(rawVideoDetailsResults);
+  if (!playlistItemsResult) return [];
 
-  if (!videoDetailsResults.success) throw `Could not find videos on YouTube 🤷`;
+  const playlistVideos = playlistItemsResult.map((item) => ({
+    id: item.snippet?.resourceId?.videoId,
+    publishedAt: item.snippet?.publishedAt,
+  }));
 
-  const videoDetails = await Promise.all(
-    videoDetailsResults.data.map(async (rawVideo) => ({
-      id: rawVideo.id,
-      title: rawVideo.snippet.title,
-      description: rawVideo.snippet.description,
-      date: getDate(
-        rawVideo.snippet.publishedAt,
-        videos.find((v) => v.id === rawVideo.id)?.addedToPlaylistDate,
-      ),
-      url: `https://youtu.be/${rawVideo.id}`,
-      duration: getDuration(rawVideo.contentDetails.duration),
-      isYouTubeShort: await getIsYouTubeShort(rawVideo.contentDetails.duration, rawVideo.id),
-      isAvailable: getIsAvailable(
-        rawVideo.status.uploadStatus,
-        rawVideo.snippet.liveBroadcastContent,
-        rawVideo.status.privacyStatus,
-      ),
-      isLive: rawVideo.snippet.liveBroadcastContent === 'live',
-      isProcessing: rawVideo.status.uploadStatus === 'uploaded',
-      isPrivate: rawVideo.status.privacyStatus === 'private',
+  if (playlistVideos.length === 0) return [];
+
+  const videoDetailsResult = await youtube.videos
+    .list({ part: ['snippet,contentDetails,status'], maxResults: 50, id: playlistVideos.map((v) => v.id ?? '') })
+    .then((response) => response?.data?.items)
+    .catch((error) => {
+      console.error(error);
+      return undefined;
+    });
+
+  if (!videoDetailsResult) return [];
+
+  const { data: videos, error } = z.array(videoValidator).safeParse(
+    videoDetailsResult.filter(shouldIncludeVideoInFeed).map((video) => ({
+      id: video.id,
+      title: video.snippet?.title,
+      description: video.snippet?.description,
+      duration: getDuration(video.contentDetails?.duration),
+      date: getDate(video.snippet?.publishedAt, playlistVideos.find((v) => v.id === video.id)?.publishedAt),
+      link: video.id ? getYoutubeLink(video.id) : '',
     })),
   );
 
-  return videoDetails;
+  if (error) {
+    console.error(error);
+    return [];
+  }
+
+  videos.sort((a, b) => (a.date < b.date ? 1 : -1));
+
+  return videos;
 };
 
-const getDate = (uploadDate: Date | string, addedToPlaylistDate: Date | string | undefined) =>
-  (addedToPlaylistDate && new Date(addedToPlaylistDate) > new Date(uploadDate)
-    ? new Date(addedToPlaylistDate)
-    : new Date(uploadDate)
-  ).toISOString();
+const shouldIncludeVideoInFeed = (video: youtube_v3.Schema$Video) =>
+  video.status?.uploadStatus === 'processed' &&
+  video.snippet?.liveBroadcastContent === 'none' &&
+  video.status?.privacyStatus !== 'private' &&
+  !isLikelyYouTubeShort(video);
 
-const getDuration = (duration: string | undefined) => {
+const isLikelyYouTubeShort = (video: youtube_v3.Schema$Video) => {
+  const duration = getDuration(video.contentDetails?.duration);
+  return duration < 120;
+};
+
+const getDuration = (duration: string | null | undefined) => {
   if (!duration) return 0;
 
   const getTimePart = (letter: 'H' | 'M' | 'S') =>
-    parseInt(duration.match(new RegExp('[0-9]+(?=' + letter + ')'))?.find(() => true) ?? '0');
+    parseInt(duration.match(new RegExp('[0-9]+(?=' + letter + ')'))?.shift() ?? '0');
 
   const hours = getTimePart('H');
   const minutes = getTimePart('M');
@@ -283,17 +170,20 @@ const getDuration = (duration: string | undefined) => {
   return hours * 3600 + minutes * 60 + seconds;
 };
 
-const getIsAvailable = (
-  uploadStatus: string,
-  liveBroadcastContent: string,
-  privacyStatus: string,
-) => uploadStatus === 'processed' && liveBroadcastContent === 'none' && privacyStatus !== 'private';
+const getDate = (videoPublishedAt: string | null | undefined, playlistVideoPublishedAt: string | null | undefined) => {
+  if (!videoPublishedAt) return undefined;
 
-const getIsYouTubeShort = async (duration: string | undefined, videoId: string) =>
-  !!duration &&
-  getDuration(duration) <= 180 &&
-  (await fetch(`https://www.youtube.com/shorts/${videoId}`, {
-    method: 'HEAD',
-  }).then((response) => !response.redirected));
+  const videoPublishedDate = new Date(videoPublishedAt);
 
-export { getChannelDetails, getPlaylistDetails, getPlaylistVideos };
+  if (!playlistVideoPublishedAt) {
+    return videoPublishedDate.toISOString();
+  }
+
+  const playlistVideoPublishedDate = new Date(playlistVideoPublishedAt);
+
+  return playlistVideoPublishedDate > videoPublishedDate
+    ? playlistVideoPublishedDate.toISOString()
+    : videoPublishedDate.toISOString();
+};
+
+export default { getChannel, getPlaylist };

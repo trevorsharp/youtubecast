@@ -28,9 +28,9 @@ const RssLinks = ({ feedId }: RssLinksProps) => {
         </a>
         <img className="h-10 w-10 cursor-pointer" src="/assets/rss.svg" alt="RSS" onClick={copyRssLink} />
       </div>
-      <div className="form-check flex gap-1">
+      <div className="form-check flex gap-2">
         <input
-          className="h-4 w-4 rounded-sm border border-gray-300 bg-white checked:border-youtube checked:bg-youtube focus:outline-none"
+          className="mt-1 h-4 w-4 cursor-pointer accent-youtube"
           type="checkbox"
           id="audio-only"
           checked={audioOnly}

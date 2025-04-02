@@ -7,7 +7,7 @@ Create podcast feeds from YouTube channels and playlists
 - Generate RSS feeds that can be added to podcast apps with support for video podcasts (e.g. Pocket Casts)
 - Simple web server for serving RSS feed data, video links, and UI
 
-## Changes as of April 2025 ‼️
+## Changes as of April 2025 ⬅️
 
 YouTubeCast has been re-architected from the ground up given the recent prioritization for self-hosting (see the [December 2024 changes](#changes-as-of-december-2024) for context). Support for downloading videos at 1080p quality is now included natively inside YouTubeCast (alongside support for video streaming up to 720p) without needing to use the now-deprecated YouTubeCast Video Server.
 

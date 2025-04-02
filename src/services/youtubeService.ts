@@ -16,7 +16,7 @@ const getYoutube = async () => {
   return youtubeInstance;
 };
 
-const getChannel = async (channelId: string) => {
+const getChannel = async (channelId: string, excludeVideos: boolean) => {
   const youtube = await getYoutube();
 
   const channelResult = await youtube.channels
@@ -46,12 +46,12 @@ const getChannel = async (channelId: string) => {
     return undefined;
   }
 
-  const videos = await getVideosForChannel(channelId);
+  const videos = excludeVideos ? [] : await getVideosForChannel(channelId);
 
   return { ...channel, videos };
 };
 
-const getPlaylist = async (playlistId: string) => {
+const getPlaylist = async (playlistId: string, excludeVideos: boolean) => {
   const youtube = await getYoutube();
 
   const playlistResult = await youtube.playlists
@@ -68,7 +68,7 @@ const getPlaylist = async (playlistId: string) => {
 
   if (!channelId) return undefined;
 
-  const channel = await getChannel(channelId);
+  const channel = await getChannel(channelId, excludeVideos);
   const playlistName = playlistId.startsWith('UU') ? `${channel?.name} (Members-Only)` : playlistResult.snippet?.title;
 
   const { data: playlist, error } = playlistValidator.safeParse({
@@ -85,7 +85,7 @@ const getPlaylist = async (playlistId: string) => {
     return undefined;
   }
 
-  const videos = await getVideosForPlaylist(playlistId);
+  const videos = excludeVideos ? [] : await getVideosForPlaylist(playlistId);
 
   return { ...playlist, videos };
 };

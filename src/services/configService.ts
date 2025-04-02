@@ -40,10 +40,14 @@ const verifyConfigFileExists = async () => {
   if (!configFileExists) {
     await Bun.write(
       configFile,
-      JSON.stringify({
-        youtubeApiKey: process.env['YOUTUBE_API_KEY'] ?? '',
-        downloadVideos: false,
-      }),
+      JSON.stringify(
+        {
+          youtubeApiKey: process.env['YOUTUBE_API_KEY'] ?? '',
+          downloadVideos: false,
+        },
+        null,
+        2,
+      ),
     );
 
     try {

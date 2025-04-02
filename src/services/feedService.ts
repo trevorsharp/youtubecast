@@ -2,13 +2,13 @@ import { Podcast } from 'podcast';
 import youtubeService from './youtubeService';
 import queueService from './queueService';
 
-const getFeedData = async (feedId: string) => {
+const getFeedData = async (feedId: string, excludeVideos: boolean = false) => {
   if (feedId.startsWith('UC')) {
-    return await youtubeService.getChannel(feedId);
+    return await youtubeService.getChannel(feedId, excludeVideos);
   }
 
   if (feedId.startsWith('PL') || feedId.startsWith('UU')) {
-    return await youtubeService.getPlaylist(feedId);
+    return await youtubeService.getPlaylist(feedId, excludeVideos);
   }
 
   return undefined;

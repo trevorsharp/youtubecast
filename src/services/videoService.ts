@@ -3,6 +3,7 @@ import env from '../env';
 import getYoutubeLink from '../utils/getYoutubeLink';
 import { z } from 'zod';
 import logZodError from '../utils/logZodError';
+import cacheService from './cacheService';
 
 const getVideoUrl = async (videoId: string, isAudioOnly: boolean) => {
   if (isAudioOnly) {
@@ -18,24 +19,27 @@ const getVideoUrl = async (videoId: string, isAudioOnly: boolean) => {
   return await getStreamingUrl(videoId, 'video');
 };
 
-const getStreamingUrl = async (videoId: string, type: 'video' | 'audio') => {
-  const format = type === 'video' ? getVideoStreamingFormat() : getAudioOnlyFormat();
-  const cookies = await getCookies();
-  const youtubeLink = getYoutubeLink(videoId);
+const getStreamingUrl = cacheService.withCache(
+  { cacheKey: 'streaming-url', ttl: 600 },
+  async (videoId: string, type: 'video' | 'audio') => {
+    const format = type === 'video' ? getVideoStreamingFormat() : getAudioOnlyFormat();
+    const cookies = await getCookies();
+    const youtubeLink = getYoutubeLink(videoId);
 
-  const ytdlpResponse = await $`yt-dlp -q -g ${format} ${cookies} ${youtubeLink}`
-    .text()
-    .catch((error) => console.error('' + error.info.stderr));
+    const ytdlpResponse = await $`yt-dlp -q -g ${format} ${cookies} ${youtubeLink}`
+      .text()
+      .catch((error) => console.error('' + error.info.stderr));
 
-  const { data: audioStreamingUrl, error } = z.string().url().safeParse(ytdlpResponse);
+    const { data: audioStreamingUrl, error } = z.string().url().safeParse(ytdlpResponse);
 
-  if (error) {
-    logZodError(error);
-    return undefined;
-  }
+    if (error) {
+      logZodError(error);
+      return undefined;
+    }
 
-  return audioStreamingUrl;
-};
+    return audioStreamingUrl;
+  },
+);
 
 const downloadVideo = async (videoId: string) => {
   const videoPartFilePath = `${env.CONTENT_FOLDER_PATH}/${videoId}.video`;

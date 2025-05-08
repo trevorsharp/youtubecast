@@ -84,7 +84,7 @@ const getExtractorArgs = async () => {
   const hasCookiesTxt = await Bun.file(env.COOKIES_TXT_FILE_PATH).exists();
   if (!hasCookiesTxt) return '';
 
-  return `--extractor-args='youtube:player-client=default,-tv,web_safari,web_embedded'`;
+  return `--extractor-args=youtube:player-client=default,-tv,web_safari,web_embedded`;
 };
 
 const getFfmpegOptions = () => ({

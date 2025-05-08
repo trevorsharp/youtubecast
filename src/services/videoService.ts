@@ -47,7 +47,7 @@ const downloadVideo = async (videoId: string) => {
   const outputVideoFilePath = `${env.CONTENT_FOLDER_PATH}/${videoId}.m3u8`;
 
   const cookies = await getCookies();
-  const cookiesAddition = cookies ? '--extractor-args="youtube:player-client=default,-tv,web_safari,web_embedded"' : '';
+  const extractorArgs = await getExtractorArgs();
   const youtubeLink = getYoutubeLink(videoId);
 
   const videoOnlyFormat = await getVideoOnlyFormat();
@@ -58,8 +58,8 @@ const downloadVideo = async (videoId: string) => {
   console.log(`Starting video download (${videoId})`);
 
   await $`\
-    yt-dlp -q ${videoOnlyFormat} ${cookies} ${cookiesAddition} --output=${videoPartFilePath} ${youtubeLink} && \
-    yt-dlp -q ${audioOnlyFormat} ${cookies} ${cookiesAddition} --output=${audioPartFilePath} ${youtubeLink} && \
+    yt-dlp -q ${videoOnlyFormat} ${cookies} ${extractorArgs} --output=${videoPartFilePath} ${youtubeLink} && \
+    yt-dlp -q ${audioOnlyFormat} ${cookies} ${extractorArgs} --output=${audioPartFilePath} ${youtubeLink} && \
     ffmpeg -i ${videoPartFilePath} -i ${audioPartFilePath} ${ffmpegOptions} ${outputVideoFilePath} && \
     rm ${videoPartFilePath} ${audioPartFilePath}
   `
@@ -77,7 +77,14 @@ const getCookies = async () => {
   const hasCookiesTxt = await Bun.file(env.COOKIES_TXT_FILE_PATH).exists();
   if (!hasCookiesTxt) return '';
 
-  return `--cookies=${env.COOKIES_TXT_FILE_PATH}`;
+  return `--cookies="${env.COOKIES_TXT_FILE_PATH}"`;
+};
+
+const getExtractorArgs = async () => {
+  const hasCookiesTxt = await Bun.file(env.COOKIES_TXT_FILE_PATH).exists();
+  if (!hasCookiesTxt) return '';
+
+  return `--extractor-args="youtube:player-client=default,-tv,web_safari,web_embedded"`;
 };
 
 const getFfmpegOptions = () => ({

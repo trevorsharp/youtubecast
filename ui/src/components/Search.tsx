@@ -13,14 +13,14 @@ const Search = ({ initialSearch }: { initialSearch?: string }) => {
 
   const { register, handleSubmit, setFocus } = useForm({
     resolver: zodResolver(z.object({ searchText: z.string() })),
-    defaultValues: { searchText: initialSearch },
+    defaultValues: { searchText: initialSearch ?? '' },
   });
 
   useEffect(() => setFocus('searchText'), []);
   useEffect(() => setIsLoading(false), [initialSearch]);
 
   const onSubmit = handleSubmit((values) => {
-    const searchText = getSearchText(values.searchText ?? '');
+    const searchText = getSearchText(values.searchText);
     if (searchText && searchText !== initialSearch) {
       setIsLoading(true);
       navigate({

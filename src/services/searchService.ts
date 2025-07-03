@@ -4,6 +4,14 @@
 // Sourced from https://github.com/appit-online/youtube-search
 
 const searchChannels = async (searchQuery: string) => {
+  if (searchQuery.match(/^PL[A-Za-z0-9_-]{32}$/)) {
+    return searchQuery;
+  }
+
+  if (searchQuery.match(/^U(C|M)[A-Za-z0-9_-]{22}$/)) {
+    return searchQuery;
+  }
+
   try {
     const searchRes: any = await fetch(
       `https://www.youtube.com/results?q=${encodeURIComponent(searchQuery.trim())}&hl=en&sp=EgIQAg%253D%253D`,

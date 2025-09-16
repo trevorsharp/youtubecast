@@ -125,8 +125,10 @@ const getVideosForPlaylist = async (playlistId: string) => {
 
   if (!videoDetailsResult) return [];
 
+  const config = await configService.getConfig();
+
   const { data: videos, error } = z.array(videoValidator).safeParse(
-    videoDetailsResult.filter(shouldIncludeVideoInFeed).map((video) => ({
+    videoDetailsResult.filter(video => shouldIncludeVideoInFeed(video, config)).map((video) => ({
       id: video.id,
       title: video.snippet?.title,
       description: video.snippet?.description,
@@ -146,15 +148,11 @@ const getVideosForPlaylist = async (playlistId: string) => {
   return videos;
 };
 
-const shouldIncludeVideoInFeed = (video: youtube_v3.Schema$Video) =>
-  video.status?.uploadStatus === 'processed' &&
-  video.snippet?.liveBroadcastContent === 'none' &&
-  video.status?.privacyStatus !== 'private' &&
-  !isLikelyYouTubeShort(video);
-
-const isLikelyYouTubeShort = (video: youtube_v3.Schema$Video) => {
-  const duration = getDuration(video.contentDetails?.duration);
-  return duration < 120;
+const shouldIncludeVideoInFeed = (video: youtube_v3.Schema$Video, config: { minimumVideoDuration: number }) => {  
+  return video.status?.uploadStatus === 'processed' &&
+    video.snippet?.liveBroadcastContent === 'none' &&
+    video.status?.privacyStatus !== 'private' &&
+   getDuration(video.contentDetails?.duration) >= config.minimumVideoDuration;
 };
 
 const getDuration = (duration: string | null | undefined) => {

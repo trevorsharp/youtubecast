@@ -16,7 +16,7 @@ Additional Changes:
 - To simplify the setup, video quality is no longer configurable on a per-feed basis. Instead, by default, video streaming is enabled at up-to-720p quality, and you can optionally set `downloadVideos` to true in your `settings.json` to download videos to your machine at up-to-1080p quality.
 - Settings are now stored in a `settings.json` file under a `config` folder instead of using environment variables. If you would like to use YouTube cookies, you can place a `cookies.txt` file inside the `config` folder instead of using environment variables.
 - Support for `ENABLE_PLAYLIST_SORTING` has been removed for now due to the complexity of supporting it.
-- Any video shorter than 2 minutes long is assumed to be a YouTube Short and is excluded from feeds. Inversely, any video longer than 2 minutes will be included even if it is a YouTube Short.
+- Any video shorter than 3 minutes long is assumed to be a YouTube Short and is excluded from feeds by default. This behavior can be configured using the `minimumVideoDuration` setting.
 - There is currently no support for cleaning up old video downloads. This may be included in a future update.
 
 ## Self-Hosted Setup Using Docker
@@ -81,6 +81,18 @@ To enable this option:
 2. Add `- ./content:/app/content` to the `volumes` section of your `docker-compose.yml` file
 
 NOTE - Everything inside your `content` folder will be accessible via the web server. DO NOT place any files that you do not want to be accessed inside this folder. It should only contain the video files (and HLS playlist files) that are downloaded by YouTubeCast.
+
+### Configure Minimum Video Duration (Optional)
+
+By default, YouTubeCast excludes videos shorter than 3 minutes (180 seconds) from feeds, assuming they are YouTube Shorts. You can customize this threshold by setting the `minimumVideoDuration` value in your `settings.json`:
+
+```json
+{
+  "minimumVideoDuration": 60
+}
+```
+
+In this example, videos shorter than 1 minute (60 seconds) would be excluded. Set this value based on your preferences for what constitutes a "short" video that should be filtered out of your podcast feeds.
 
 ## Changes as of December 2024
 

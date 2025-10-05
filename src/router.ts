@@ -49,12 +49,12 @@ router.get('/videos/:videoId', async (context) => {
 
   const videoUrl = await videoService.getVideoUrl(videoId, isAudioOnly);
 
-  if (!videoUrl) {
-    return context.text('Server Error - Video could not be found', 500);
+  if (!isAudioOnly && !videoUrl?.startsWith('/content')) {
+    await queueService.addVideoToDownloadQueue(videoId, { addToFrontOfQueue: true });
   }
 
-  if (!isAudioOnly && !videoUrl.startsWith('/content')) {
-    await queueService.addVideoToDownloadQueue(videoId, { addToFrontOfQueue: true });
+  if (!videoUrl) {
+    return context.text('Server Error - Video could not be found', 500);
   }
 
   return context.redirect(videoUrl, 302);

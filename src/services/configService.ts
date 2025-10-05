@@ -79,4 +79,4 @@ const validateConfigFile = async () => {
   return config;
 };
 
-export default { getConfig };
+export default { getConfig, verifyContentFolderExists };

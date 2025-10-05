@@ -43,7 +43,7 @@ const verifyConfigFileExists = async () => {
       JSON.stringify(
         {
           youtubeApiKey: process.env['YOUTUBE_API_KEY'] ?? '',
-          downloadVideos: false
+          downloadVideos: false,
         },
         null,
         2,

@@ -7,17 +7,15 @@ Create podcast feeds from YouTube channels and playlists
 - Generate RSS feeds that can be added to podcast apps with support for video podcasts (e.g. Pocket Casts)
 - Simple web server for serving RSS feed data, video links, and UI
 
-## Changes as of April 2025 ⬅️
+## Changes as of October 2025
 
-YouTubeCast has been re-architected from the ground up given the recent prioritization for self-hosting (see the [December 2024 changes](#changes-as-of-december-2024) for context). Support for downloading videos at 1080p quality is now included natively inside YouTubeCast (alongside support for video streaming up to 720p) without needing to use the now-deprecated YouTubeCast Video Server.
+YouTubeCast now supports 1080p video streaming without requiring video downloads. Additionally, a new maximum compatibility mode has been added for better podcast app compatibility.
 
 Additional Changes:
 
-- To simplify the setup, video quality is no longer configurable on a per-feed basis. Instead, by default, video streaming is enabled at up-to-720p quality, and you can optionally set `downloadVideos` to true in your `settings.json` to download videos to your machine at up-to-1080p quality.
-- Settings are now stored in a `settings.json` file under a `config` folder instead of using environment variables. If you would like to use YouTube cookies, you can place a `cookies.txt` file inside the `config` folder instead of using environment variables.
-- Support for `ENABLE_PLAYLIST_SORTING` has been removed for now due to the complexity of supporting it.
-- Any video shorter than 3 minutes long is assumed to be a YouTube Short and is excluded from feeds by default. This behavior can be configured using the `minimumVideoDuration` setting.
-- There is currently no support for cleaning up old video downloads. This may be included in a future update.
+- 1080p video quality is now available through streaming without requiring downloads to your machine
+- Added `maximumCompatibility` setting for better compatibility with podcast apps that don't support HLS streaming
+- Maximum compatibility mode requires `downloadVideos` to be enabled and will download videos as MP4 files instead of HLS format
 
 ## Self-Hosted Setup Using Docker
 
@@ -71,11 +69,11 @@ To generate this file:
 3. With a YouTube tab open, open the cookies.txt extension and download the cookies.txt file
 4. Copy the file into your config folder and rename it to `cookies.txt`
 
-### Download Videos at 1080p Quality (Optional)
+### Download Videos (Optional)
 
-If you want to serve videos at 1080p quality, you will have to enable the option to download videos to your machine. Note that this will significantly increase your disk usage. Enabling this option may break the ability to download videos in within your podcast app.
+YouTubeCast now supports 1080p video streaming without requiring downloads. However, you can optionally enable video downloads for offline storage or to use maximum compatibility mode. Note that downloading videos will significantly increase your disk usage.
 
-To enable this option:
+To enable video downloads:
 
 1. Set `downloadVideos` to `true` in your `settings.json`
 2. Add `- ./content:/app/content` to the `volumes` section of your `docker-compose.yml` file
@@ -94,12 +92,51 @@ By default, YouTubeCast excludes videos shorter than 3 minutes (180 seconds) fro
 
 In this example, videos shorter than 1 minute (60 seconds) would be excluded. Set this value based on your preferences for what constitutes a "short" video that should be filtered out of your podcast feeds.
 
+### Maximum Compatibility Mode (Optional)
+
+By default, YouTubeCast streams videos in HLS format which provides efficient streaming but may not be compatible with all podcast apps. If you experience playback issues with certain podcast apps, you can enable maximum compatibility mode to download videos as standard MP4 files instead.
+
+**Prerequisites:** Maximum compatibility mode requires video downloads to be enabled.
+
+To enable maximum compatibility mode:
+
+1. First, enable video downloads by setting `downloadVideos` to `true` in your `settings.json`
+2. Add the maximum compatibility setting:
+
+```json
+{
+  ...
+  "downloadVideos": true,
+  "maximumCompatibility": true
+}
+```
+
+**Note:** Enabling this mode will:
+- Require `downloadVideos` to be enabled
+- Download videos as `.mp4` files instead of `.m3u8` files
+- May result in larger file sizes and longer download times
+- Provides better compatibility with podcast apps that don't support HLS streaming
+
+---
+
+## Changes as of April 2025
+
+YouTubeCast has been re-architected from the ground up given the recent prioritization for self-hosting (see the [December 2024 changes](#changes-as-of-december-2024) for context). Support for downloading videos is now included natively inside YouTubeCast (alongside support for video streaming) without needing to use the now-deprecated YouTubeCast Video Server.
+
+Additional Changes:
+
+- To simplify the setup, video quality is not configurable on a per-feed basis.
+- Settings are now stored in a `settings.json` file under a `config` folder instead of using environment variables. If you would like to use YouTube cookies, you can place a `cookies.txt` file inside the `config` folder instead of using environment variables.
+- Support for `ENABLE_PLAYLIST_SORTING` has been removed for now due to the complexity of supporting it.
+- Any video shorter than 3 minutes long is assumed to be a YouTube Short and is excluded from feeds by default. This behavior can be configured using the `minimumVideoDuration` setting.
+- There is currently no support for cleaning up old video downloads. This may be included in a future update.
+
 ## Changes as of December 2024
 
 As of December 2024, YouTubeCast is no longer publicly hosted. YouTube has made changes to combat bot traffic that make it impractical to host a publicly available version of YouTubeCast. Self-hosting should be used instead moving forward.
 
 Additional Changes:
 
-- YouTubeCast Video Server is being deprecated in favor of unifying all of YouTubeCast's functionality in a single project. For now, support for videos in higher quality (above 720p) has been removed. ~~This functionality may become available directly within YouTubeCast at a later date. If you want to keep this functionality in the interim, you can continue to use the Docker images for both YouTubeCast and YouTubeCast Video Server with the tag `legacy`.~~ See the [April 2025 changes](#changes-as-of-april-2025-️) for this feature directly within YouTubeCast.
+- YouTubeCast Video Server is being deprecated in favor of unifying all of YouTubeCast's functionality in a single project.
 - YouTube Shorts are now always exlcuded and the `excludeShorts` query parameter has been deprecated.
 - Support for Redis cache has been removed as distributed hosting is no longer practical (in-memory cache will be used instead).

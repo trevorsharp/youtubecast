@@ -4,16 +4,29 @@ import getYoutubeLink from '../utils/getYoutubeLink';
 import { z } from 'zod';
 import logZodError from '../utils/logZodError';
 import cacheService from './cacheService';
+import configService from './configService';
 
 const getVideoUrl = async (videoId: string, isAudioOnly: boolean) => {
   if (isAudioOnly) {
     return await getStreamingUrl(videoId, 'audio');
   }
 
-  const videoFileExists = await Bun.file(`${env.CONTENT_FOLDER_PATH}/${videoId}.m3u8`).exists();
+  const m3u8FileExists = await Bun.file(`${env.CONTENT_FOLDER_PATH}/${videoId}.m3u8`).exists();
 
-  if (videoFileExists) {
+  if (m3u8FileExists) {
     return `/content/${videoId}.m3u8`;
+  }
+
+  const mp4FileExists = await Bun.file(`${env.CONTENT_FOLDER_PATH}/${videoId}.mp4`).exists();
+
+  if (mp4FileExists) {
+    return `/content/${videoId}.mp4`;
+  }
+
+  const config = await configService.getConfig();
+
+  if (config.maximumCompatibility) {
+    return undefined;
   }
 
   return await getStreamingUrl(videoId, 'video');
@@ -22,7 +35,7 @@ const getVideoUrl = async (videoId: string, isAudioOnly: boolean) => {
 const getStreamingUrl = cacheService.withCache(
   { cacheKey: 'streaming-url', ttl: 600 },
   async (videoId: string, type: 'video' | 'audio') => {
-    const format = type === 'video' ? getVideoStreamingFormat() : getAudioOnlyFormat();
+    const format = type === 'video' ? getVideoFormat() : getAudioOnlyFormat();
     const cookies = await getCookies();
     const youtubeLink = getYoutubeLink(videoId);
 
@@ -42,36 +55,33 @@ const getStreamingUrl = cacheService.withCache(
 );
 
 const downloadVideo = async (videoId: string) => {
+  const config = await configService.getConfig();
+
   const videoPartFilePath = `${env.CONTENT_FOLDER_PATH}/${videoId}.video`;
-  const audioPartFilePath = `${env.CONTENT_FOLDER_PATH}/${videoId}.audio`;
-  const outputVideoFilePath = `${env.CONTENT_FOLDER_PATH}/${videoId}.m3u8`;
+  const outputVideoFilePath = config.maximumCompatibility
+    ? `${env.CONTENT_FOLDER_PATH}/${videoId}.mp4`
+    : `${env.CONTENT_FOLDER_PATH}/${videoId}.m3u8`;
 
   const cookies = await getCookies();
   const extractorArgs = await getExtractorArgs();
   const youtubeLink = getYoutubeLink(videoId);
 
-  const videoOnlyFormat = await getVideoOnlyFormat();
-  const audioOnlyFormat = getAudioOnlyFormat();
-
-  const ffmpegOptions = getFfmpegOptions();
+  const ffmpegOptions = config.maximumCompatibility ? getFfmpegMaximumCompatibilityOptions() : getFfmpegOptions();
 
   console.log(`Starting video download (${videoId})`);
 
   await $`\
-    yt-dlp -q ${videoOnlyFormat} ${cookies} ${extractorArgs} --output=${videoPartFilePath} ${youtubeLink} && \
-    yt-dlp -q ${audioOnlyFormat} ${cookies} ${extractorArgs} --output=${audioPartFilePath} ${youtubeLink} && \
-    ffmpeg -i ${videoPartFilePath} -i ${audioPartFilePath} ${ffmpegOptions} ${outputVideoFilePath} && \
-    rm ${videoPartFilePath} ${audioPartFilePath}
+    yt-dlp -q ${getVideoFormat()} ${cookies} ${extractorArgs} --output=${videoPartFilePath} ${youtubeLink} && \
+    ffmpeg -i ${videoPartFilePath} ${ffmpegOptions} ${outputVideoFilePath} && \
+    rm ${videoPartFilePath}
   `
     .then(() => console.log(`Finished downloading video (${videoId})`))
     .catch((error) => console.error('' + error.info.stderr));
 };
 
-const getVideoStreamingFormat = () => `--format=best[height<=720][vcodec^=avc1]`;
+const getVideoFormat = () => `--format=best[vcodec^=avc1][acodec^=mp4a]`;
 
 const getAudioOnlyFormat = () => '--format=bestaudio[acodec^=mp4a][vcodec=none]';
-
-const getVideoOnlyFormat = async () => `--format=bestvideo[height<=1080][vcodec^=avc1]`;
 
 const getCookies = async () => {
   const hasCookiesTxt = await Bun.file(env.COOKIES_TXT_FILE_PATH).exists();
@@ -89,6 +99,10 @@ const getExtractorArgs = async () => {
 
 const getFfmpegOptions = () => ({
   raw: '-hide_banner -loglevel error -c:v copy -c:a copy -f hls -hls_playlist_type vod -hls_flags single_file',
+});
+
+const getFfmpegMaximumCompatibilityOptions = () => ({
+  raw: '-hide_banner -loglevel error -c:v copy -c:a copy',
 });
 
 export default { getVideoUrl, downloadVideo };

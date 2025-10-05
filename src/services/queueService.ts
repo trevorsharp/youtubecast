@@ -11,7 +11,9 @@ const addVideoToDownloadQueue = async (videoId: string, options?: { addToFrontOf
 
   if (!config.downloadVideos) return;
 
-  const videoFileExists = await Bun.file(`${env.CONTENT_FOLDER_PATH}/${videoId}.m3u8`).exists();
+  const videoFileExists =
+    (await Bun.file(`${env.CONTENT_FOLDER_PATH}/${videoId}.m3u8`).exists()) ||
+    (await Bun.file(`${env.CONTENT_FOLDER_PATH}/${videoId}.mp4`).exists());
 
   if (videoFileExists || videosInQueue.has(videoId)) return;
 

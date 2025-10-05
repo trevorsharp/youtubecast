@@ -128,14 +128,16 @@ const getVideosForPlaylist = async (playlistId: string) => {
   const config = await configService.getConfig();
 
   const { data: videos, error } = z.array(videoValidator).safeParse(
-    videoDetailsResult.filter(video => shouldIncludeVideoInFeed(video, config)).map((video) => ({
-      id: video.id,
-      title: video.snippet?.title,
-      description: video.snippet?.description,
-      duration: getDuration(video.contentDetails?.duration),
-      date: getDate(video.snippet?.publishedAt, playlistVideos.find((v) => v.id === video.id)?.publishedAt),
-      link: video.id ? getYoutubeLink(video.id) : '',
-    })),
+    videoDetailsResult
+      .filter((video) => shouldIncludeVideoInFeed(video, config))
+      .map((video) => ({
+        id: video.id,
+        title: video.snippet?.title,
+        description: video.snippet?.description,
+        duration: getDuration(video.contentDetails?.duration),
+        date: getDate(video.snippet?.publishedAt, playlistVideos.find((v) => v.id === video.id)?.publishedAt),
+        link: video.id ? getYoutubeLink(video.id) : '',
+      })),
   );
 
   if (error) {
@@ -148,11 +150,13 @@ const getVideosForPlaylist = async (playlistId: string) => {
   return videos;
 };
 
-const shouldIncludeVideoInFeed = (video: youtube_v3.Schema$Video, config: { minimumVideoDuration: number }) => {  
-  return video.status?.uploadStatus === 'processed' &&
+const shouldIncludeVideoInFeed = (video: youtube_v3.Schema$Video, config: { minimumVideoDuration: number }) => {
+  return (
+    video.status?.uploadStatus === 'processed' &&
     video.snippet?.liveBroadcastContent === 'none' &&
     video.status?.privacyStatus !== 'private' &&
-   getDuration(video.contentDetails?.duration) >= config.minimumVideoDuration;
+    getDuration(video.contentDetails?.duration) >= config.minimumVideoDuration
+  );
 };
 
 const getDuration = (duration: string | null | undefined) => {

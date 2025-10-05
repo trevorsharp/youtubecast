@@ -23,6 +23,12 @@ const getVideoUrl = async (videoId: string, isAudioOnly: boolean) => {
     return `/content/${videoId}.mp4`;
   }
 
+  const config = await configService.getConfig();
+
+  if (config.maximumCompatibility) {
+    return undefined;
+  }
+
   return await getStreamingUrl(videoId, 'video');
 };
 

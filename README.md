@@ -112,6 +112,7 @@ To enable maximum compatibility mode:
 ```
 
 **Note:** Enabling this mode will:
+
 - Require `downloadVideos` to be enabled
 - Download videos as `.mp4` files instead of `.m3u8` files
 - May result in larger file sizes and longer download times

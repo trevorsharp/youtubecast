@@ -58,7 +58,9 @@ const downloadVideo = async (videoId: string) => {
   const config = await configService.getConfig();
 
   const videoPartFilePath = `${env.CONTENT_FOLDER_PATH}/${videoId}.video`;
-  const outputVideoFilePath = config.maximumCompatibility ? `${env.CONTENT_FOLDER_PATH}/${videoId}.mp4` : `${env.CONTENT_FOLDER_PATH}/${videoId}.m3u8`;
+  const outputVideoFilePath = config.maximumCompatibility
+    ? `${env.CONTENT_FOLDER_PATH}/${videoId}.mp4`
+    : `${env.CONTENT_FOLDER_PATH}/${videoId}.m3u8`;
 
   const cookies = await getCookies();
   const extractorArgs = await getExtractorArgs();

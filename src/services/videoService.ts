@@ -71,7 +71,7 @@ const downloadVideo = async (videoId: string) => {
   console.log(`Starting video download (${videoId})`);
 
   await $`\
-    yt-dlp -q ${getVideoFormat()} ${cookies} ${extractorArgs} --output=${videoPartFilePath} ${youtubeLink} && \
+    yt-dlp -q ${getVideoFormat(config.videoQuality)} ${cookies} ${extractorArgs} --output=${videoPartFilePath} ${youtubeLink} && \
     ffmpeg -i ${videoPartFilePath} ${ffmpegOptions} ${outputVideoFilePath} && \
     rm ${videoPartFilePath}
   `
@@ -79,7 +79,7 @@ const downloadVideo = async (videoId: string) => {
     .catch((error) => console.error('' + error.info.stderr));
 };
 
-const getVideoFormat = () => `--format=best[vcodec^=avc1][acodec^=mp4a]`;
+const getVideoFormat = (videoQuality?: number) => `--format=best[vcodec^=avc1][acodec^=mp4a]${videoQuality ? `[height=${videoQuality}]` : ''}`;
 
 const getAudioOnlyFormat = () => '--format=bestaudio[acodec^=mp4a][vcodec=none]';
 

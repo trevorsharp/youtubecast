@@ -6,4 +6,5 @@ export default z.object({
   maximumCompatibility: z.boolean().default(false),
   cacheTimeToLive: z.number().nonnegative().default(1200),
   minimumVideoDuration: z.number().positive().default(180),
+  videoQuality: z.number().optional(),
 });

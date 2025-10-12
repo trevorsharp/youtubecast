@@ -35,11 +35,12 @@ const getVideoUrl = async (videoId: string, isAudioOnly: boolean) => {
 const getStreamingUrl = cacheService.withCache(
   { cacheKey: 'streaming-url', ttl: 600 },
   async (videoId: string, type: 'video' | 'audio') => {
-    const format = type === 'video' ? getVideoFormat() : getAudioOnlyFormat();
+    const format = type === 'video' ? await getVideoFormat() : getAudioOnlyFormat();
     const cookies = await getCookies();
+    const extractorArgs = getExtractorArgs();
     const youtubeLink = getYoutubeLink(videoId);
 
-    const ytdlpResponse = await $`yt-dlp -q -g ${format} ${cookies} ${youtubeLink}`
+    const ytdlpResponse = await $`yt-dlp -q -g ${format} ${cookies} ${extractorArgs} ${youtubeLink}`
       .text()
       .catch((error) => console.error('' + error.info.stderr));
 
@@ -62,8 +63,9 @@ const downloadVideo = async (videoId: string) => {
     ? `${env.CONTENT_FOLDER_PATH}/${videoId}.mp4`
     : `${env.CONTENT_FOLDER_PATH}/${videoId}.m3u8`;
 
+  const format = await getVideoFormat();
   const cookies = await getCookies();
-  const extractorArgs = await getExtractorArgs();
+  const extractorArgs = getExtractorArgs();
   const youtubeLink = getYoutubeLink(videoId);
 
   const ffmpegOptions = config.maximumCompatibility ? getFfmpegMaximumCompatibilityOptions() : getFfmpegOptions();
@@ -71,7 +73,7 @@ const downloadVideo = async (videoId: string) => {
   console.log(`Starting video download (${videoId})`);
 
   await $`\
-    yt-dlp -q ${getVideoFormatForDownload()} ${cookies} ${extractorArgs} --output=${videoPartFilePath} ${youtubeLink} && \
+    yt-dlp -q ${format} ${cookies} ${extractorArgs} --output=${videoPartFilePath} ${youtubeLink} && \
     ffmpeg -i ${videoPartFilePath} ${ffmpegOptions} ${outputVideoFilePath} && \
     rm ${videoPartFilePath}
   `
@@ -79,11 +81,14 @@ const downloadVideo = async (videoId: string) => {
     .catch((error) => console.error('' + error.info.stderr));
 };
 
-const getVideoFormat = () =>
-  '--format="best[vcodec^=avc1][acodec^=mp4a]"';
+const getVideoFormat = async () => {
+  const config = await configService.getConfig();
 
-const getVideoFormatForDownload = () =>
-  `--format="best[vcodec^=avc1][acodec^=mp4a][height>720]"`;
+  return config.highestQuality ?
+    '--format=[vcodec^=avc1][acodec^=mp4a][width=1920]' :
+    '--format=best[vcodec^=avc1][acodec^=mp4a]';
+}
+
 
 const getAudioOnlyFormat = () => '--format=bestaudio[acodec^=mp4a][vcodec=none]';
 
@@ -94,12 +99,7 @@ const getCookies = async () => {
   return `--cookies=${env.COOKIES_TXT_FILE_PATH}`;
 };
 
-const getExtractorArgs = async () => {
-  const hasCookiesTxt = await Bun.file(env.COOKIES_TXT_FILE_PATH).exists();
-  if (!hasCookiesTxt) return '';
-
-  return `--extractor-args=youtube:player-client=default,-tv,web_safari,web_embedded`;
-};
+const getExtractorArgs = () => '--extractor-args=youtube:player_client=tv,web_safari';
 
 const getFfmpegOptions = () => ({
   raw: '-hide_banner -loglevel error -c:v copy -c:a copy -f hls -hls_playlist_type vod -hls_flags single_file',

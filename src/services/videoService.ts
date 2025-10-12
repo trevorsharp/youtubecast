@@ -80,10 +80,10 @@ const downloadVideo = async (videoId: string) => {
 };
 
 const getVideoFormat = () =>
-  '--format=best[vcodec^=avc1][acodec^=mp4a]';
+  '--format="best[vcodec^=avc1][acodec^=mp4a]"';
 
 const getVideoFormatForDownload = () =>
-  `${getVideoFormat()}[height=1080]`;
+  `--format="best[vcodec^=avc1][acodec^=mp4a][height>720]"`;
 
 const getAudioOnlyFormat = () => '--format=bestaudio[acodec^=mp4a][vcodec=none]';
 

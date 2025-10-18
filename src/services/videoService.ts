@@ -84,11 +84,10 @@ const downloadVideo = async (videoId: string) => {
 const getVideoFormat = async () => {
   const config = await configService.getConfig();
 
-  return config.highestQuality ?
-    '--format=[vcodec^=avc1][acodec^=mp4a][width=1920]' :
-    '--format=best[vcodec^=avc1][acodec^=mp4a]';
-}
-
+  return config.highestQuality
+    ? '--format=[vcodec^=avc1][acodec^=mp4a][width=1920]'
+    : '--format=best[vcodec^=avc1][acodec^=mp4a]';
+};
 
 const getAudioOnlyFormat = () => '--format=bestaudio[acodec^=mp4a][vcodec=none]';
 

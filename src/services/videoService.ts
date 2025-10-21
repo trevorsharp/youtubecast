@@ -55,7 +55,7 @@ const getStreamingUrl = cacheService.withCache(
   },
 );
 
-const downloadVideo = async (videoId: string) => {
+const downloadVideo = async (videoId: string, ignoreQuality: boolean | undefined) => {
   const config = await configService.getConfig();
 
   const videoPartFilePath = `${env.CONTENT_FOLDER_PATH}/${videoId}.video`;
@@ -63,7 +63,7 @@ const downloadVideo = async (videoId: string) => {
     ? `${env.CONTENT_FOLDER_PATH}/${videoId}.mp4`
     : `${env.CONTENT_FOLDER_PATH}/${videoId}.m3u8`;
 
-  const format = await getVideoFormat();
+  const format = await getVideoFormat(ignoreQuality);
   const cookies = await getCookies();
   const extractorArgs = getExtractorArgs();
   const youtubeLink = getYoutubeLink(videoId);
@@ -81,10 +81,10 @@ const downloadVideo = async (videoId: string) => {
     .catch((error) => console.error('' + error.info.stderr));
 };
 
-const getVideoFormat = async () => {
+const getVideoFormat = async (ignoreQuality?: boolean | undefined) => {
   const config = await configService.getConfig();
 
-  return config.highestQuality
+  return config.highestQuality && !ignoreQuality
     ? '--format=[vcodec^=avc1][acodec^=mp4a][width=1920]'
     : '--format=best[vcodec^=avc1][acodec^=mp4a]';
 };

@@ -6,7 +6,10 @@ import videoService from './videoService';
 const queue = new AsyncQueue();
 const videosInQueue = new Set<string>();
 
-const addVideoToDownloadQueue = async (videoId: string, options?: { addToFrontOfQueue?: boolean }) => {
+const addVideoToDownloadQueue = async (
+  videoId: string,
+  options?: { addToFrontOfQueue?: boolean; ignoreQuality?: boolean },
+) => {
   const config = await configService.getConfig();
 
   if (!config.downloadVideos) return;
@@ -22,7 +25,7 @@ const addVideoToDownloadQueue = async (videoId: string, options?: { addToFrontOf
   videosInQueue.add(videoId);
 
   queue.push(async () => {
-    await videoService.downloadVideo(videoId);
+    await videoService.downloadVideo(videoId, options?.ignoreQuality);
     videosInQueue.delete(videoId);
   }, options);
 };

@@ -4,7 +4,7 @@ WORKDIR /app
 # Build static UI
 FROM base AS build
 
-COPY ui/package.json ui/bun.lockb ./
+COPY ui/package.json ui/bun.lock ./
 RUN bun install --frozen-lockfile
 COPY ./ui .
 ENV NODE_ENV=production

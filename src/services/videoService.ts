@@ -40,9 +40,10 @@ const getStreamingUrl = cacheService.withCache(
     const extractorArgs = getExtractorArgs();
     const youtubeLink = getYoutubeLink(videoId);
 
-    const ytdlpResponse = await $`yt-dlp -q -g ${format} ${cookies} ${extractorArgs} ${youtubeLink}`
-      .text()
-      .catch((error) => console.error('' + error.info.stderr));
+    const ytdlpResponse =
+      await $`yt-dlp -q -g --js-runtimes=bun --remote-components=ejs:npm ${format} ${cookies} ${extractorArgs} ${youtubeLink}`
+        .text()
+        .catch((error) => console.error('' + error.info.stderr));
 
     const { data: audioStreamingUrl, error } = z.string().url().safeParse(ytdlpResponse);
 
@@ -73,7 +74,7 @@ const downloadVideo = async (videoId: string, ignoreQuality: boolean | undefined
   console.log(`Starting video download (${videoId})`);
 
   await $`\
-    yt-dlp -q ${format} ${cookies} ${extractorArgs} --output=${videoPartFilePath} ${youtubeLink} && \
+    yt-dlp -q --js-runtimes=bun --remote-components=ejs:npm ${format} ${cookies} ${extractorArgs} --output=${videoPartFilePath} ${youtubeLink} && \
     ffmpeg -i ${videoPartFilePath} ${ffmpegOptions} ${outputVideoFilePath} && \
     rm ${videoPartFilePath}
   `

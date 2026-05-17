@@ -4,7 +4,9 @@ import env from '../env';
 
 const startApplication = async () => {
   await configService.getConfig();
-  await $`yt-dlp --update-to nightly`;
+  await $`yt-dlp --update-to nightly`.catch((error) => {
+    console.warn('Unable to update yt-dlp; continuing startup.', error.stderr?.toString().trim() ?? error.message);
+  });
 
   const contentFolderExists = await configService
     .verifyContentFolderExists()

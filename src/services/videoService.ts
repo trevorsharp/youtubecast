@@ -85,21 +85,24 @@ const downloadVideo = async (videoId: string, ignoreQuality: boolean | undefined
 const getVideoFormat = async (ignoreQuality?: boolean | undefined) => {
   const config = await configService.getConfig();
 
-  return config.highestQuality && !ignoreQuality
-    ? '--format=[vcodec^=avc1][acodec^=mp4a][width=1920]'
-    : '--format=best[vcodec^=avc1][acodec^=mp4a]';
+  return {
+    raw:
+      config.highestQuality && !ignoreQuality
+        ? '--format=[vcodec^=avc1][acodec^=mp4a][width=1920]'
+        : '--format=best[vcodec^=avc1][acodec^=mp4a]',
+  };
 };
 
-const getAudioOnlyFormat = () => '--format=bestaudio[acodec^=mp4a][vcodec=none]';
+const getAudioOnlyFormat = () => ({ raw: '--format=bestaudio[acodec^=mp4a][vcodec=none]' });
 
 const getCookies = async () => {
   const hasCookiesTxt = await Bun.file(env.COOKIES_TXT_FILE_PATH).exists();
-  if (!hasCookiesTxt) return '';
+  if (!hasCookiesTxt) return { raw: '' };
 
-  return `--cookies=${env.COOKIES_TXT_FILE_PATH}`;
+  return { raw: `--cookies=${env.COOKIES_TXT_FILE_PATH}` };
 };
 
-const getExtractorArgs = () => '--extractor-args=youtube:player_client=tv,web_safari';
+const getExtractorArgs = () => ({ raw: '--extractor-args=youtube:player_client=tv,web_safari' });
 
 const getFfmpegOptions = () => ({
   raw: '-hide_banner -loglevel error -c:v copy -c:a copy -f hls -hls_playlist_type vod -hls_flags single_file',

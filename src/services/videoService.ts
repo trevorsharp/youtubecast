@@ -40,19 +40,30 @@ const getStreamingUrl = cacheService.withCache(
     const extractorArgs = getExtractorArgs();
     const youtubeLink = getYoutubeLink(videoId);
 
-    const ytdlpResponse =
-      await $`yt-dlp -q -g --js-runtimes=bun --remote-components=ejs:npm ${format} ${cookies} ${extractorArgs} ${youtubeLink}`
-        .text()
-        .catch((error) => console.error('' + error.info.stderr));
+    let parseError: z.ZodError<string> | undefined;
 
-    const { data: audioStreamingUrl, error } = z.string().url().safeParse(ytdlpResponse);
+    for (let attempt = 1; attempt <= 3; attempt++) {
+      const ytdlpResponse =
+        await $`yt-dlp -q -g --js-runtimes=bun --remote-components=ejs:npm ${format} ${cookies} ${extractorArgs} ${youtubeLink}`
+          .text()
+          .catch((error) =>
+            console.error(`Failed to get streaming URL (${videoId}, attempt ${attempt}/3): ${error.info.stderr}`),
+          );
 
-    if (error) {
-      logZodError(error);
-      return undefined;
+      const { data: streamingUrl, error } = z.string().url().safeParse(ytdlpResponse);
+
+      if (!error) {
+        return streamingUrl;
+      }
+
+      parseError = error;
     }
 
-    return audioStreamingUrl;
+    if (parseError) {
+      logZodError(parseError);
+    }
+
+    return undefined;
   },
 );
 

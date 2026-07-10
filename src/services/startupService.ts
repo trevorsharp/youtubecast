@@ -15,7 +15,9 @@ const startApplication = async () => {
 
   if (contentFolderExists) {
     await $`find ${env.CONTENT_FOLDER_PATH} -name "*.video" -type f -delete`;
+    await $`find ${env.CONTENT_FOLDER_PATH} -name "*.video.mp4" -type f -delete`;
     await $`find ${env.CONTENT_FOLDER_PATH} -name "*.audio" -type f -delete`;
+    await $`find ${env.CONTENT_FOLDER_PATH} -name "*.audio.m4a" -type f -delete`;
   }
 };
 

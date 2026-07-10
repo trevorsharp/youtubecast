@@ -6,7 +6,7 @@ import logZodError from '../utils/logZodError';
 import cacheService from './cacheService';
 import configService from './configService';
 
-type YtDlpArg = { raw: string };
+type YtDlpArgs = string[];
 
 const getVideoUrl = async (videoId: string, isAudioOnly: boolean) => {
   if (isAudioOnly) {
@@ -76,9 +76,9 @@ const getStreamingUrl = cacheService.withCache(
 const getStreamingUrlFromYtDlp = async (
   videoId: string,
   youtubeLink: string,
-  cookies: YtDlpArg,
-  format: YtDlpArg,
-  extractorArgs: YtDlpArg,
+  cookies: YtDlpArgs,
+  format: YtDlpArgs,
+  extractorArgs: YtDlpArgs,
   logFailures = true,
 ) => {
   let parseError: z.ZodError<string | undefined> | undefined;
@@ -141,16 +141,15 @@ const downloadVideo = async (videoId: string, ignoreQuality: boolean | undefined
 
 const getDownloadVideoFormat = async (ignoreQuality?: boolean | undefined) => {
   const config = await configService.getConfig();
+  const downloadFormat =
+    config.highestQuality && !ignoreQuality
+      ? 'bestvideo[vcodec^=avc1][height>=1080]/bestvideo[vcodec^=avc1][height>=720]/bestvideo[vcodec^=avc1]'
+      : 'bestvideo[vcodec^=avc1][height<=720][height>=720]/bestvideo[vcodec^=avc1][height>=720]/bestvideo[vcodec^=avc1]';
 
-  return {
-    raw:
-      config.highestQuality && !ignoreQuality
-        ? '--format=bestvideo[vcodec^=avc1][height>=1080]/bestvideo[vcodec^=avc1][height>=720]/bestvideo[vcodec^=avc1]'
-        : '--format=bestvideo[vcodec^=avc1][height<=720][height>=720]/bestvideo[vcodec^=avc1][height>=720]/bestvideo[vcodec^=avc1]',
-  };
+  return [`--format=${downloadFormat}`];
 };
 
-const getDownloadAudioFormat = () => ({ raw: '--format=bestaudio[acodec^=mp4a][vcodec=none]' });
+const getDownloadAudioFormat = () => ['--format=bestaudio[acodec^=mp4a][vcodec=none]'];
 
 const getStreamingVideoHlsFormat = async () => {
   const config = await configService.getConfig();
@@ -158,25 +157,25 @@ const getStreamingVideoHlsFormat = async () => {
     ? 'best[protocol^=m3u8][vcodec^=avc1][acodec^=mp4a][height>=720]'
     : 'best[protocol^=m3u8][vcodec^=avc1][acodec^=mp4a][height>=720][height<=720]/best[protocol^=m3u8][vcodec^=avc1][acodec^=mp4a][height>=720]';
 
-  return { raw: `--format=${hlsFormat}` };
+  return [`--format=${hlsFormat}`];
 };
 
-const getStreamingVideoFallbackFormat = () => ({
-  raw: '--format=best[ext=mp4][vcodec^=avc1][acodec^=mp4a]/best[vcodec^=avc1][acodec^=mp4a]',
-});
+const getStreamingVideoFallbackFormat = () => [
+  '--format=best[ext=mp4][vcodec^=avc1][acodec^=mp4a]/best[vcodec^=avc1][acodec^=mp4a]',
+];
 
-const getAudioOnlyFormat = () => ({ raw: '--format=bestaudio[acodec^=mp4a][vcodec=none]' });
+const getAudioOnlyFormat = () => ['--format=bestaudio[acodec^=mp4a][vcodec=none]'];
 
 const getCookies = async () => {
   const hasCookiesTxt = await Bun.file(env.COOKIES_TXT_FILE_PATH).exists();
-  if (!hasCookiesTxt) return { raw: '' };
+  if (!hasCookiesTxt) return [];
 
-  return { raw: `--cookies=${env.COOKIES_TXT_FILE_PATH}` };
+  return [`--cookies=${env.COOKIES_TXT_FILE_PATH}`];
 };
 
-const getDefaultExtractorArgs = () => ({ raw: '' });
+const getDefaultExtractorArgs = () => [];
 
-const getWebSafariExtractorArgs = () => ({ raw: '--extractor-args=youtube:player_client=web_safari' });
+const getWebSafariExtractorArgs = () => ['--extractor-args=youtube:player_client=web_safari'];
 
 const getFfmpegOptions = () => ({
   raw: '-y -hide_banner -loglevel error -map 0:v:0 -map 1:a:0 -c:v copy -c:a copy -f hls -hls_playlist_type vod -hls_flags single_file',

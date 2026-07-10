@@ -11,7 +11,7 @@ Create podcast feeds from YouTube channels and playlists
 
 YouTubeCast now uses a more reliable approach for getting playable YouTube video links. When streaming directly, it will try to use a higher quality video link first, but YouTube does not always make those links available in a way podcast apps can play. In those cases, YouTubeCast falls back to a lower quality link that is more likely to work.
 
-For more reliable higher quality video, enable `downloadVideos`. Downloads can use separate video and audio streams from YouTube and combine them into a playable file without re-encoding. By default, downloads target 720p when available. If `highestQuality` is enabled, downloads can use 1080p or better when YouTube provides it.
+For more reliable higher quality video, enable `downloadVideos`. Downloads can use separate video and audio streams from YouTube and combine them into a playable file without re-encoding. By default, downloads can use up to 1080p when YouTube provides it.
 
 ## Self-Hosted Setup Using Docker
 

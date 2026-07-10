@@ -143,8 +143,8 @@ const getDownloadVideoFormat = async (ignoreQuality?: boolean | undefined) => {
   const config = await configService.getConfig();
   const downloadFormat =
     config.highestQuality && !ignoreQuality
-      ? 'bestvideo[vcodec^=avc1][height>=1080]/bestvideo[vcodec^=avc1][height>=720]/bestvideo[vcodec^=avc1]'
-      : 'bestvideo[vcodec^=avc1][height<=720][height>=720]/bestvideo[vcodec^=avc1][height>=720]/bestvideo[vcodec^=avc1]';
+      ? 'bestvideo[vcodec^=avc1][height>=1080]'
+      : 'bestvideo[vcodec^=avc1][height<=1080][height>=720]/bestvideo[vcodec^=avc1][height<=1080]';
 
   return [`--format=${downloadFormat}`];
 };

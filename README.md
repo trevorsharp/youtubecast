@@ -13,16 +13,6 @@ YouTubeCast now uses a more reliable approach for getting playable YouTube video
 
 For more reliable higher quality video, enable `downloadVideos`. Downloads can use separate video and audio streams from YouTube and combine them into a playable file without re-encoding. By default, downloads target 720p when available. If `highestQuality` is enabled, downloads can use 1080p or better when YouTube provides it.
 
-## Changes as of October 2025
-
-YouTubeCast now supports 1080p video streaming without requiring video downloads. Additionally, a new maximum compatibility mode has been added for better podcast app compatibility.
-
-Additional Changes:
-
-- 1080p video quality is now available through streaming without requiring downloads to your machine
-- Added `maximumCompatibility` setting for better compatibility with podcast apps that don't support HLS streaming
-- Maximum compatibility mode requires `downloadVideos` to be enabled and will download videos as MP4 files instead of HLS format
-
 ## Self-Hosted Setup Using Docker
 
 Prerequisites:
@@ -125,6 +115,16 @@ To enable maximum compatibility mode:
 - Provides better compatibility with podcast apps that don't support HLS streaming
 
 ---
+
+## Changes as of October 2025
+
+YouTubeCast now supports 1080p video streaming without requiring video downloads. Additionally, a new maximum compatibility mode has been added for better podcast app compatibility.
+
+Additional Changes:
+
+- 1080p video quality is now available through streaming without requiring downloads to your machine
+- Added `maximumCompatibility` setting for better compatibility with podcast apps that don't support HLS streaming
+- Maximum compatibility mode requires `downloadVideos` to be enabled and will download videos as MP4 files instead of HLS format
 
 ## Changes as of April 2025
 

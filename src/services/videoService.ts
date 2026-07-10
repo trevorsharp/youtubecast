@@ -81,20 +81,31 @@ const getStreamingUrlFromYtDlp = async (
   extractorArgs: YtDlpArg,
   logFailures = true,
 ) => {
-  const ytdlpResponse =
-    await $`yt-dlp -q -g --js-runtimes=bun --remote-components=ejs:npm ${format} ${cookies} ${extractorArgs} ${youtubeLink}`
-      .text()
-      .catch((error) => {
-        if (logFailures) console.error(`Failed to get streaming URL (${videoId}): ${error.info.stderr}`);
-      });
+  let parseError: z.ZodError<string | undefined> | undefined;
 
-  const { data: streamingUrl, error: parseError } = z.string().url().safeParse(ytdlpResponse?.trim());
+  for (let attempt = 1; attempt <= 2; attempt++) {
+    const ytdlpResponse =
+      await $`yt-dlp -q -g --js-runtimes=bun --remote-components=ejs:npm ${format} ${cookies} ${extractorArgs} ${youtubeLink}`
+        .text()
+        .catch((error) => {
+          if (logFailures)
+            console.error(`Failed to get streaming URL (${videoId}, attempt ${attempt}/2): ${error.info.stderr}`);
+        });
+
+    const { data: streamingUrl, error } = z.string().url().safeParse(ytdlpResponse?.trim());
+
+    if (!error) {
+      return streamingUrl;
+    }
+
+    parseError = error;
+  }
 
   if (parseError && logFailures) {
     logZodError(parseError);
   }
 
-  return streamingUrl;
+  return undefined;
 };
 
 const downloadVideo = async (videoId: string, ignoreQuality: boolean | undefined) => {

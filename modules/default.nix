@@ -60,13 +60,12 @@
       description = "YouTubeCast settings (equivalent to settings.json).";
     };
 
-    youtubeApiKeyFile = lib.mkOption {
-      type = lib.types.nullOr lib.types.path;
-      default = null;
+    useSopsSecret = lib.mkOption {
+      type = lib.types.bool;
+      default = false;
       description = ''
-        Path to a file containing the YouTube API key.
-        Takes precedence over `settings.youtubeApiKey`.
-        Useful for SOPS-nix integration.
+        Enable reading YouTube API key from sops-nix secret at runtime.
+        Requires `services.sops.secrets.youtube-api-key` to be declared.
       '';
     };
 
@@ -123,25 +122,19 @@
         };
         cfg = config.services.youtubecast;
 
-        key = if cfg.youtubeApiKeyFile != null
-          then pkgs.lib.readFile cfg.youtubeApiKeyFile
-          else cfg.settings.youtubeApiKey;
-
         dl = if cfg.settings.downloadVideos then "true" else "false";
         mc = if cfg.settings.maximumCompatibility then "true" else "false";
         hq = if cfg.settings.highestQuality then "true" else "false";
 
-        settingsJson = pkgs.runCommand "settings.json" { } ''
-          cat > $out <<EOF
+        settingsJson = pkgs.writeText "settings.json" ''
         {
-          "youtubeApiKey": "${key}",
+          "youtubeApiKey": "${cfg.settings.youtubeApiKey}",
           "downloadVideos": ${dl},
           "maximumCompatibility": ${mc},
           "highestQuality": ${hq},
-          "cacheTimeToLive": "${toString cfg.settings.cacheTimeToLive}",
-          "minimumVideoDuration": "${toString cfg.settings.minimumVideoDuration}"
+          "cacheTimeToLive": ${toString cfg.settings.cacheTimeToLive},
+          "minimumVideoDuration": ${toString cfg.settings.minimumVideoDuration}
         }
-        EOF
         '';
 
         nginxConf = pkgs.writeText "nginx.conf" ''
@@ -211,24 +204,47 @@
 
           environment = {
             APP_DIR = "${pkg}/app";
+            CONFIG_BASE = "${cfg.contentDir}/runtime";
             NGINX_CONF = "/etc/youtubecast/nginx.conf";
             CONTENT_DIR = cfg.contentDir;
             YOUTUBECAST_PORT = toString cfg.port;
-            PATH = lib.mkForce "${pkgs.bun}/bin:${pkgs.nginx}/bin:${pkgs.coreutils}/bin:${pkgs.findutils}/bin:${pkgs.gnugrep}/bin:${pkgs.gnused}/bin";
+            PATH = lib.mkForce "${pkgs.bun}/bin:${pkgs.nginx}/bin:${pkgs.yt-dlp}/bin:${pkgs.coreutils}/bin:${pkgs.findutils}/bin:${pkgs.gnugrep}/bin:${pkgs.gnused}/bin";
+            LOCALE_ARCHIVE = "${pkgs.glibcLocales}/lib/locale/locale-archive";
           } // lib.optionalAttrs (cfg.environmentFile != null) {
             ENVIRONMENT_FILE = cfg.environmentFile;
+          } // lib.optionalAttrs (cfg.useSopsSecret) {
+            USE_SOPS_SECRET = "true";
           };
 
           preStart = ''
             mkdir -p $CONTENT_DIR
-            mkdir -p $APP_DIR/config
+            mkdir -p $CONFIG_BASE
 
-            # Copy settings and cookies to runtime directory
-            cp /etc/youtubecast/settings.json $CONTENT_DIR/
-            cp /etc/youtubecast/settings.json $APP_DIR/config/
+            # Generate settings.json with YouTube API key from sops secret at runtime
+            if [ -n "$USE_SOPS_SECRET" ]; then
+              YOUTUBE_KEY=$(cat /run/secrets/youtubeapikey)
+            else
+              YOUTUBE_KEY="${cfg.settings.youtubeApiKey}"
+            fi
+
+            cat > $CONTENT_DIR/settings.json <<EOF
+        {
+          "youtubeApiKey": "$YOUTUBE_KEY",
+          "downloadVideos": ${dl},
+          "maximumCompatibility": ${mc},
+          "highestQuality": ${hq},
+          "cacheTimeToLive": ${toString cfg.settings.cacheTimeToLive},
+          "minimumVideoDuration": ${toString cfg.settings.minimumVideoDuration}
+        }
+        EOF
+
+            cp $CONTENT_DIR/settings.json $CONFIG_BASE/config/
             if [ -f /etc/youtubecast/cookies.txt ]; then
               cp /etc/youtubecast/cookies.txt $CONTENT_DIR/
             fi
+
+            # Create content symlink so Bun can find it at $CONFIG_BASE/content
+            ln -sfn $CONTENT_DIR $CONFIG_BASE/content
 
             # Copy nginx config
             cp $NGINX_CONF /etc/nginx/nginx.conf

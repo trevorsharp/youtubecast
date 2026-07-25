@@ -9,11 +9,11 @@ BUN_PORT=3001
 # Create content directory if it doesn't exist
 mkdir -p "$CONTENT_DIR"
 
-# Write nginx config with the correct port
-sed "s/\${port}/$NGINX_PORT/" "$APP_DIR/nginx.conf" > /tmp/youtubecast-nginx.conf
+# Start nginx using the system config (symlinked from /etc/youtubecast/nginx.conf)
+NGINX_RUNTIME_CONF="/tmp/youtubecast-nginx.conf"
+sed "s/\${port}/$NGINX_PORT/" "$NGINX_CONF" > "$NGINX_RUNTIME_CONF"
 
-# Start nginx
-nginx -c /tmp/youtubecast-nginx.conf -g "daemon off;" &
+nginx -c "$NGINX_RUNTIME_CONF" -g "daemon off;" &
 
-# Start Bun application
-exec bun run "$APP_DIR/src/index.ts"
+# Start Bun application (source is in the package, config is read from CONFIG_BASE)
+exec bun run "${APP_DIR}/src/index.ts"

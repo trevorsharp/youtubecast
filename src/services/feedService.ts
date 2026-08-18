@@ -2,6 +2,7 @@ import { Podcast } from 'podcast';
 import youtubeService from './youtubeService';
 import queueService from './queueService';
 import cacheService from './cacheService';
+import configService from './configService';
 
 const getFeedData = cacheService.withCache(
   { cacheKey: 'feed-data' },
@@ -18,10 +19,13 @@ const getFeedData = cacheService.withCache(
   },
 );
 
-const generatePodcastFeed = async (host: string, feedId: string, isAudioOnly: boolean) => {
+const generatePodcastFeed = async (baseUrl: string, feedId: string, isAudioOnly: boolean) => {
   const feedData = await getFeedData(feedId);
 
   if (!feedData) return undefined;
+
+  const config = await configService.getConfig();
+  const videoExtension = config.maximumCompatibility ? '.mp4' : '.m3u8';
 
   if (!isAudioOnly) {
     const [firstVideo] = feedData.videos;
@@ -32,7 +36,7 @@ const generatePodcastFeed = async (host: string, feedId: string, isAudioOnly: bo
     title: feedData.name,
     description: feedData.description,
     author: feedData.name,
-    feedUrl: `http://${host}/${feedId}/feed${getQueryParams(isAudioOnly)}`,
+    feedUrl: `${baseUrl}/${feedId}/feed${getQueryParams(isAudioOnly)}`,
     siteUrl: feedData.link,
     imageUrl: feedData.imageUrl,
   });
@@ -44,7 +48,7 @@ const generatePodcastFeed = async (host: string, feedId: string, isAudioOnly: bo
       description: `${video.description}\n\n${video.link}`,
       date: new Date(video.date),
       enclosure: {
-        url: `http://${host}/videos/${video.id}${getQueryParams(isAudioOnly)}`,
+        url: `${baseUrl}/videos/${video.id}${isAudioOnly ? '' : videoExtension}${getQueryParams(isAudioOnly)}`,
         type: isAudioOnly ? 'audio/mp3' : 'video/mp4',
       },
       url: video.link,

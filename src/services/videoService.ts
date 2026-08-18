@@ -8,7 +8,7 @@ import configService from './configService';
 
 type YtDlpArgs = string[];
 
-const getVideoUrl = async (videoId: string, isAudioOnly: boolean) => {
+const getVideoUrl = async (videoId: string, isAudioOnly: boolean, isHls: boolean) => {
   if (isAudioOnly) {
     return await getStreamingUrl(videoId, 'audio');
   }
@@ -17,6 +17,10 @@ const getVideoUrl = async (videoId: string, isAudioOnly: boolean) => {
 
   if (m3u8FileExists) {
     return `/content/${videoId}.m3u8`;
+  }
+
+  if (isHls) {
+    return await getHlsStreamingUrl(videoId);
   }
 
   const mp4FileExists = await Bun.file(`${env.CONTENT_FOLDER_PATH}/${videoId}.mp4`).exists();
@@ -37,27 +41,17 @@ const getVideoUrl = async (videoId: string, isAudioOnly: boolean) => {
 const getStreamingUrl = cacheService.withCache(
   { cacheKey: 'streaming-url', ttl: 600 },
   async (videoId: string, type: 'video' | 'audio') => {
-    const cookies = await getCookies();
-    const youtubeLink = getYoutubeLink(videoId);
-
     if (type === 'audio') {
       return await getStreamingUrlFromYtDlp(
         videoId,
-        youtubeLink,
-        cookies,
+        getYoutubeLink(videoId),
+        await getCookies(),
         getAudioOnlyFormat(),
         getDefaultExtractorArgs(),
       );
     }
 
-    const hlsStreamingUrl = await getStreamingUrlFromYtDlp(
-      videoId,
-      youtubeLink,
-      cookies,
-      await getStreamingVideoHlsFormat(),
-      getWebSafariExtractorArgs(),
-      false,
-    );
+    const hlsStreamingUrl = await getHlsStreamingUrl(videoId);
 
     if (hlsStreamingUrl) {
       return hlsStreamingUrl;
@@ -65,10 +59,27 @@ const getStreamingUrl = cacheService.withCache(
 
     return await getStreamingUrlFromYtDlp(
       videoId,
-      youtubeLink,
-      cookies,
+      getYoutubeLink(videoId),
+      await getCookies(),
       getStreamingVideoFallbackFormat(),
       getDefaultExtractorArgs(),
+    );
+  },
+);
+
+const getHlsStreamingUrl = cacheService.withCache(
+  { cacheKey: 'hls-streaming-url', ttl: 600 },
+  async (videoId: string) => {
+    const cookies = await getCookies();
+    const youtubeLink = getYoutubeLink(videoId);
+
+    return await getStreamingUrlFromYtDlp(
+      videoId,
+      youtubeLink,
+      cookies,
+      await getStreamingVideoHlsFormat(),
+      getWebSafariExtractorArgs(),
+      false,
     );
   },
 );

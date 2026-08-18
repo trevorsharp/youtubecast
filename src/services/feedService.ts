@@ -25,7 +25,6 @@ const generatePodcastFeed = async (baseUrl: string, feedId: string, isAudioOnly:
   if (!feedData) return undefined;
 
   const config = await configService.getConfig();
-  const videoExtension = config.maximumCompatibility ? '.mp4' : '.m3u8';
 
   if (!isAudioOnly) {
     const [firstVideo] = feedData.videos;
@@ -48,9 +47,20 @@ const generatePodcastFeed = async (baseUrl: string, feedId: string, isAudioOnly:
       description: `${video.description}\n\n${video.link}`,
       date: new Date(video.date),
       enclosure: {
-        url: `${baseUrl}/videos/${video.id}${isAudioOnly ? '' : videoExtension}${getQueryParams(isAudioOnly)}`,
+        url: `${baseUrl}/videos/${video.id}${getQueryParams(isAudioOnly)}`,
         type: isAudioOnly ? 'audio/mp3' : 'video/mp4',
       },
+      customElements:
+        isAudioOnly || config.maximumCompatibility
+          ? []
+          : [
+              {
+                'podcast:alternateEnclosure': [
+                  { _attr: { type: 'application/x-mpegURL', length: 0 } },
+                  { 'podcast:source': { _attr: { uri: `${baseUrl}/videos/${video.id}.m3u8` } } },
+                ],
+              },
+            ],
       url: video.link,
       itunesDuration: video.duration,
     }),

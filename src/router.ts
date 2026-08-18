@@ -45,11 +45,13 @@ router.get('/:feedId/feed', async (context) => {
 });
 
 router.get('/videos/:videoId', async (context) => {
-  const videoId = context.req.param('videoId').replace(/\.(?:m3u8|mp4)$/i, '');
+  const videoIdParam = context.req.param('videoId');
+  const isHls = /\.m3u8$/i.test(videoIdParam);
+  const videoId = videoIdParam.replace(/\.m3u8$/i, '');
   const searchParams = new URL(context.req.url).searchParams;
   const isAudioOnly = searchParams.get('audioOnly') !== null && searchParams.get('audioOnly') !== 'false';
 
-  const videoUrl = await videoService.getVideoUrl(videoId, isAudioOnly);
+  const videoUrl = await videoService.getVideoUrl(videoId, isAudioOnly, isHls);
 
   if (!isAudioOnly && !videoUrl?.startsWith('/content')) {
     await queueService.addVideoToDownloadQueue(videoId, { addToFrontOfQueue: true, ignoreQuality: true });

@@ -28,12 +28,14 @@ router.get('/api/search/:searchText', async (context) => {
 });
 
 router.get('/:feedId/feed', async (context) => {
-  const { host } = new URL(context.req.url);
   const { feedId } = context.req.param();
+  const host = context.req.header('host') ?? '';
+  const isHttps = context.req.header('x-forwarded-proto') === 'https';
+  const baseUrl = `${isHttps ? 'https' : 'http'}://${host}`;
   const searchParams = new URL(context.req.url).searchParams;
   const isAudioOnly = searchParams.get('audioOnly') !== null && searchParams.get('audioOnly') !== 'false';
 
-  const podcastFeed = await feedService.generatePodcastFeed(host, feedId, isAudioOnly);
+  const podcastFeed = await feedService.generatePodcastFeed(baseUrl, feedId, isAudioOnly);
 
   if (!podcastFeed) {
     return context.text('Server Error - Could not generate podcast feed', 500);
@@ -43,11 +45,13 @@ router.get('/:feedId/feed', async (context) => {
 });
 
 router.get('/videos/:videoId', async (context) => {
-  const { videoId } = context.req.param();
+  const videoIdParam = context.req.param('videoId');
+  const isHls = /\.m3u8$/i.test(videoIdParam);
+  const videoId = videoIdParam.replace(/\.m3u8$/i, '');
   const searchParams = new URL(context.req.url).searchParams;
   const isAudioOnly = searchParams.get('audioOnly') !== null && searchParams.get('audioOnly') !== 'false';
 
-  const videoUrl = await videoService.getVideoUrl(videoId, isAudioOnly);
+  const videoUrl = await videoService.getVideoUrl(videoId, isAudioOnly, isHls);
 
   if (!isAudioOnly && !videoUrl?.startsWith('/content')) {
     await queueService.addVideoToDownloadQueue(videoId, { addToFrontOfQueue: true, ignoreQuality: true });

@@ -14,9 +14,8 @@ const addVideoToDownloadQueue = async (
 
   if (!config.downloadVideos) return;
 
-  const videoFileExists =
-    (await Bun.file(`${env.CONTENT_FOLDER_PATH}/${videoId}.m3u8`).exists()) ||
-    (await Bun.file(`${env.CONTENT_FOLDER_PATH}/${videoId}.mp4`).exists());
+  const videoFileExtension = config.maximumCompatibility ? 'mp4' : 'm3u8';
+  const videoFileExists = await Bun.file(`${env.CONTENT_FOLDER_PATH}/${videoId}.${videoFileExtension}`).exists();
 
   if (videoFileExists || videosInQueue.has(videoId)) return;
 
@@ -25,8 +24,11 @@ const addVideoToDownloadQueue = async (
   videosInQueue.add(videoId);
 
   queue.push(async () => {
-    await videoService.downloadVideo(videoId, options?.ignoreQuality);
-    videosInQueue.delete(videoId);
+    try {
+      await videoService.downloadVideo(videoId, options?.ignoreQuality);
+    } finally {
+      videosInQueue.delete(videoId);
+    }
   }, options);
 };
 

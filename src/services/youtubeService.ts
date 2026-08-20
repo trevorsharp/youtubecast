@@ -8,6 +8,10 @@ import getYoutubeLink from '../utils/getYoutubeLink';
 
 let youtubeInstance: youtube_v3.Youtube | undefined = undefined;
 
+const logError = (error: unknown) => {
+  console.error(error instanceof Error ? error.message : String(error));
+};
+
 const getYoutube = async () => {
   if (youtubeInstance) return youtubeInstance;
 
@@ -23,7 +27,7 @@ const getChannel = async (channelId: string, excludeVideos: boolean) => {
     .list({ part: ['snippet'], id: [channelId] })
     .then((response) => response?.data?.items?.shift())
     .catch((error) => {
-      console.error(error);
+      logError(error);
       return undefined;
     });
 
@@ -42,7 +46,7 @@ const getChannel = async (channelId: string, excludeVideos: boolean) => {
   });
 
   if (error) {
-    console.error(error);
+    logError(error);
     return undefined;
   }
 
@@ -58,7 +62,7 @@ const getPlaylist = async (playlistId: string, excludeVideos: boolean) => {
     .list({ part: ['snippet'], id: [playlistId] })
     .then((response) => response?.data?.items?.shift())
     .catch((error) => {
-      console.error(error);
+      logError(error);
       return undefined;
     });
 
@@ -81,7 +85,7 @@ const getPlaylist = async (playlistId: string, excludeVideos: boolean) => {
   });
 
   if (error) {
-    console.error(error);
+    logError(error);
     return undefined;
   }
 
@@ -102,7 +106,7 @@ const getVideosForPlaylist = async (playlistId: string) => {
     .list({ part: ['snippet'], maxResults: 50, playlistId })
     .then((response) => response?.data?.items)
     .catch((error) => {
-      console.error(error);
+      logError(error);
       return undefined;
     });
 
@@ -119,7 +123,7 @@ const getVideosForPlaylist = async (playlistId: string) => {
     .list({ part: ['snippet,contentDetails,status'], maxResults: 50, id: playlistVideos.map((v) => v.id ?? '') })
     .then((response) => response?.data?.items)
     .catch((error) => {
-      console.error(error);
+      logError(error);
       return undefined;
     });
 
@@ -141,7 +145,7 @@ const getVideosForPlaylist = async (playlistId: string) => {
   );
 
   if (error) {
-    console.error(error);
+    logError(error);
     return [];
   }
 

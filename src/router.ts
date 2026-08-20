@@ -47,7 +47,7 @@ router.get('/:feedId/feed', async (context) => {
 router.get('/videos/:videoId', async (context) => {
   const videoIdParam = context.req.param('videoId');
   const isHls = /\.m3u8$/i.test(videoIdParam);
-  const videoId = videoIdParam.replace(/\.m3u8$/i, '');
+  const videoId = videoIdParam.replace(/\.(m3u8|mp4)$/i, '');
   const searchParams = new URL(context.req.url).searchParams;
   const isAudioOnly = searchParams.get('audioOnly') !== null && searchParams.get('audioOnly') !== 'false';
 
@@ -58,7 +58,7 @@ router.get('/videos/:videoId', async (context) => {
   }
 
   if (!videoUrl) {
-    return context.text('Server Error - Video could not be found', 500);
+    return context.text('Video is not available yet', 503, { 'Retry-After': '60' });
   }
 
   return context.redirect(videoUrl, 302);

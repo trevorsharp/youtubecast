@@ -111,8 +111,11 @@ To enable maximum compatibility mode:
 
 - Require `downloadVideos` to be enabled
 - Download videos as `.mp4` files instead of `.m3u8` files
+- Disable HLS alternate enclosures and streaming fallbacks; videos are unavailable until their MP4 download completes
 - May result in larger file sizes and longer download times
 - Provides better compatibility with podcast apps that don't support HLS streaming
+
+The selected mode only serves downloaded files in its own format. Changing `maximumCompatibility` will therefore stop serving downloads created in the previous format. You will need to download those videos again or manually convert the existing files; YouTubeCast does not convert or delete them automatically.
 
 ---
 

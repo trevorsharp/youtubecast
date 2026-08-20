@@ -5,7 +5,7 @@ import { z } from 'zod';
 import logZodError from '../utils/logZodError';
 import cacheService from './cacheService';
 import configService from './configService';
-import { mkdtemp, rename, rm } from 'node:fs/promises';
+import { rename, rm } from 'node:fs/promises';
 
 type YtDlpArgs = string[];
 
@@ -120,14 +120,13 @@ const getStreamingUrlFromYtDlp = async (
 
 const downloadVideo = async (videoId: string, ignoreQuality: boolean | undefined) => {
   const config = await configService.getConfig();
-  const stagingFolderPath = await mkdtemp(`${env.CONTENT_FOLDER_PATH}/.youtubecast-`);
 
-  const videoPartFilePath = `${stagingFolderPath}/video.mp4`;
-  const audioPartFilePath = `${stagingFolderPath}/audio.m4a`;
-  const outputVideoFileName = config.maximumCompatibility ? `${videoId}.mp4` : `${videoId}.m3u8`;
-  const stagedOutputVideoFilePath = `${stagingFolderPath}/${outputVideoFileName}`;
-  const outputVideoFilePath = `${env.CONTENT_FOLDER_PATH}/${outputVideoFileName}`;
-  const stagedHlsSegmentFilePath = `${stagingFolderPath}/${videoId}.ts`;
+  const videoPartFilePath = `${env.CONTENT_FOLDER_PATH}/${videoId}.video.mp4`;
+  const audioPartFilePath = `${env.CONTENT_FOLDER_PATH}/${videoId}.audio.m4a`;
+  const outputVideoFileExtension = config.maximumCompatibility ? 'mp4' : 'm3u8';
+  const stagedOutputVideoFilePath = `${env.CONTENT_FOLDER_PATH}/${videoId}.part.${outputVideoFileExtension}`;
+  const outputVideoFilePath = `${env.CONTENT_FOLDER_PATH}/${videoId}.${outputVideoFileExtension}`;
+  const stagedHlsSegmentFilePath = `${env.CONTENT_FOLDER_PATH}/${videoId}.part.ts`;
   const hlsSegmentFilePath = `${env.CONTENT_FOLDER_PATH}/${videoId}.ts`;
 
   const videoFormat = await getDownloadVideoFormat(ignoreQuality);
@@ -148,6 +147,8 @@ const downloadVideo = async (videoId: string, ignoreQuality: boolean | undefined
     `;
 
     if (!config.maximumCompatibility) {
+      const playlist = await Bun.file(stagedOutputVideoFilePath).text();
+      await Bun.write(stagedOutputVideoFilePath, playlist.replaceAll(`${videoId}.part.ts`, `${videoId}.ts`));
       await rename(stagedHlsSegmentFilePath, hlsSegmentFilePath);
     }
     await rename(stagedOutputVideoFilePath, outputVideoFilePath);
@@ -157,7 +158,11 @@ const downloadVideo = async (videoId: string, ignoreQuality: boolean | undefined
     const shellError = error as { info?: { stderr?: unknown } };
     console.error(`${shellError.info?.stderr ?? error}`);
   } finally {
-    await rm(stagingFolderPath, { recursive: true, force: true });
+    await Promise.all(
+      [videoPartFilePath, audioPartFilePath, stagedOutputVideoFilePath, stagedHlsSegmentFilePath].map((filePath) =>
+        rm(filePath, { force: true }),
+      ),
+    );
   }
 };
 

@@ -1,7 +1,10 @@
-{ pkgs, fetchBunDeps, hook }:
+{
+  pkgs,
+  fetchBunDeps,
+  hook,
+}:
 
 let
-  lib = pkgs.lib;
   commonDeps = with pkgs; [
     bun
     nodejs
@@ -30,7 +33,10 @@ let
 
     src = ../ui;
 
-    nativeBuildInputs = [ pkgs.bun hook ];
+    nativeBuildInputs = [
+      pkgs.bun
+      hook
+    ];
 
     bunDeps = frontendDeps;
 
@@ -46,12 +52,16 @@ let
     '';
   };
 
-in pkgs.stdenvNoCC.mkDerivation {
+in
+pkgs.stdenvNoCC.mkDerivation {
   name = "youtubecast";
 
   src = ../.;
 
-  nativeBuildInputs = commonDeps ++ [ pkgs.bun hook ];
+  nativeBuildInputs = commonDeps ++ [
+    pkgs.bun
+    hook
+  ];
   buildInputs = backendDeps;
 
   dontUseBunBuild = true;

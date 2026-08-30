@@ -18,30 +18,42 @@
   };
 
   outputs =
-    { self, nixpkgs, flake_utils, bun2nix }:
+    {
+      self,
+      nixpkgs,
+      flake_utils,
+      bun2nix,
+    }:
     let
-      pkgsFor = system: import nixpkgs {
-        inherit system;
-        overlays = [ bun2nix.overlays.default ];
-      };
-    in
-    flake_utils.lib.eachDefaultSystem (system: let
-      pkgs = pkgsFor system;
-      bun2nixPkg = bun2nix.packages.${system}.bun2nix;
-      fetchBunDeps = bun2nixPkg.passthru.fetchBunDeps;
-      hook = bun2nixPkg.passthru.hook;
-    in {
-      packages = {
-        default = self.packages.${system}.youtubecast;
-        youtubecast = import ./modules/youtubecast.nix {
-          inherit pkgs fetchBunDeps hook;
+      pkgsFor =
+        system:
+        import nixpkgs {
+          inherit system;
+          overlays = [ bun2nix.overlays.default ];
         };
-      };
+    in
+    flake_utils.lib.eachDefaultSystem (
+      system:
+      let
+        pkgs = pkgsFor system;
+        bun2nixPkg = bun2nix.packages.${system}.bun2nix;
+        fetchBunDeps = bun2nixPkg.passthru.fetchBunDeps;
+        hook = bun2nixPkg.passthru.hook;
+      in
+      {
+        packages = {
+          default = self.packages.${system}.youtubecast;
+          youtubecast = import ./modules/youtubecast.nix {
+            inherit pkgs fetchBunDeps hook;
+          };
+        };
 
-      devShells.default = import ./devshell.nix {
-        inherit pkgs;
-      };
-    }) // {
+        devShells.default = import ./devshell.nix {
+          inherit pkgs;
+        };
+      }
+    )
+    // {
       nixosModules.default = import ./modules/default.nix;
     };
 }

@@ -5,12 +5,23 @@ import { z } from 'zod';
 import logZodError from '../utils/logZodError';
 import cacheService from './cacheService';
 import configService from './configService';
+import { rename, rm } from 'node:fs/promises';
 
 type YtDlpArgs = string[];
 
-const getVideoUrl = async (videoId: string, isAudioOnly: boolean) => {
+const getVideoUrl = async (videoId: string, isAudioOnly: boolean, isHls: boolean) => {
   if (isAudioOnly) {
     return await getStreamingUrl(videoId, 'audio');
+  }
+
+  const config = await configService.getConfig();
+
+  if (config.maximumCompatibility) {
+    if (isHls) return undefined;
+
+    const mp4FileExists = await Bun.file(`${env.CONTENT_FOLDER_PATH}/${videoId}.mp4`).exists();
+
+    return mp4FileExists ? `/content/${videoId}.mp4` : undefined;
   }
 
   const m3u8FileExists = await Bun.file(`${env.CONTENT_FOLDER_PATH}/${videoId}.m3u8`).exists();
@@ -19,16 +30,8 @@ const getVideoUrl = async (videoId: string, isAudioOnly: boolean) => {
     return `/content/${videoId}.m3u8`;
   }
 
-  const mp4FileExists = await Bun.file(`${env.CONTENT_FOLDER_PATH}/${videoId}.mp4`).exists();
-
-  if (mp4FileExists) {
-    return `/content/${videoId}.mp4`;
-  }
-
-  const config = await configService.getConfig();
-
-  if (config.maximumCompatibility) {
-    return undefined;
+  if (isHls) {
+    return await getHlsStreamingUrl(videoId);
   }
 
   return await getStreamingUrl(videoId, 'video');
@@ -37,27 +40,17 @@ const getVideoUrl = async (videoId: string, isAudioOnly: boolean) => {
 const getStreamingUrl = cacheService.withCache(
   { cacheKey: 'streaming-url', ttl: 600 },
   async (videoId: string, type: 'video' | 'audio') => {
-    const cookies = await getCookies();
-    const youtubeLink = getYoutubeLink(videoId);
-
     if (type === 'audio') {
       return await getStreamingUrlFromYtDlp(
         videoId,
-        youtubeLink,
-        cookies,
+        getYoutubeLink(videoId),
+        await getCookies(),
         getAudioOnlyFormat(),
         getDefaultExtractorArgs(),
       );
     }
 
-    const hlsStreamingUrl = await getStreamingUrlFromYtDlp(
-      videoId,
-      youtubeLink,
-      cookies,
-      await getStreamingVideoHlsFormat(),
-      getWebSafariExtractorArgs(),
-      false,
-    );
+    const hlsStreamingUrl = await getHlsStreamingUrl(videoId);
 
     if (hlsStreamingUrl) {
       return hlsStreamingUrl;
@@ -65,10 +58,27 @@ const getStreamingUrl = cacheService.withCache(
 
     return await getStreamingUrlFromYtDlp(
       videoId,
-      youtubeLink,
-      cookies,
+      getYoutubeLink(videoId),
+      await getCookies(),
       getStreamingVideoFallbackFormat(),
       getDefaultExtractorArgs(),
+    );
+  },
+);
+
+const getHlsStreamingUrl = cacheService.withCache(
+  { cacheKey: 'hls-streaming-url', ttl: 600 },
+  async (videoId: string) => {
+    const cookies = await getCookies();
+    const youtubeLink = getYoutubeLink(videoId);
+
+    return await getStreamingUrlFromYtDlp(
+      videoId,
+      youtubeLink,
+      cookies,
+      await getStreamingVideoHlsFormat(),
+      getWebSafariExtractorArgs(),
+      false,
     );
   },
 );
@@ -113,9 +123,10 @@ const downloadVideo = async (videoId: string, ignoreQuality: boolean | undefined
 
   const videoPartFilePath = `${env.CONTENT_FOLDER_PATH}/${videoId}.video.mp4`;
   const audioPartFilePath = `${env.CONTENT_FOLDER_PATH}/${videoId}.audio.m4a`;
-  const outputVideoFilePath = config.maximumCompatibility
-    ? `${env.CONTENT_FOLDER_PATH}/${videoId}.mp4`
-    : `${env.CONTENT_FOLDER_PATH}/${videoId}.m3u8`;
+  const outputVideoFileExtension = config.maximumCompatibility ? 'mp4' : 'm3u8';
+  const stagedOutputVideoFilePath = `${env.CONTENT_FOLDER_PATH}/${videoId}.part.${outputVideoFileExtension}`;
+  const outputVideoFilePath = `${env.CONTENT_FOLDER_PATH}/${videoId}.${outputVideoFileExtension}`;
+  const stagedHlsSegmentFilePath = `${env.CONTENT_FOLDER_PATH}/${videoId}.part.ts`;
   const hlsSegmentFilePath = `${env.CONTENT_FOLDER_PATH}/${videoId}.ts`;
 
   const videoFormat = await getDownloadVideoFormat(ignoreQuality);
@@ -128,15 +139,31 @@ const downloadVideo = async (videoId: string, ignoreQuality: boolean | undefined
 
   console.log(`Starting video download (${videoId})`);
 
-  await $`\
-    rm -f ${videoPartFilePath} ${audioPartFilePath} ${outputVideoFilePath} ${hlsSegmentFilePath} && \
-    yt-dlp -q --js-runtimes=bun --remote-components=ejs:npm ${videoFormat} ${cookies} ${extractorArgs} --output=${videoPartFilePath} ${youtubeLink} && \
-    yt-dlp -q --js-runtimes=bun --remote-components=ejs:npm ${audioFormat} ${cookies} ${extractorArgs} --output=${audioPartFilePath} ${youtubeLink} && \
-    ffmpeg -i ${videoPartFilePath} -i ${audioPartFilePath} ${ffmpegOptions} ${outputVideoFilePath} && \
-    rm -f ${videoPartFilePath} ${audioPartFilePath}
-  `
-    .then(() => console.log(`Finished downloading video (${videoId})`))
-    .catch((error) => console.error('' + error.info.stderr));
+  try {
+    await $`\
+      yt-dlp -q --js-runtimes=bun --remote-components=ejs:npm ${videoFormat} ${cookies} ${extractorArgs} --output=${videoPartFilePath} ${youtubeLink} && \
+      yt-dlp -q --js-runtimes=bun --remote-components=ejs:npm ${audioFormat} ${cookies} ${extractorArgs} --output=${audioPartFilePath} ${youtubeLink} && \
+      ffmpeg -i ${videoPartFilePath} -i ${audioPartFilePath} ${ffmpegOptions} ${stagedOutputVideoFilePath}
+    `;
+
+    if (!config.maximumCompatibility) {
+      const playlist = await Bun.file(stagedOutputVideoFilePath).text();
+      await Bun.write(stagedOutputVideoFilePath, playlist.replaceAll(`${videoId}.part.ts`, `${videoId}.ts`));
+      await rename(stagedHlsSegmentFilePath, hlsSegmentFilePath);
+    }
+    await rename(stagedOutputVideoFilePath, outputVideoFilePath);
+
+    console.log(`Finished downloading video (${videoId})`);
+  } catch (error) {
+    const shellError = error as { info?: { stderr?: unknown } };
+    console.error(`${shellError.info?.stderr ?? error}`);
+  } finally {
+    await Promise.all(
+      [videoPartFilePath, audioPartFilePath, stagedOutputVideoFilePath, stagedHlsSegmentFilePath].map((filePath) =>
+        rm(filePath, { force: true }),
+      ),
+    );
+  }
 };
 
 const getDownloadVideoFormat = async (ignoreQuality?: boolean | undefined) => {

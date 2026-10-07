@@ -1,10 +1,15 @@
 import { z } from 'zod';
 
-export default z.object({
-  youtubeApiKey: z.string().min(1, 'YouTube API Key must be provided'),
-  downloadVideos: z.boolean(),
-  maximumCompatibility: z.boolean().default(false),
-  cacheTimeToLive: z.number().nonnegative().default(1200),
-  minimumVideoDuration: z.number().positive().default(180),
-  highestQuality: z.boolean().default(false),
-});
+export default z
+  .object({
+    youtubeApiKey: z.string().min(1, 'YouTube API Key must be provided'),
+    downloadVideos: z.boolean(),
+    maximumCompatibility: z.boolean().default(false),
+    cacheTimeToLive: z.number().nonnegative().default(1200),
+    minimumVideoDuration: z.number().positive().default(180),
+    highestQuality: z.boolean().default(false),
+  })
+  .refine((config) => !config.maximumCompatibility || config.downloadVideos, {
+    message: 'Maximum compatibility requires video downloads to be enabled',
+    path: ['maximumCompatibility'],
+  });

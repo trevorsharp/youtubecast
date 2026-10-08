@@ -8,15 +8,15 @@ Create a **Nix flake** and a **pure NixOS module** to build and run YouTubeCast 
 
 ## Project Summary
 
-| Aspect | Detail |
-| --- | --- |
-| Language | TypeScript (ESNext) |
-| Runtime | Bun 1.3.14 |
-| Backend Framework | Hono (HTTP server) |
-| Frontend | React 19 + Vite 8 + TanStack Router + Tailwind CSS 4 |
-| System deps (current) | ffmpeg, nginx, python3, yt-dlp (nightly) |
-| Config file | `config/settings.json` |
-| Ports | 3000 (nginx, external), 3001 (Bun, internal) |
+| Aspect                | Detail                                               |
+| --------------------- | ---------------------------------------------------- |
+| Language              | TypeScript (ESNext)                                  |
+| Runtime               | Bun 1.3.14                                           |
+| Backend Framework     | Hono (HTTP server)                                   |
+| Frontend              | React 19 + Vite 8 + TanStack Router + Tailwind CSS 4 |
+| System deps (current) | ffmpeg, nginx, python3, yt-dlp (nightly)             |
+| Config file           | `config/settings.json`                               |
+| Ports                 | 3000 (nginx, external), 3001 (Bun, internal)         |
 
 ---
 
@@ -176,8 +176,8 @@ Bun listens on a dynamically assigned high port (e.g., `3001 + (port - 3000)`) t
 
 For every secret in `settings.json`, provide a corresponding `*File` option:
 
-| Setting | Direct option | File option (SOPS-nix friendly) |
-| --- | --- | --- |
+| Setting         | Direct option                    | File option (SOPS-nix friendly)                      |
+| --------------- | -------------------------------- | ---------------------------------------------------- |
 | `youtubeApiKey` | `settings.youtubeApiKey = "..."` | `youtubeApiKeyFile = "/run/secrets/youtube-api-key"` |
 
 **Behavior:** If `*File` is set, it takes precedence. The module reads the file content and writes the value into `settings.json` at runtime. This allows SOPS-nix to place decrypted secrets in `/run/secrets/`.
@@ -188,13 +188,13 @@ For every secret in `settings.json`, provide a corresponding `*File` option:
 
 A dev shell providing:
 
-| Tool | Source |
-| --- | --- |
-| `bun` | nixpkgs |
-| `typescript` | from `devDependencies` |
-| `eslint` | from `devDependencies` |
-| `prettier` | from `devDependencies` |
-| `nodejs` (for Vite) | nixpkgs |
+| Tool                | Source                 |
+| ------------------- | ---------------------- |
+| `bun`               | nixpkgs                |
+| `typescript`        | from `devDependencies` |
+| `eslint`            | from `devDependencies` |
+| `prettier`          | from `devDependencies` |
+| `nodejs` (for Vite) | nixpkgs                |
 
 ```nix
 { pkgs, ... }:
@@ -212,15 +212,15 @@ pkgs.mkShell {
 
 ## 6. Migration Notes (Docker → NixOS)
 
-| Docker aspect | NixOS equivalent |
-| --- | --- |
-| `oven/bun:1.3.14-alpine` | `pkgs.bun` (glibc-based, no Alpine) |
-| `apk add ffmpeg python3 py3-pip nginx` | Include in `packages` of derivation |
-| yt-dlp nightly from GitHub | `pkgs.yt-dlp` (stable version) |
-| Multi-stage Docker build | Single Nix derivation with build phases |
-| `VOLUME` mounts | `contentDir` + config generation in module |
-| `EXPOSE 3000` | Nginx `listen <port>` in module config |
-| `CMD nginx && bun run start` | Wrapper script: `start.sh` that runs both |
+| Docker aspect                          | NixOS equivalent                           |
+| -------------------------------------- | ------------------------------------------ |
+| `oven/bun:1.3.14-alpine`               | `pkgs.bun` (glibc-based, no Alpine)        |
+| `apk add ffmpeg python3 py3-pip nginx` | Include in `packages` of derivation        |
+| yt-dlp nightly from GitHub             | `pkgs.yt-dlp` (stable version)             |
+| Multi-stage Docker build               | Single Nix derivation with build phases    |
+| `VOLUME` mounts                        | `contentDir` + config generation in module |
+| `EXPOSE 3000`                          | Nginx `listen <port>` in module config     |
+| `CMD nginx && bun run start`           | Wrapper script: `start.sh` that runs both  |
 
 ### Key differences to handle
 
@@ -232,30 +232,30 @@ pkgs.mkShell {
 
 ## 7. Implementation Order
 
-| Step | Task | Files to create/modify |
-| --- | --- | --- |
-| 1 | **Write `flake.nix`** — Define inputs, outputs, `flakeUtils.forAllSystems` | `flake.nix` (new) |
-| 2 | **Write package derivation** — Frontend build + backend pack + runtime bundle | `modules/youtubecast.nix` (new) |
-| 3 | **Write NixOS module** — `services.youtubecast` options, service activation, nginx config generation | `modules/default.nix` (new) |
-| 4 | **Write devShell** — Development environment with bun, typescript, eslint, prettier | `devshell.nix` (new) |
-| 5 | **Update `nginx.conf`** — Make port configurable via a variable for the module to use | `nginx.conf` (modify) |
-| 6 | **Test locally** — `nix build`, `nix run`, enable module on a test system | (manual testing) |
+| Step | Task                                                                                                 | Files to create/modify          |
+| ---- | ---------------------------------------------------------------------------------------------------- | ------------------------------- |
+| 1    | **Write `flake.nix`** — Define inputs, outputs, `flakeUtils.forAllSystems`                           | `flake.nix` (new)               |
+| 2    | **Write package derivation** — Frontend build + backend pack + runtime bundle                        | `modules/youtubecast.nix` (new) |
+| 3    | **Write NixOS module** — `services.youtubecast` options, service activation, nginx config generation | `modules/default.nix` (new)     |
+| 4    | **Write devShell** — Development environment with bun, typescript, eslint, prettier                  | `devshell.nix` (new)            |
+| 5    | **Update `nginx.conf`** — Make port configurable via a variable for the module to use                | `nginx.conf` (modify)           |
+| 6    | **Test locally** — `nix build`, `nix run`, enable module on a test system                            | (manual testing)                |
 
 ---
 
 ## 8. Files to Create
 
-| File | Purpose |
-| --- | --- |
-| `flake.nix` | Flake definition: packages, apps, devShells |
+| File                      | Purpose                                       |
+| ------------------------- | --------------------------------------------- |
+| `flake.nix`               | Flake definition: packages, apps, devShells   |
 | `modules/youtubecast.nix` | Package derivation (frontend + backend build) |
-| `modules/default.nix` | NixOS module (service, options, activation) |
-| `devshell.nix` | Development shell definition |
+| `modules/default.nix`     | NixOS module (service, options, activation)   |
+| `devshell.nix`            | Development shell definition                  |
 
 ## 9. Files to Modify
 
-| File | Change |
-| --- | --- |
+| File         | Change                                                                                                              |
+| ------------ | ------------------------------------------------------------------------------------------------------------------- |
 | `nginx.conf` | Replace hardcoded port `3000` with a variable (e.g., `$PORT`) so the NixOS module can inject the user's chosen port |
 
 ---

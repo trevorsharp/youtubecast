@@ -1,6 +1,87 @@
 # YouTubeCast
 
-Create podcast feeds from YouTube channels and playlists
+Create podcast feeds from YouTube channels and playlists.
+
+## Building from Source (Nix)
+
+Prerequisites: Nix with flakes enabled.
+
+```bash
+nix develop                    # Enter dev shell with bun, node, typescript, eslint, prettier
+nix build .#youtubecast        # Build package (outputs to result/)
+nix run .                      # Run the app
+```
+
+To regenerate bun dependencies after changing `package.json`:
+
+```bash
+bun2nix bun-root               # Regenerate modules/bun-root.nix (backend deps)
+bun2nix bun-frontend --dir ui  # Regenerate modules/bun-frontend.nix (frontend deps)
+```
+
+## NixOS Module
+
+Import the flake into your system's `flake.nix`:
+
+```nix
+{
+  inputs = {
+    nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
+    youtubecast.url = "github:trevorsharp/youtubecast";
+  };
+
+  outputs = { self, nixpkgs, youtubecast }: {
+    nixosConfigurations.your-hostname = nixpkgs.lib.nixosSystem {
+      system = "x86_64-linux";
+      specialArgs = {
+        inherit (youtubecast.inputs) bun2nix;
+      };
+      modules = [
+        youtubecast.nixosModules.default
+        ./configuration.nix
+      ];
+    };
+  };
+}
+```
+
+Enable with `services.youtubecast.enable = true`. The module generates `settings.json` and manages a systemd service with nginx.
+
+### Options
+
+- `enable` (bool, default: `false`) — Enable the YouTubeCast service.
+- `port` (port, default: `3000`) — Port for nginx to listen on externally.
+- `settings` (submodule) — Equivalent to `settings.json`:
+  - `youtubeApiKey` (str, default: `""`) — YouTube Data API v3 key.
+  - `downloadVideos` (bool, default: `false`) — Enable video downloads.
+  - `maximumCompatibility` (bool, default: `false`) — Download videos as MP4 instead of HLS.
+  - `highestQuality` (bool, default: `false`) — Use 1080p+ video quality.
+  - `cacheTimeToLive` (int, default: `1200`) — Cache TTL in seconds.
+  - `minimumVideoDuration` (int, default: `180`) — Minimum video duration in seconds (shorts filter).
+- `youtubeApiKeyFile` (path, default: `""`) — Path to a file containing the YouTube API key. Takes precedence over `settings.youtubeApiKey`. Useful for SOPS-nix integration.
+- `cookiesFile` (path, default: `""`) — Path to a `cookies.txt` file for authenticated YouTube content (e.g. members-only videos).
+- `contentDir` (path, default: `/var/lib/youtubecast`) — Directory for storing downloaded videos.
+- `user` (str, default: `youtubecast`) — Service user name.
+- `group` (str, default: `youtubecast`) — Service group name.
+- `bindAddress` (str, default: `0.0.0.0`) — Network interface for nginx to bind to.
+- `environmentFile` (path, default: `""`) — Path to an environment file for service variables.
+
+### Example
+
+```nix
+services.youtubecast = {
+  enable = true;
+  port = config.global.ports.youtubecast;
+
+  settings = {
+    downloadVideos = false;
+    highestQuality = true;
+    minimumVideoDuration = 180;
+  };
+
+  youtubeApiKeyFile = config.sops.secrets.youtube-api-key.path;
+};
+```
 
 ## Features
 
@@ -17,9 +98,9 @@ For more reliable higher quality video, enable `downloadVideos`. Downloads can u
 
 Prerequisites:
 
-- Ensure Docker is set up and running on your machine (https://docs.docker.com/get-docker)
+- Ensure Docker is set up and running on your machine (<https://docs.docker.com/get-docker>)
 - Set up a hostname that can be used to access your machine from the internet (can use a static IP address as well)
-- Get a YouTube API v3 key set up (https://developers.google.com/youtube/v3/getting-started)
+- Get a YouTube API v3 key set up (<https://developers.google.com/youtube/v3/getting-started>)
 
 To run this application using Docker:
 

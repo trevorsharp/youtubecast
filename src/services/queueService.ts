@@ -8,7 +8,7 @@ const videosInQueue = new Set<string>();
 
 const addVideoToDownloadQueue = async (
   videoId: string,
-  options?: { addToFrontOfQueue?: boolean; ignoreQuality?: boolean },
+  options?: { addToFrontOfQueue?: boolean; allowLowerQuality?: boolean },
 ) => {
   const config = await configService.getConfig();
 
@@ -25,7 +25,7 @@ const addVideoToDownloadQueue = async (
 
   queue.push(async () => {
     try {
-      await videoService.downloadVideo(videoId, options?.ignoreQuality);
+      await videoService.downloadVideo(videoId, options?.allowLowerQuality);
     } finally {
       videosInQueue.delete(videoId);
     }

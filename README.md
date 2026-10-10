@@ -11,7 +11,7 @@ Create podcast feeds from YouTube channels and playlists
 
 YouTubeCast now uses a more reliable approach for getting playable YouTube video links. When streaming directly, it will try to use a higher quality video link first, but YouTube does not always make those links available in a way podcast apps can play. In those cases, YouTubeCast falls back to a lower quality link that is more likely to work.
 
-For more reliable higher quality video, enable `downloadVideos`. Downloads can use separate video and audio streams from YouTube and combine them into a playable file without re-encoding. By default, downloads can use up to 1080p when YouTube provides it.
+For more reliable higher quality video, enable `downloadVideos`. Downloads prefer separate video and audio streams from YouTube but can also use a combined stream, producing a playable file without re-encoding. Video resolution is capped at 1080p.
 
 ## Self-Hosted Setup Using Docker
 
@@ -56,7 +56,7 @@ Create a file named `docker-compose.yml` with the contents above.
 
 ### cookies.txt (Optional)
 
-If you want to download YouTube content that requires user authentication to download, you will need to add cookies to your configuration. One reason for needing this is to download members-only videos. Note that the source of these videos (channel, user, or playlist) still must be either public or unlisted. For members-only videos, go to the channel's home page and scroll down to find an auto-generated playlist titled "Members-only videos" which will contain all the videos posted for members of the channel.
+If you want to stream or download YouTube content that requires authentication, you will need to place cookies from an account with access to the content in your configuration folder. One reason for needing this is to access members-only videos. Note that the source of these videos (channel, user, or playlist) still must be either public or unlisted. For members-only videos, go to the channel's home page and scroll down to find an auto-generated playlist titled "Members-only videos" which will contain all the videos posted for members of the channel.
 
 To generate this file:
 

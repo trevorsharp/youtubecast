@@ -54,7 +54,7 @@ router.get('/videos/:videoId', async (context) => {
   const videoUrl = await videoService.getVideoUrl(videoId, isAudioOnly, isHls);
 
   if (!isAudioOnly && !videoUrl?.startsWith('/content')) {
-    await queueService.addVideoToDownloadQueue(videoId, { addToFrontOfQueue: true, ignoreQuality: true });
+    await queueService.addVideoToDownloadQueue(videoId, { addToFrontOfQueue: true, allowLowerQuality: true });
   }
 
   if (!videoUrl) {

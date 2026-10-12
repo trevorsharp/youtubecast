@@ -76,8 +76,8 @@ const getHlsStreamingUrl = cacheService.withCache(
       videoId,
       youtubeLink,
       cookies,
-      await getStreamingVideoHlsFormat(),
-      getWebSafariExtractorArgs(),
+      getStreamingVideoHlsFormat(),
+      getVideoExtractorArgs(),
       false,
     );
   },
@@ -118,21 +118,19 @@ const getStreamingUrlFromYtDlp = async (
   return undefined;
 };
 
-const downloadVideo = async (videoId: string, ignoreQuality: boolean | undefined) => {
+const downloadVideo = async (videoId: string, allowLowerQuality = false) => {
   const config = await configService.getConfig();
 
   const videoPartFilePath = `${env.CONTENT_FOLDER_PATH}/${videoId}.video.mp4`;
-  const audioPartFilePath = `${env.CONTENT_FOLDER_PATH}/${videoId}.audio.m4a`;
   const outputVideoFileExtension = config.maximumCompatibility ? 'mp4' : 'm3u8';
   const stagedOutputVideoFilePath = `${env.CONTENT_FOLDER_PATH}/${videoId}.part.${outputVideoFileExtension}`;
   const outputVideoFilePath = `${env.CONTENT_FOLDER_PATH}/${videoId}.${outputVideoFileExtension}`;
   const stagedHlsSegmentFilePath = `${env.CONTENT_FOLDER_PATH}/${videoId}.part.ts`;
   const hlsSegmentFilePath = `${env.CONTENT_FOLDER_PATH}/${videoId}.ts`;
 
-  const videoFormat = await getDownloadVideoFormat(ignoreQuality);
-  const audioFormat = getDownloadAudioFormat();
+  const videoFormat = getDownloadVideoFormat(allowLowerQuality);
   const cookies = await getCookies();
-  const extractorArgs = getDefaultExtractorArgs();
+  const extractorArgs = getVideoExtractorArgs();
   const youtubeLink = getYoutubeLink(videoId);
 
   const ffmpegOptions = config.maximumCompatibility ? getFfmpegMaximumCompatibilityOptions() : getFfmpegOptions();
@@ -141,9 +139,8 @@ const downloadVideo = async (videoId: string, ignoreQuality: boolean | undefined
 
   try {
     await $`\
-      yt-dlp -q --js-runtimes=bun --remote-components=ejs:npm ${videoFormat} ${cookies} ${extractorArgs} --output=${videoPartFilePath} ${youtubeLink} && \
-      yt-dlp -q --js-runtimes=bun --remote-components=ejs:npm ${audioFormat} ${cookies} ${extractorArgs} --output=${audioPartFilePath} ${youtubeLink} && \
-      ffmpeg -i ${videoPartFilePath} -i ${audioPartFilePath} ${ffmpegOptions} ${stagedOutputVideoFilePath}
+      yt-dlp -q --js-runtimes=bun --remote-components=ejs:npm ${videoFormat} ${cookies} ${extractorArgs} --merge-output-format=mp4 --output=${videoPartFilePath} ${youtubeLink} && \
+      ffmpeg -i ${videoPartFilePath} ${ffmpegOptions} ${stagedOutputVideoFilePath}
     `;
 
     if (!config.maximumCompatibility) {
@@ -158,37 +155,30 @@ const downloadVideo = async (videoId: string, ignoreQuality: boolean | undefined
     const shellError = error as { info?: { stderr?: unknown } };
     console.error(`${shellError.info?.stderr ?? error}`);
   } finally {
+    const downloadPartFiles = await Array.fromAsync(
+      new Bun.Glob(`${videoId}.video.*`).scan({ cwd: env.CONTENT_FOLDER_PATH, absolute: true, onlyFiles: true }),
+    );
+
     await Promise.all(
-      [videoPartFilePath, audioPartFilePath, stagedOutputVideoFilePath, stagedHlsSegmentFilePath].map((filePath) =>
+      [...downloadPartFiles, stagedOutputVideoFilePath, stagedHlsSegmentFilePath].map((filePath) =>
         rm(filePath, { force: true }),
       ),
     );
   }
 };
 
-const getDownloadVideoFormat = async (ignoreQuality?: boolean | undefined) => {
-  const config = await configService.getConfig();
-  const downloadFormat =
-    config.highestQuality && !ignoreQuality
-      ? 'bestvideo[vcodec^=avc1][height>=1080]'
-      : 'bestvideo[vcodec^=avc1][height<=1080][height>=720]/bestvideo[vcodec^=avc1][height<=1080]';
+const getDownloadVideoFormat = (allowLowerQuality: boolean) => {
+  const resolution = allowLowerQuality ? '[height<=1080]' : '[height=1080]';
 
-  return [`--format=${downloadFormat}`];
+  return [
+    `--format=bestvideo[vcodec^=avc1]${resolution}+bestaudio[acodec^=mp4a][vcodec=none]/best[vcodec^=avc1][acodec^=mp4a]${resolution}`,
+  ];
 };
 
-const getDownloadAudioFormat = () => ['--format=bestaudio[acodec^=mp4a][vcodec=none]'];
-
-const getStreamingVideoHlsFormat = async () => {
-  const config = await configService.getConfig();
-  const hlsFormat = config.highestQuality
-    ? 'best[protocol^=m3u8][vcodec^=avc1][acodec^=mp4a][height>=720]'
-    : 'best[protocol^=m3u8][vcodec^=avc1][acodec^=mp4a][height>=720][height<=720]/best[protocol^=m3u8][vcodec^=avc1][acodec^=mp4a][height>=720]';
-
-  return [`--format=${hlsFormat}`];
-};
+const getStreamingVideoHlsFormat = () => ['--format=best[protocol^=m3u8][vcodec^=avc1][acodec^=mp4a][height<=1080]'];
 
 const getStreamingVideoFallbackFormat = () => [
-  '--format=best[ext=mp4][vcodec^=avc1][acodec^=mp4a]/best[vcodec^=avc1][acodec^=mp4a]',
+  '--format=best[ext=mp4][vcodec^=avc1][acodec^=mp4a][height<=1080]/best[vcodec^=avc1][acodec^=mp4a][height<=1080]',
 ];
 
 const getAudioOnlyFormat = () => ['--format=bestaudio[acodec^=mp4a][vcodec=none]'];
@@ -202,14 +192,14 @@ const getCookies = async () => {
 
 const getDefaultExtractorArgs = () => [];
 
-const getWebSafariExtractorArgs = () => ['--extractor-args=youtube:player_client=web_safari'];
+const getVideoExtractorArgs = () => ['--extractor-args=youtube:player_client=default,web_safari'];
 
 const getFfmpegOptions = () => ({
-  raw: '-y -hide_banner -loglevel error -map 0:v:0 -map 1:a:0 -c:v copy -c:a copy -f hls -hls_playlist_type vod -hls_flags single_file',
+  raw: '-y -hide_banner -loglevel error -map 0:v:0 -map 0:a:0 -c:v copy -c:a copy -f hls -hls_playlist_type vod -hls_flags single_file',
 });
 
 const getFfmpegMaximumCompatibilityOptions = () => ({
-  raw: '-y -hide_banner -loglevel error -map 0:v:0 -map 1:a:0 -c:v copy -c:a copy -movflags +faststart',
+  raw: '-y -hide_banner -loglevel error -map 0:v:0 -map 0:a:0 -c:v copy -c:a copy -movflags +faststart',
 });
 
 export default { getVideoUrl, downloadVideo };

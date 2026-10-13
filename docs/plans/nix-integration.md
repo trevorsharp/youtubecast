@@ -117,7 +117,6 @@ services.youtubecast = {
     youtubeApiKey = "";                    # required
     downloadVideos = false;
     maximumCompatibility = false;
-    highestQuality = false;
     cacheTimeToLive = 1200;
     minimumVideoDuration = 180;
   };

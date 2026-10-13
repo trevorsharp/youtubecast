@@ -13,6 +13,7 @@ nix run .                      # Run the app
 - `bun run start` — run backend (Bun on port 3001, behind nginx)
 - `bun run build` — build frontend (writes to root-level `static/`)
 - `bun run lint` — typecheck + prettier check + eslint (must pass before committing)
+- `bun run test` — run unit tests (bun test)
 - `bun run prettier` — format everything
 
 ## Architecture

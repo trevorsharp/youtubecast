@@ -55,16 +55,15 @@ Enable with `services.youtubecast.enable = true`. The module generates `settings
   - `youtubeApiKey` (str, default: `""`) — YouTube Data API v3 key.
   - `downloadVideos` (bool, default: `false`) — Enable video downloads.
   - `maximumCompatibility` (bool, default: `false`) — Download videos as MP4 instead of HLS.
-  - `highestQuality` (bool, default: `false`) — Use 1080p+ video quality.
   - `cacheTimeToLive` (int, default: `1200`) — Cache TTL in seconds.
   - `minimumVideoDuration` (int, default: `180`) — Minimum video duration in seconds (shorts filter).
-- `youtubeApiKeyFile` (path, default: `""`) — Path to a file containing the YouTube API key. Takes precedence over `settings.youtubeApiKey`. Useful for SOPS-nix integration.
-- `cookiesFile` (path, default: `""`) — Path to a `cookies.txt` file for authenticated YouTube content (e.g. members-only videos).
+- `useSopsSecret` (bool, default: `false`) — Read the YouTube API key at runtime from the sops-nix secret `youtubeapikey` (mounted at `/run/secrets/youtubeapikey`) instead of `settings.youtubeApiKey`.
+- `cookiesFile` (path or null, default: `null`) — Path to a `cookies.txt` file for authenticated YouTube content (e.g. members-only videos).
 - `contentDir` (path, default: `/var/lib/youtubecast`) — Directory for storing downloaded videos.
 - `user` (str, default: `youtubecast`) — Service user name.
 - `group` (str, default: `youtubecast`) — Service group name.
 - `bindAddress` (str, default: `0.0.0.0`) — Network interface for nginx to bind to.
-- `environmentFile` (path, default: `""`) — Path to an environment file for service variables.
+- `environmentFile` (path or null, default: `null`) — Path to an environment file for service variables.
 
 ### Example
 
@@ -75,11 +74,11 @@ services.youtubecast = {
 
   settings = {
     downloadVideos = false;
-    highestQuality = true;
     minimumVideoDuration = 180;
   };
 
-  youtubeApiKeyFile = config.sops.secrets.youtube-api-key.path;
+  # Requires services.sops.secrets.youtubeapikey to be declared.
+  useSopsSecret = true;
 };
 ```
 

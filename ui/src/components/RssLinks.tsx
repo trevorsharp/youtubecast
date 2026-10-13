@@ -8,10 +8,10 @@ const RssLinks = ({ feedId }: RssLinksProps) => {
   const [copiedText, setCopiedText] = useState<string>('');
   const [audioOnly, setAudioOnly] = useState(false);
 
-  const getRssLink = () => `${window.location.hostname}/${feedId}/feed${audioOnly ? '?audioOnly' : ''}`;
+  const getRssLink = () => `${window.location.host}/${feedId}/feed${audioOnly ? '?audioOnly' : ''}`;
 
   const copyRssLink = () => {
-    void navigator.clipboard.writeText(`http://${getRssLink()}`).then(() => {
+    void navigator.clipboard.writeText(`${window.location.protocol}//${getRssLink()}`).then(() => {
       setCopiedText('Copied link to RSS feed 🎉');
       setTimeout(() => setCopiedText(''), 2000);
     });

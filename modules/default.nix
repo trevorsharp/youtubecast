@@ -1,4 +1,10 @@
-{ config, pkgs, lib, specialArgs ? {}, ... }:
+{
+  config,
+  pkgs,
+  lib,
+  specialArgs ? { },
+  ...
+}:
 {
   options.services.youtubecast = {
     enable = lib.mkOption {
@@ -32,11 +38,6 @@
             default = false;
             description = "Download videos as MP4 instead of HLS.";
           };
-          highestQuality = lib.mkOption {
-            type = lib.types.bool;
-            default = false;
-            description = "Use 1080p+ video quality.";
-          };
           cacheTimeToLive = lib.mkOption {
             type = lib.types.int;
             default = 1200;
@@ -53,7 +54,6 @@
         youtubeApiKey = "";
         downloadVideos = false;
         maximumCompatibility = false;
-        highestQuality = false;
         cacheTimeToLive = 1200;
         minimumVideoDuration = 180;
       };
@@ -65,7 +65,7 @@
       default = false;
       description = ''
         Enable reading YouTube API key from sops-nix secret at runtime.
-        Requires `services.sops.secrets.youtube-api-key` to be declared.
+        Requires `services.sops.secrets.youtubeapikey` to be declared.
       '';
     };
 
@@ -124,18 +124,6 @@
 
         dl = if cfg.settings.downloadVideos then "true" else "false";
         mc = if cfg.settings.maximumCompatibility then "true" else "false";
-        hq = if cfg.settings.highestQuality then "true" else "false";
-
-        settingsJson = pkgs.writeText "settings.json" ''
-        {
-          "youtubeApiKey": "${cfg.settings.youtubeApiKey}",
-          "downloadVideos": ${dl},
-          "maximumCompatibility": ${mc},
-          "highestQuality": ${hq},
-          "cacheTimeToLive": ${toString cfg.settings.cacheTimeToLive},
-          "minimumVideoDuration": ${toString cfg.settings.minimumVideoDuration}
-        }
-        '';
 
         nginxConf = pkgs.writeText "nginx.conf" ''
           worker_processes  auto;
@@ -146,6 +134,8 @@
           }
 
           http {
+            include ${pkgs.nginx}/conf/mime.types;
+
             # Proxy
             proxy_http_version  1.1;
             proxy_cache_bypass  $http_upgrade;
@@ -172,12 +162,19 @@
           }
         '';
 
-        cookiesTxt = if cfg.cookiesFile != null
-          then { "youtubecast/cookies.txt" = { source = cfg.cookiesFile; }; }
-          else { };
-      in {
+        cookiesTxt =
+          if cfg.cookiesFile != null then
+            {
+              "youtubecast/cookies.txt" = {
+                source = cfg.cookiesFile;
+              };
+            }
+          else
+            { };
+      in
+      {
         # Create service user and group
-        users.groups.${cfg.group} = {};
+        users.groups.${cfg.group} = { };
         users.users.${cfg.user} = {
           extraGroups = [ cfg.group ];
           isSystemUser = true;
@@ -186,8 +183,9 @@
 
         # Generate configuration files
         environment.etc = cookiesTxt // {
-          "youtubecast/settings.json" = { source = settingsJson; };
-          "youtubecast/nginx.conf" = { source = nginxConf; };
+          "youtubecast/nginx.conf" = {
+            source = nginxConf;
+          };
         };
 
         # Create content directory
@@ -210,44 +208,42 @@
             YOUTUBECAST_PORT = toString cfg.port;
             PATH = lib.mkForce "${pkgs.bun}/bin:${pkgs.nginx}/bin:${pkgs.yt-dlp}/bin:${pkgs.coreutils}/bin:${pkgs.findutils}/bin:${pkgs.gnugrep}/bin:${pkgs.gnused}/bin";
             LOCALE_ARCHIVE = "${pkgs.glibcLocales}/lib/locale/locale-archive";
-          } // lib.optionalAttrs (cfg.environmentFile != null) {
+          }
+          // lib.optionalAttrs (cfg.environmentFile != null) {
             ENVIRONMENT_FILE = cfg.environmentFile;
-          } // lib.optionalAttrs (cfg.useSopsSecret) {
+          }
+          // lib.optionalAttrs (cfg.useSopsSecret) {
             USE_SOPS_SECRET = "true";
           };
 
           preStart = ''
-            mkdir -p $CONTENT_DIR
-            mkdir -p $CONFIG_BASE
+                mkdir -p $CONTENT_DIR
+                mkdir -p $CONFIG_BASE/config
 
-            # Generate settings.json with YouTube API key from sops secret at runtime
-            if [ -n "$USE_SOPS_SECRET" ]; then
-              YOUTUBE_KEY=$(cat /run/secrets/youtubeapikey)
-            else
-              YOUTUBE_KEY="${cfg.settings.youtubeApiKey}"
-            fi
+                # Generate settings.json with YouTube API key from sops secret at runtime
+                if [ -n "$USE_SOPS_SECRET" ]; then
+                  YOUTUBE_KEY=$(cat /run/secrets/youtubeapikey)
+                else
+                  YOUTUBE_KEY="${cfg.settings.youtubeApiKey}"
+                fi
 
-            cat > $CONTENT_DIR/settings.json <<EOF
-        {
-          "youtubeApiKey": "$YOUTUBE_KEY",
-          "downloadVideos": ${dl},
-          "maximumCompatibility": ${mc},
-          "highestQuality": ${hq},
-          "cacheTimeToLive": ${toString cfg.settings.cacheTimeToLive},
-          "minimumVideoDuration": ${toString cfg.settings.minimumVideoDuration}
-        }
-        EOF
+                cat > $CONTENT_DIR/settings.json <<EOF
+            {
+              "youtubeApiKey": "$YOUTUBE_KEY",
+              "downloadVideos": ${dl},
+              "maximumCompatibility": ${mc},
+              "cacheTimeToLive": ${toString cfg.settings.cacheTimeToLive},
+              "minimumVideoDuration": ${toString cfg.settings.minimumVideoDuration}
+            }
+            EOF
 
-            cp $CONTENT_DIR/settings.json $CONFIG_BASE/config/
-            if [ -f /etc/youtubecast/cookies.txt ]; then
-              cp /etc/youtubecast/cookies.txt $CONTENT_DIR/
-            fi
+                cp $CONTENT_DIR/settings.json $CONFIG_BASE/config/
+                if [ -f /etc/youtubecast/cookies.txt ]; then
+                  cp /etc/youtubecast/cookies.txt $CONFIG_BASE/config/cookies.txt
+                fi
 
-            # Create content symlink so Bun can find it at $CONFIG_BASE/content
-            ln -sfn $CONTENT_DIR $CONFIG_BASE/content
-
-            # Copy nginx config
-            cp $NGINX_CONF /etc/nginx/nginx.conf
+                # Create content symlink so Bun can find it at $CONFIG_BASE/content
+                ln -sfn $CONTENT_DIR $CONFIG_BASE/content
           '';
 
           serviceConfig = {
@@ -263,6 +259,9 @@
 
         # Nginx is started by the wrapper script, so disable the default nginx service
         # unless explicitly enabled by the user
-        networking.firewall.allowedTCPPorts = lib.mkIf (!config.services.nginx.enable) [ (lib.toInt (toString cfg.port)) ];
-      });
+        networking.firewall.allowedTCPPorts = lib.mkIf (!config.services.nginx.enable) [
+          (lib.toInt (toString cfg.port))
+        ];
+      }
+  );
 }

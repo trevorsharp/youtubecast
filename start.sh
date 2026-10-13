@@ -1,8 +1,8 @@
-#!/usr/bin/env bash
+#!/bin/sh
 set -e
 
 APP_DIR="${APP_DIR:-/app}"
-CONTENT_DIR="${YOUTUBECAST_CONTENT_DIR:-/var/lib/youtubecast}"
+CONTENT_DIR="${CONTENT_DIR:-/var/lib/youtubecast}"
 NGINX_PORT="${YOUTUBECAST_PORT:-3000}"
 
 # Create content directory if it doesn't exist

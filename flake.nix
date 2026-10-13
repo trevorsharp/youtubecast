@@ -48,6 +48,11 @@
           };
         };
 
+        apps.default = {
+          type = "app";
+          program = "${self.packages.${system}.youtubecast}/bin/youtubecast-start";
+        };
+
         devShells.default = import ./devshell.nix {
           inherit pkgs;
         };

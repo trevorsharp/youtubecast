@@ -92,4 +92,6 @@ pkgs.stdenvNoCC.mkDerivation {
     # Copy nginx.conf to app dir for reference
     cp nginx.conf $out/app/nginx.example
   '';
+
+  meta.mainProgram = "youtubecast-start";
 }

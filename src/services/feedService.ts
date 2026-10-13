@@ -48,7 +48,7 @@ const generatePodcastFeed = async (baseUrl: string, feedId: string, isAudioOnly:
       date: new Date(video.date),
       enclosure: {
         url: `${baseUrl}/videos/${video.id}${getQueryParams(isAudioOnly)}`,
-        type: isAudioOnly ? 'audio/mp3' : 'video/mp4',
+        type: isAudioOnly ? 'audio/mp4' : 'video/mp4',
       },
       customElements:
         isAudioOnly || config.maximumCompatibility

@@ -24,7 +24,14 @@ COPY --from=build /static ./static
 COPY ./src ./src
 
 COPY nginx.conf /etc/nginx/nginx.conf
+COPY start.sh /app/start.sh
+RUN chmod +x /app/start.sh
+
+ENV APP_DIR=/app \
+  NGINX_CONF=/etc/nginx/nginx.conf \
+  CONTENT_DIR=/app/content \
+  YOUTUBECAST_PORT=3000
 
 # Run application
 EXPOSE 3000/tcp
-CMD nginx && bun run start
+CMD ["/app/start.sh"]

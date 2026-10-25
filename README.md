@@ -57,7 +57,8 @@ Enable with `services.youtubecast.enable = true`. The module generates `settings
   - `maximumCompatibility` (bool, default: `false`) — Download videos as MP4 instead of HLS.
   - `cacheTimeToLive` (int, default: `1200`) — Cache TTL in seconds.
   - `minimumVideoDuration` (int, default: `180`) — Minimum video duration in seconds (shorts filter).
-- `useSopsSecret` (bool, default: `false`) — Read the YouTube API key at runtime from the sops-nix secret `youtubeapikey` (mounted at `/run/secrets/youtubeapikey`) instead of `settings.youtubeApiKey`.
+  - `maxItems` (int, default: unset) — Default maximum number of items in the RSS feed (1-5000). Can be overridden per feed with `?maxItems=N`.
+- `youtubeApiKeyFile` (path or null, default: `null`) — Path to a file containing the YouTube API key. Takes precedence over `settings.youtubeApiKey`.
 - `cookiesFile` (path or null, default: `null`) — Path to a `cookies.txt` file for authenticated YouTube content (e.g. members-only videos).
 - `contentDir` (path, default: `/var/lib/youtubecast`) — Directory for storing downloaded videos.
 - `user` (str, default: `youtubecast`) — Service user name.
@@ -77,8 +78,7 @@ services.youtubecast = {
     minimumVideoDuration = 180;
   };
 
-  # Requires services.sops.secrets.youtubeapikey to be declared.
-  useSopsSecret = true;
+  youtubeApiKeyFile = config.sops.secrets.youtube-api-key.path;
 };
 ```
 

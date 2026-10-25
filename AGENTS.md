@@ -37,5 +37,5 @@ nix run .                      # Run the app
 ## NixOS Module
 
 - Enable with `services.youtubecast.enable = true`
-- Settings map to `settings.json` — use `youtubeApiKeyFile` for SOPS integration
+- Settings map to `settings.json` — use `services.youtubecast.youtubeApiKeyFile` for secrets from any encryption system
 - Content directory defaults to `/var/lib/youtubecast`

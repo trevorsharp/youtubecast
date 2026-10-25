@@ -48,6 +48,11 @@
             default = 180;
             description = "Minimum video duration in seconds (default: 180).";
           };
+          maxItems = lib.mkOption {
+            type = lib.types.nullOr lib.types.int;
+            default = null;
+            description = "Default maximum number of items in the RSS feed (1-5000).";
+          };
         };
       };
       default = {
@@ -56,16 +61,17 @@
         maximumCompatibility = false;
         cacheTimeToLive = 1200;
         minimumVideoDuration = 180;
+        maxItems = null;
       };
       description = "YouTubeCast settings (equivalent to settings.json).";
     };
 
-    useSopsSecret = lib.mkOption {
-      type = lib.types.bool;
-      default = false;
+    youtubeApiKeyFile = lib.mkOption {
+      type = lib.types.nullOr lib.types.path;
+      default = null;
       description = ''
-        Enable reading YouTube API key from sops-nix secret at runtime.
-        Requires `services.sops.secrets.youtubeapikey` to be declared.
+        Path to a file containing the YouTube API key.
+        Takes precedence over `settings.youtubeApiKey`.
       '';
     };
 
@@ -211,18 +217,15 @@
           }
           // lib.optionalAttrs (cfg.environmentFile != null) {
             ENVIRONMENT_FILE = cfg.environmentFile;
-          }
-          // lib.optionalAttrs (cfg.useSopsSecret) {
-            USE_SOPS_SECRET = "true";
           };
 
           preStart = ''
                 mkdir -p $CONTENT_DIR
                 mkdir -p $CONFIG_BASE/config
 
-                # Generate settings.json with YouTube API key from sops secret at runtime
-                if [ -n "$USE_SOPS_SECRET" ]; then
-                  YOUTUBE_KEY=$(cat /run/secrets/youtubeapikey)
+                # Generate settings.json with YouTube API key from file or settings at runtime
+                if [ -n "${if cfg.youtubeApiKeyFile != null then "1" else ""}" ]; then
+                  YOUTUBE_KEY=$(cat ${cfg.youtubeApiKeyFile})
                 else
                   YOUTUBE_KEY="${cfg.settings.youtubeApiKey}"
                 fi
@@ -234,6 +237,12 @@
               "maximumCompatibility": ${mc},
               "cacheTimeToLive": ${toString cfg.settings.cacheTimeToLive},
               "minimumVideoDuration": ${toString cfg.settings.minimumVideoDuration}
+              ${
+                if cfg.settings.maxItems != null then
+                  ",\n              \"maxItems\": ${toString cfg.settings.maxItems}"
+                else
+                  ""
+              }
             }
             EOF
 

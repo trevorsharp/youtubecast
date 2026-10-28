@@ -95,7 +95,7 @@ const getStreamingUrlFromYtDlp = async (
 
   for (let attempt = 1; attempt <= 2; attempt++) {
     const ytdlpResponse =
-      await $`yt-dlp -q -g --js-runtimes=bun --remote-components=ejs:npm ${format} ${cookies} ${extractorArgs} ${youtubeLink}`
+      await $`yt-dlp -q -g --js-runtimes=node --remote-components=ejs:github ${format} ${cookies} ${extractorArgs} ${youtubeLink}`
         .text()
         .catch((error) => {
           if (logFailures)
@@ -139,7 +139,7 @@ const downloadVideo = async (videoId: string, allowLowerQuality = false) => {
 
   try {
     await $`\
-      yt-dlp -q --js-runtimes=bun --remote-components=ejs:npm ${videoFormat} ${cookies} ${extractorArgs} --merge-output-format=mp4 --output=${videoPartFilePath} ${youtubeLink} && \
+      yt-dlp -q --js-runtimes=node --remote-components=ejs:github ${videoFormat} ${cookies} ${extractorArgs} --merge-output-format=mp4 --output=${videoPartFilePath} ${youtubeLink} && \
       ffmpeg -i ${videoPartFilePath} ${ffmpegOptions} ${stagedOutputVideoFilePath}
     `;
 

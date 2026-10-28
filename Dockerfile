@@ -1,3 +1,5 @@
+FROM node:24.22.1-alpine AS node
+
 FROM oven/bun:1.4.4-alpine AS base
 WORKDIR /app
 
@@ -13,7 +15,8 @@ RUN bun run build
 # Compose release container
 FROM base AS release
 
-RUN apk add --no-cache ffmpeg python3 py3-pip nginx
+COPY --from=node /usr/local/bin/node /usr/local/bin/node
+RUN apk add --no-cache ffmpeg python3 py3-pip nginx libatomic libstdc++ && node --version
 RUN set -x && \
   wget https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp -O /usr/bin/yt-dlp && \
   chmod a+x /usr/bin/yt-dlp

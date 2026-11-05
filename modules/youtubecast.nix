@@ -15,6 +15,8 @@ let
     yt-dlp
     # yt-dlp runs on python3 and shells out to ffmpeg
     python3
+    # yt-dlp solves YouTube's JS challenges with node (--js-runtimes=node)
+    nodejs
     # spawned by start.sh (mkdir, ln) and by the app (find)
     coreutils
     findutils

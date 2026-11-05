@@ -246,6 +246,8 @@ in
         pkgs.ffmpeg
         pkgs.yt-dlp
         pkgs.python3
+        # yt-dlp solves YouTube's JS challenges with node (--js-runtimes=node)
+        pkgs.nodejs
         pkgs.coreutils
         pkgs.findutils
         pkgs.gnugrep

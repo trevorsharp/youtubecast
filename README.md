@@ -12,11 +12,20 @@ nix build .#youtubecast        # Build package (outputs to result/)
 nix run .                      # Run the app
 ```
 
-To regenerate bun dependencies after changing `package.json`:
+The app needs a YouTube API key in a writable config folder before it will
+start (same `settings.json` format as the Docker section below):
 
 ```bash
-bun2nix bun-root               # Regenerate modules/bun-root.nix (backend deps)
-bun2nix bun-frontend --dir ui  # Regenerate modules/bun-frontend.nix (frontend deps)
+mkdir -p /tmp/youtubecast/runtime/config
+printf '{"youtubeApiKey":"your-key","downloadVideos":false}' >/tmp/youtubecast/runtime/config/settings.json
+CONFIG_BASE=/tmp/youtubecast/runtime YOUTUBECAST_PORT=3000 nix run .
+```
+
+To regenerate bun dependencies after changing `package.json` (or `ui/package.json`):
+
+```bash
+bun2nix -l bun.lock -o modules/bun-root.nix        # backend dependencies
+bun2nix -l ui/bun.lock -o modules/bun-frontend.nix # frontend dependencies
 ```
 
 ## NixOS Module
@@ -33,9 +42,6 @@ Import the flake into your system's `flake.nix`:
   outputs = { self, nixpkgs, youtubecast }: {
     nixosConfigurations.your-hostname = nixpkgs.lib.nixosSystem {
       system = "x86_64-linux";
-      specialArgs = {
-        inherit (youtubecast.inputs) bun2nix;
-      };
       modules = [
         youtubecast.nixosModules.default
         ./configuration.nix
@@ -50,20 +56,21 @@ Enable with `services.youtubecast.enable = true`. The module generates `settings
 ### Options
 
 - `enable` (bool, default: `false`) — Enable the YouTubeCast service.
+- `package` (package or null, default: `null`) — Package to run. Defaults to the one this flake builds for your system; set it to run your own override.
 - `port` (port, default: `3000`) — Port for nginx to listen on externally.
-- `settings` (submodule) — Equivalent to `settings.json`:
+- `bindAddress` (str, default: `0.0.0.0`) — Network interface for nginx to bind to. For IPv6, use brackets: `"[::1]"`.
+- `settings` (submodule) — Equivalent to `settings.json`. Unknown keys are preserved and passed through to the app.
   - `youtubeApiKey` (str, default: `""`) — YouTube Data API v3 key.
   - `downloadVideos` (bool, default: `false`) — Enable video downloads.
-  - `maximumCompatibility` (bool, default: `false`) — Download videos as MP4 instead of HLS.
+  - `maximumCompatibility` (bool, default: `false`) — Download videos as MP4 instead of HLS (requires `downloadVideos`).
   - `cacheTimeToLive` (int, default: `1200`) — Cache TTL in seconds.
   - `minimumVideoDuration` (int, default: `180`) — Minimum video duration in seconds (shorts filter).
-  - `maxItems` (int, default: unset) — Default maximum number of items in the RSS feed (1-5000). Can be overridden per feed with `?maxItems=N`.
-- `youtubeApiKeyFile` (path or null, default: `null`) — Path to a file containing the YouTube API key. Takes precedence over `settings.youtubeApiKey`.
+  - `maxItems` (int or null, default: `null`) — Default maximum number of items in the RSS feed (1-5000). Can be overridden per feed with `?maxItems=N`.
+- `youtubeApiKeyFile` (path or null, default: `null`) — Path to a file containing the YouTube API key. Takes precedence over `settings.youtubeApiKey`. Read when the service starts, so it can point at a runtime secret (e.g. a sops-nix path).
 - `cookiesFile` (path or null, default: `null`) — Path to a `cookies.txt` file for authenticated YouTube content (e.g. members-only videos).
-- `contentDir` (path, default: `/var/lib/youtubecast`) — Directory for storing downloaded videos.
+- `contentDir` (path, default: `/var/lib/youtubecast`) — Directory for storing downloaded videos. A `runtime/` subdirectory is created inside it for the app's config and the `content` symlink that nginx serves.
 - `user` (str, default: `youtubecast`) — Service user name.
 - `group` (str, default: `youtubecast`) — Service group name.
-- `bindAddress` (str, default: `0.0.0.0`) — Network interface for nginx to bind to.
 - `environmentFile` (path or null, default: `null`) — Path to an environment file for service variables.
 
 ### Example

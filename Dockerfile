@@ -30,6 +30,7 @@ RUN chmod +x /app/start.sh
 ENV APP_DIR=/app \
   NGINX_CONF=/etc/nginx/nginx.conf \
   CONTENT_DIR=/app/content \
+  CONFIG_BASE=/app \
   YOUTUBECAST_PORT=3000
 
 # Run application

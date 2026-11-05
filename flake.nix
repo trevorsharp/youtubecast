@@ -56,9 +56,20 @@
         devShells.default = import ./devshell.nix {
           inherit pkgs;
         };
+
+        checks.package = self.packages.${system}.youtubecast;
       }
     )
     // {
-      nixosModules.default = import ./modules/default.nix;
+      # Consumers add `youtubecast.nixosModules.default` to `modules` directly:
+      # this wrapper hands the module the per-system package set it needs, so
+      # no specialArgs (bun2nix, self, ...) are required.
+      nixosModules.default =
+        { pkgs, ... }:
+        {
+          _module.args.youtubecastPackages = self.packages.${pkgs.system};
+
+          imports = [ ./modules/default.nix ];
+        };
     };
 }

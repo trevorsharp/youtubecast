@@ -8,11 +8,11 @@ const getFeedData = cacheService.withCache(
   { cacheKey: 'feed-data' },
   async (feedId: string, excludeVideos: boolean = false, maxItems?: number) => {
     if (feedId.startsWith('UC')) {
-      return await youtubeService.getChannel(feedId, excludeVideos);
+      return await youtubeService.getChannel(feedId, excludeVideos, maxItems);
     }
 
     if (feedId.startsWith('PL') || feedId.startsWith('UU')) {
-      return await youtubeService.getPlaylist(feedId, excludeVideos);
+      return await youtubeService.getPlaylist(feedId, excludeVideos, maxItems);
     }
 
     return undefined;
@@ -20,12 +20,7 @@ const getFeedData = cacheService.withCache(
 );
 
 const generatePodcastFeed = async (baseUrl: string, feedId: string, isAudioOnly: boolean, maxItems?: number) => {
-  const feedData = await getFeedData(
-    feedId,
-    isAudioOnly ? false : undefined,
-    isAudioOnly ? undefined : false,
-    maxItems,
-  );
+  const feedData = await getFeedData(feedId, isAudioOnly ? false : undefined, maxItems);
 
   if (!feedData) return undefined;
 

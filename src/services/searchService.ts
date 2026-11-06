@@ -71,7 +71,7 @@ const searchChannels = async (searchQuery: string) => {
     console.error(error);
   }
 
-  throw 'Sorry, something went wrong with your search 🤷';
+  throw new Error('Sorry, something went wrong with your search 🤷');
 };
 
 export default { searchChannels };

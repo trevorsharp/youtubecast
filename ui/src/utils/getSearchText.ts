@@ -5,7 +5,7 @@ const getSearchText = (rawSearch: string) => {
     .replace('%40', '@')
     .split('/')
     .filter((segment) => segment)
-    .map((segment) => decodeURI(segment));
+    .map((segment) => decodeURIComponent(segment));
 
   if ((path === 'channel' || path === 'c' || path === 'user') && path2) return path2;
 

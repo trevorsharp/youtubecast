@@ -43,8 +43,10 @@ router.get('/:feedId/feed', async (context) => {
   const baseUrl = `${isHttps ? 'https' : 'http'}://${host}`;
   const searchParams = new URL(context.req.url).searchParams;
   const isAudioOnly = searchParams.get('audioOnly') !== null && searchParams.get('audioOnly') !== 'false';
+  const maxItemsParam = searchParams.get('maxItems');
+  const maxItems = maxItemsParam ? Number.parseInt(maxItemsParam, 10) : undefined;
 
-  const podcastFeed = await feedService.generatePodcastFeed(baseUrl, feedId, isAudioOnly);
+  const podcastFeed = await feedService.generatePodcastFeed(baseUrl, feedId, isAudioOnly, maxItems);
 
   if (!podcastFeed) {
     return context.text('Server Error - Could not generate podcast feed', 500);

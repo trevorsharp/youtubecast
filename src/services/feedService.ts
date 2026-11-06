@@ -6,28 +6,35 @@ import configService from './configService';
 
 const getFeedData = cacheService.withCache(
   { cacheKey: 'feed-data' },
-  async (feedId: string, excludeVideos: boolean = false) => {
+  async (feedId: string, excludeVideos: boolean = false, maxItems?: number) => {
     if (feedId.startsWith('UC')) {
-      return await youtubeService.getChannel(feedId, excludeVideos);
+      return await youtubeService.getChannel(feedId, excludeVideos, maxItems);
     }
 
     if (feedId.startsWith('PL') || feedId.startsWith('UU')) {
-      return await youtubeService.getPlaylist(feedId, excludeVideos);
+      return await youtubeService.getPlaylist(feedId, excludeVideos, maxItems);
     }
 
     return undefined;
   },
 );
 
-const generatePodcastFeed = async (baseUrl: string, feedId: string, isAudioOnly: boolean) => {
-  const feedData = await getFeedData(feedId);
+const generatePodcastFeed = async (baseUrl: string, feedId: string, isAudioOnly: boolean, maxItems?: number) => {
+  const feedData = await getFeedData(feedId, isAudioOnly ? false : undefined, maxItems);
 
   if (!feedData) return undefined;
 
   const config = await configService.getConfig();
 
+  const feedMaxItems =
+    maxItems !== undefined && !Number.isNaN(maxItems) && maxItems >= 1 && maxItems <= 5000
+      ? maxItems
+      : typeof config.maxItems === 'number' && config.maxItems >= 1 && config.maxItems <= 5000
+        ? config.maxItems
+        : undefined;
+
   if (!isAudioOnly) {
-    const [firstVideo] = feedData.videos;
+    const [firstVideo] = feedData.videos.slice(0, feedMaxItems ?? undefined);
     if (firstVideo) await queueService.addVideoToDownloadQueue(firstVideo.id);
   }
 
@@ -35,12 +42,12 @@ const generatePodcastFeed = async (baseUrl: string, feedId: string, isAudioOnly:
     title: feedData.name,
     description: feedData.description,
     author: feedData.name,
-    feedUrl: `${baseUrl}/${feedId}/feed${getQueryParams(isAudioOnly)}`,
+    feedUrl: `${baseUrl}/${feedId}/feed${getQueryParams(isAudioOnly, feedMaxItems)}`,
     siteUrl: feedData.link,
     imageUrl: feedData.imageUrl,
   });
 
-  feedData.videos.forEach((video) =>
+  feedData.videos.slice(0, feedMaxItems).forEach((video) =>
     rssFeed.addItem({
       title: video.title,
       itunesTitle: video.title,
@@ -69,9 +76,12 @@ const generatePodcastFeed = async (baseUrl: string, feedId: string, isAudioOnly:
   return rssFeed.buildXml();
 };
 
-const getQueryParams = (isAudioOnly: boolean) => {
-  if (isAudioOnly) return '?audioOnly';
-  return '';
+const getQueryParams = (isAudioOnly: boolean, maxItems?: number) => {
+  const params = [];
+  if (isAudioOnly) params.push('audioOnly');
+  if (maxItems !== undefined) params.push(`maxItems=${maxItems}`);
+  if (params.length === 0) return '';
+  return `?${params.join('&')}`;
 };
 
 export default { getFeedData, generatePodcastFeed };

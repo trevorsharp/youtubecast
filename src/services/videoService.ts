@@ -9,6 +9,43 @@ import { rename, rm } from 'node:fs/promises';
 
 type YtDlpArgs = string[];
 
+// googlevideo answers 403 to every request that lands in the short window right
+// after a streaming URL is issued (measured: under a second), and only starts
+// serving the URL once that window has passed. Clients that download instead of
+// stream do not retry a 403, so a redirect handed out inside that window fails
+// their download even though the very same URL works a moment later, which is
+// why the same episode can stream fine and still refuse to download.
+// Probing the URL here — one byte at a time, a handful of times — means the
+// window is over by the time the client is redirected, and also covers the HEAD
+// requests some clients send to learn the file size.
+const streamingUrlProbeCount = 6;
+const streamingUrlProbeDelayMs = 250;
+const streamingUrlProbeTimeoutMs = 2000;
+const streamingUrlWarmUpTimeoutMs = 4000;
+
+const waitUntilStreamingUrlIsServed = async (streamingUrl: string, videoId: string) => {
+  const warmUpDeadline = Date.now() + streamingUrlWarmUpTimeoutMs;
+
+  for (let attempt = 1; attempt <= streamingUrlProbeCount; attempt++) {
+    const response = await fetch(streamingUrl, {
+      headers: { Range: 'bytes=0-0' },
+      signal: AbortSignal.timeout(streamingUrlProbeTimeoutMs),
+    }).catch(() => undefined);
+
+    if (response?.ok) return;
+
+    // A probe that never answers must not hold the request that resolved the
+    // URL hostage, and waiting longer than this buys nothing.
+    if (Date.now() >= warmUpDeadline) break;
+
+    if (attempt < streamingUrlProbeCount) await Bun.sleep(streamingUrlProbeDelayMs);
+  }
+
+  // Not worth failing over: the URL is signed for hours and may well start
+  // answering before the client even gets to it.
+  console.warn(`Streaming URL was still not served (${videoId}) after ${streamingUrlProbeCount} probes`);
+};
+
 const getVideoUrl = async (videoId: string, isAudioOnly: boolean, isHls: boolean) => {
   if (isAudioOnly) {
     return await getStreamingUrl(videoId, 'audio');
@@ -105,6 +142,8 @@ const getStreamingUrlFromYtDlp = async (
     const { data: streamingUrl, error } = z.string().url().safeParse(ytdlpResponse?.trim());
 
     if (!error) {
+      await waitUntilStreamingUrlIsServed(streamingUrl, videoId);
+
       return streamingUrl;
     }
 

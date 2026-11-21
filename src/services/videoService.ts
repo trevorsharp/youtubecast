@@ -9,6 +9,8 @@ import { rename, rm } from 'node:fs/promises';
 
 type YtDlpArgs = string[];
 
+const maxStreamingUrlWaitMs = 30_000;
+
 const getVideoUrl = async (videoId: string, isAudioOnly: boolean, isHls: boolean) => {
   if (isAudioOnly) {
     return await getStreamingUrl(videoId, 'audio');
@@ -91,21 +93,35 @@ const getStreamingUrlFromYtDlp = async (
   extractorArgs: YtDlpArgs,
   logFailures = true,
 ) => {
-  let parseError: z.ZodError<string | undefined> | undefined;
+  let parseError: z.ZodError | undefined;
 
   for (let attempt = 1; attempt <= 2; attempt++) {
     const ytdlpResponse =
-      await $`yt-dlp -q -g --js-runtimes=node --remote-components=ejs:github ${format} ${cookies} ${extractorArgs} ${youtubeLink}`
-        .text()
+      await $`yt-dlp -q --print '%(.{url,available_at})j' --js-runtimes=node --remote-components=ejs:github ${format} ${cookies} ${extractorArgs} ${youtubeLink}`
+        .json()
         .catch((error) => {
           if (logFailures)
-            console.error(`Failed to get streaming URL (${videoId}, attempt ${attempt}/2): ${error.info.stderr}`);
+            console.error(
+              `Failed to get streaming URL (${videoId}, attempt ${attempt}/2): ${error.info?.stderr ?? error}`,
+            );
         });
 
-    const { data: streamingUrl, error } = z.string().url().safeParse(ytdlpResponse?.trim());
+    const { data: streamingInfo, error } = z
+      .object({ url: z.url(), available_at: z.number().optional() })
+      .safeParse(ytdlpResponse);
 
     if (!error) {
-      return streamingUrl;
+      const waitMs = (streamingInfo.available_at ?? 0) * 1000 - Date.now();
+
+      if (waitMs > maxStreamingUrlWaitMs) {
+        return undefined;
+      }
+
+      if (waitMs > 0) {
+        await Bun.sleep(waitMs);
+      }
+
+      return streamingInfo.url;
     }
 
     parseError = error;

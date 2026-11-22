@@ -6,7 +6,8 @@
     "start": "bun run src/index.ts",
     "build": "cd ui && bun run build",
     "lint": "tsc --noEmit && prettier --check . && eslint .",
-    "prettier": "prettier --write ."
+    "prettier": "prettier --write .",
+    "test": "bun test src ui/src"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",

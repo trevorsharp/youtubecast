@@ -7,6 +7,7 @@ export default z
     maximumCompatibility: z.boolean().default(false),
     cacheTimeToLive: z.number().nonnegative().default(1200),
     minimumVideoDuration: z.number().positive().default(180),
+    maxItems: z.number().int().min(1).max(5000).optional(),
   })
   .refine((config) => !config.maximumCompatibility || config.downloadVideos, {
     message: 'Maximum compatibility requires video downloads to be enabled',

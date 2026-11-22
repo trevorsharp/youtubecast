@@ -1,11 +1,16 @@
 import { readdir } from 'node:fs/promises';
+import { z } from 'zod';
 import configValidator from '../validators/configValidator';
 import logZodError from '../utils/logZodError';
 import env from '../env';
 
 const configFile = Bun.file(`${env.CONFIG_FOLDER_PATH}/settings.json`);
 
+let cachedConfig: z.infer<typeof configValidator> | undefined;
+
 const getConfig = async () => {
+  if (cachedConfig) return cachedConfig;
+
   await verifyConfigFolderExists();
   await verifyConfigFileExists();
 
@@ -14,6 +19,8 @@ const getConfig = async () => {
   if (config.downloadVideos) {
     await verifyContentFolderExists();
   }
+
+  cachedConfig = config;
 
   return config;
 };
